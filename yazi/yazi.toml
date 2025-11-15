@@ -1,0 +1,62 @@
+
+[mgr]
+ratio          = [ 1, 4, 3 ]
+sort_by        = "alphabetical"
+sort_sensitive = false
+sort_reverse 	 = false
+sort_dir_first = true
+sort_translit  = false
+linemode       = "none"
+show_hidden    = true
+show_symlink   = true
+scrolloff      = 5
+mouse_events   = [ "click", "scroll" ]
+title_format   = "Yazi: {cwd}"
+image_bound	= [ 10000, 10000 ] 
+
+[opener]
+edit = [
+	{ run = 'nvim "$1"', desc = "Open in LazyVim", block = true, orphar = true, for = "unix" },
+]
+open = [
+	{ run = 'xdg-open "$1"', desc = "Open", block = true, orphan = true, for = "linux" },
+]
+reveal = [
+	{ run = 'xdg-open "$(dirname "$1")"', desc = "Reveal", for = "linux" },
+]
+extract = [
+	{ run = 'ya pub extract --list "$@"', desc = "Extract here", for = "unix" },
+]
+play = [
+	{ run = 'mpv --force-window "$@"', orphan = true, for = "unix" },
+]
+exec = [
+	{ run = ' "$@" >/dev/null 2>&1 ', desc = "Execute",  block = false, for = "unix" }
+]
+vscodium = [
+	{ run = 'flatpak run com.vscodium.codium .', desc = "Open in VSCode",  block = false, for = "unix" }
+]
+kitty = [
+	{ run = 'kitty "$1"', block = false, orphan = true, desc = "Open in Kitty", for = "unix"}
+]
+nautilus = [
+{ run = 'nautilus "$@"', block = false, orphan = true, desc = "Open in Nautilus", for = "unix"}
+]
+
+[open]
+rules = [
+	#any 
+	{ mime = "*", use = ["open", "edit", "kitty", "vscodium", "nautilus", "play", "exec"]},
+	# text
+	{ mime = "text/*", use = [ "edit", "kitty", "nvim", "vscodium" ] },
+	# image
+	{ mime = "image/*", use = [ "open", "reveal" ] },
+	# Archive
+	{ mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", use = [ "extract", "reveal" ] },
+	# Media
+	{ mime = "{audio,video}/*", use = [ "play", "reveal" ] },
+]
+prepend_rules = [
+	{ name = "*.x86_64", use = "exec" },
+	{ name = "config", use = "edit" },
+]

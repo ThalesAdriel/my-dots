@@ -1,0 +1,193 @@
+/* === Base Colors === */
+@define-color bg_main rgba(17, 18, 26, 0.0);
+@define-color bg_main_tooltip rgba(0, 0, 0, 0.7);
+@define-color bg_hover rgba(200, 200, 200, 0.3);
+@define-color bg_active rgba(100, 100, 100, 0.5);
+@define-color border_main rgba(255, 255, 255, 0.2);
+@define-color content_main white;
+@define-color content_inactive rgba(255, 255, 255, 0.25);
+
+/* === Global Styles === */
+* {
+	text-shadow: none;
+	box-shadow: none;
+	border: none;
+	border-radius: 0;
+	font-family: "Segoe UI", "Ubuntu";
+	font-weight: 600;
+	font-size: 12.7px;
+}
+
+window#waybar {
+	background: @bg_main;
+	border-top: 1px solid @border_main;
+	color: @content_main;
+	border-radius: 0 0 6px 6px;
+}
+
+/* === Tooltip === */
+tooltip {
+	background: @bg_main_tooltip;
+	border: 1px solid @border_main;
+	border-radius: 6px;
+}
+
+tooltip label {
+	color: @content_main;
+}
+
+/* === Common Transition === */
+#custom-os_button,
+#taskbar button,
+#pulseaudio,
+#idle_inhibitor,
+#clock,
+#custom-hyprsunset,
+#custom-notification,
+#custom-expand,
+#battery,
+#network,
+#tray>widget,
+#temperature {
+	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* === Shared Hover Styles (except workspaces) === */
+#pulseaudio:hover,
+#idle_inhibitor:hover,
+#clock:hover,
+#custom-hyprsunset:hover,
+#custom-notification:hover,
+#custom-expand:hover,
+#battery:hover,
+#network:hover,
+#tray>widget:hover,
+#custom-os_button:hover,
+#taskbar button:hover {
+	background: @bg_hover;
+	color: @content_main;
+	border-radius: 10px;
+}
+
+/* === OS Button === */
+#custom-os_button {
+	font-family: "JetBrainsMono Nerd Font";
+	font-size: 24px;
+	padding: 0 20px 0 12px;
+}
+
+/* === Workspaces (restored behavior) === */
+#workspaces {
+	color: transparent;
+	margin: 0 1.5px;
+}
+
+#workspaces button {
+	padding: 3px;
+	color: @content_inactive;
+	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+#workspaces button:hover {
+	background: @bg_hover;
+	color: @content_main;
+}
+
+#workspaces button.active {
+	color: @content_main;
+	border-bottom: 3px solid white;
+}
+
+#workspaces button.focused {
+	color: @bg_active;
+}
+
+#workspaces button.urgent {
+	background: rgba(255, 200, 0, 0.35);
+	border-bottom: 3px dashed @warning_color;
+	color: @warning_color;
+}
+
+/* === Taskbar === */
+#taskbar button {
+	min-width: 130px;
+	border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+	margin: 0 2px;
+	padding: 0 8px;
+	color: white;
+}
+
+#taskbar button.active {
+	border-bottom: 3px solid white;
+	background: @bg_active;
+}
+
+/* === System Widgets === */
+#cpu,
+#disk,
+#memory {
+	padding: 3px;
+}
+
+#temperature {
+	color: transparent;
+	font-size: 0;
+}
+
+#temperature.critical {
+	padding-right: 3px;
+	color: @warning_color;
+	font-size: initial;
+	border-bottom: 3px dashed @warning_color;
+}
+
+/* === Window === */
+#window {
+	border-radius: 10px;
+	margin: 0 20px;
+}
+
+/* === Tray === */
+#tray {
+	margin: 0 5px;
+}
+
+#tray>.passive {
+	border-bottom: none;
+}
+
+#tray>.active {
+	border-bottom: 3px solid white;
+}
+
+#tray>.needs-attention {
+	border-bottom: 3px solid @warning_color;
+}
+
+/* === Common Padding === */
+#pulseaudio,
+#network {
+	padding: 0 3px;
+}
+
+#idle_inhibitor {
+	padding: 5px;
+}
+
+#language,
+#custom-hyprsunset,
+#custom-expand {
+	padding: 0 5px;
+}
+
+#custom-notification {
+	padding: 0 8px 0 5px;
+}
+
+#clock {
+	padding: 0 12px 0 8px;
+}
+
+#battery {
+	padding-left: 10px;
+}
