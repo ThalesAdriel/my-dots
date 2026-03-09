@@ -1,27 +1,18 @@
-/*base background color*/
-@define-color bg_main rgba(25, 25, 25, 0.65);
+/* === Base Colors === */
+@define-color bg_main rgba(17, 18, 26, 0.0);
 @define-color bg_main_tooltip rgba(0, 0, 0, 0.7);
-
-
-/*base background color of selections */
 @define-color bg_hover rgba(200, 200, 200, 0.3);
-/*base background color of active elements */
 @define-color bg_active rgba(100, 100, 100, 0.5);
-
-/*base border color*/
 @define-color border_main rgba(255, 255, 255, 0.2);
-
-/*text color for entries, views and content in general */
 @define-color content_main white;
-/*text color for entries that are unselected */
 @define-color content_inactive rgba(255, 255, 255, 0.25);
 
+/* === Global Styles === */
 * {
 	text-shadow: none;
 	box-shadow: none;
 	border: none;
 	border-radius: 0;
-	font-family: "Segoe UI", "Ubuntu";
 	font-weight: 600;
 	font-size: 12.7px;
 }
@@ -30,44 +21,77 @@ window#waybar {
 	background: @bg_main;
 	border-top: 1px solid @border_main;
 	color: @content_main;
-	border-radius: 0px 0px 5px 5px
+	border-radius: 0 0 6px 6px;
 }
 
+/* === Tooltip === */
 tooltip {
 	background: @bg_main_tooltip;
-	border-radius: 5px;
-	border-width: 1px;
-	border-style: solid;
-	border-color: @border_main;
+	border: 1px solid @border_main;
+	border-radius: 6px;
 }
 
 tooltip label {
 	color: @content_main;
 }
 
+/* === Common Transition === */
+#custom-os_button,
+#taskbar button,
+#pulseaudio,
+#idle_inhibitor,
+#clock,
+#custom-hyprsunset,
+#custom-notification,
+#custom-expand,
+#battery,
+#network,
+#tray>widget,
+#temperature {
+	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* === Shared Hover Styles (except workspaces) === */
+#pulseaudio:hover,
+#idle_inhibitor:hover,
+#clock,
+#custom-hyprsunset:hover,
+#custom-notification:hover,
+#custom-expand:hover,
+#battery:hover,
+#network:hover,
+#tray>widget:hover,
+#custom-os_button:hover,
+#taskbar button:hover {
+	background: @bg_hover;
+	color: @content_main;
+	border-radius: 10px;
+}
+
+/* === OS Button === */
 #custom-os_button {
 	font-family: "JetBrainsMono Nerd Font";
 	font-size: 24px;
-	padding-left: 12px;
-	padding-right: 20px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+	padding: 0 20px 0 12px;
 }
 
-#custom-os_button:hover {
-	background: @bg_hover;
-	color: @content_main;
-}
-
+/* === Workspaces (restored behavior) === */
 #workspaces {
 	color: transparent;
-	margin-right: 1.5px;
-	margin-left: 1.5px;
+	margin: 0 1.5px;
 }
 
 #workspaces button {
+	all: initial;
 	padding: 3px;
 	color: @content_inactive;
+	background: transparent;
 	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+#workspaces button:hover {
+	background: @bg_hover;
+	color: @content_main;
 }
 
 #workspaces button.active {
@@ -85,22 +109,13 @@ tooltip label {
 	color: @warning_color;
 }
 
-#workspaces button:hover {
-	background: @bg_hover;
-	color: @content_main;
-}
-
-#taskbar {}
-
+/* === Taskbar === */
 #taskbar button {
 	min-width: 130px;
 	border-bottom: 3px solid rgba(255, 255, 255, 0.3);
-	margin-left: 2px;
-	margin-right: 2px;
-	padding-left: 8px;
-	padding-right: 8px;
+	margin: 0 2px;
+	padding: 0 8px;
 	color: white;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 #taskbar button.active {
@@ -108,12 +123,7 @@ tooltip label {
 	background: @bg_active;
 }
 
-#taskbar button:hover {
-	border-bottom: 3px solid white;
-	background: @bg_hover;
-	color: @content_main;
-}
-
+/* === System Widgets === */
 #cpu,
 #disk,
 #memory {
@@ -122,8 +132,7 @@ tooltip label {
 
 #temperature {
 	color: transparent;
-	font-size: 0px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+	font-size: 0;
 }
 
 #temperature.critical {
@@ -131,18 +140,17 @@ tooltip label {
 	color: @warning_color;
 	font-size: initial;
 	border-bottom: 3px dashed @warning_color;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
+/* === Window === */
 #window {
 	border-radius: 10px;
-	margin-left: 20px;
-	margin-right: 20px;
+	margin: 0 20px;
 }
 
+/* === Tray === */
 #tray {
-	margin-left: 5px;
-	margin-right: 5px;
+	margin: 0 5px;
 }
 
 #tray>.passive {
@@ -157,101 +165,31 @@ tooltip label {
 	border-bottom: 3px solid @warning_color;
 }
 
-#tray>widget {
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+/* === Common Padding === */
+#pulseaudio,
+#network,
+#battery{
+	all: initial;
+	padding: 2px 3px 0px 4px;
 }
 
-#tray>widget:hover {
-	background: @bg_hover;
-}
-
-#pulseaudio {
+#idle_inhibitor {
 	font-family: "JetBrainsMono Nerd Font";
-	padding-left: 3px;
-	padding-right: 3px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+	all: initial;
+	padding: 5px 8px 0px 5px;
 }
 
-#pulseaudio:hover {
-	background: @bg_hover;
-	border-radius: 10px;
-
+#language,
+#custom-hyprsunset,
+#custom-expand {
+	padding: 0 5px;
 }
 
-#idle_inhibitor{
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-
-}
-
-#idle_inhibitor:hover{
-	background: @bg_hover;
-	border-radius: 10px;
-
-}
-
-#language {
-	padding-left: 5px;
-	padding-right: 5px;
+#custom-notification {
+	padding: 1px 7px 0 5px;
 }
 
 #clock {
-	padding-right: 5px;
-	padding-left: 5px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+	padding: 1px 12px 0 8px;
 }
 
-#clock:hover {
-	background: @bg_hover;
-	border-radius: 10px;
-}
-
-#custom-hyprsunset{
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-	padding-right: 5px;
-	padding-left: 5px;
-}
-
-#custom-hyprsunset:hover{
-	background: @bg_hover;
-	border-radius: 10px;
-}
-
-#custom-notification{
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-	padding-right: 10px;
-	padding-left: 5px;
-}
-
-#custom-notification:hover{
-	background: @bg_hover;
-	border-radius: 10px;
-}
-
-#custom-expand{
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-	padding-right: 10px;
-	padding-left: 5px;
-}
-
-#custom-expand:hover{
-	background: @bg_hover;
-	border-radius: 10px;
-}
-
-#battery{
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-	padding-left: 10px;
-}
-#battery:hover{
-	background: @bg_hover;
-	border-radius: 10px;
-}
-#network{
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-	padding-left: 3px;
-	padding-right: 3px;
-}
-#network:hover{
-	background: @bg_hover;
-	border-radius: 10px;
-}

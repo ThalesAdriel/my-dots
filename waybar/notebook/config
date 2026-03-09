@@ -12,14 +12,15 @@
         "hyprland/workspaces",
         "hyprland/window"
     ],
-    "modules-center": ["clock", "idle_inhibitor"],
+    "modules-center": ["clock"],
     "modules-right": [
         "group/expand",
+	"idle_inhibitor",
         "pulseaudio",
-        "battery",
-        "network",
-        "clock#dmy",
-        "custom/notification"
+	"custom/notification", 
+        "network", 
+	"battery",
+        "clock#dmy"
     ],
     "hyprland/window": {
         "max-length": 50,
@@ -50,7 +51,7 @@
     "idle_inhibitor": {
         "format": "{icon}",
         "format-icons": {
-            "activated": "☕︎",
+            "activated": "󰅶",
             "deactivated": "𝗓ᶻᶻ"
         },
         "start-activated": true
@@ -110,7 +111,7 @@
     "pulseaudio": {
         "max-volume": 150,
         "scroll-step": 10,
-        "format": "{icon} {volume}% 🎙 {format_source}",
+        "format": "{icon}",
         "tooltip-format": "{icon} {volume}% 🎙 {format_source}",
         "format-muted": " ",
         "format-icons": {
@@ -132,7 +133,7 @@
     },
       "custom/notification": {
     "tooltip-format": "Open notifications panel",
-    "format": "",
+    "format": "󱨇",
     "on-click": "swaync-client -t -sw",
     "escape": true
   },
@@ -142,10 +143,11 @@
             "warning": 30,
             "critical": 20
         },
-        "format": "{icon} {capacity}%",
+        "format": "{icon}",
+	"tooltip-format": "{capacity}%",
         "format-charging": " {capacity}%",
         "format-plugged": " {capacity}%",
-        "format-alt": "{time} {icon}",
+        "format-alt": "{icon}",
         "format-icons": [
             "󰂎",
             "󰁺",
@@ -161,9 +163,9 @@
         ]
     },
         "network": {
-        "format-wifi": " {icon}",
-        "format-ethernet": "  ",
-        "format-disconnected": "󰌙",
+        "format-wifi": "{icon}",
+        "format-ethernet": " 󰌙 ",
+        "format-disconnected": " 󰌙 ",
         "format-icons": [
             "󰤯 ",
             "󰤟 ",
