@@ -166,31 +166,4 @@ tooltip label {
 	border-bottom: 3px solid @warning_color;
 }
 
-/* === Common Padding === */
-#pulseaudio,
-#network {
-	all: initial;
-	padding: 2px 3px 0px 4px;
-}
 
-#idle_inhibitor {
-	padding: 5px 5px 7px 5px;
-}
-
-#language,
-#custom-hyprsunset,
-#custom-expand {
-	padding: 0 5px;
-}
-
-#custom-notification {
-	padding: 1px 3px 0 0px;
-}
-
-#clock {
-	padding: 1px 12px 0 8px;
-}
-
-#battery {
-	padding-left: 10px;
-}
