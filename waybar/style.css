@@ -83,8 +83,10 @@ tooltip label {
 }
 
 #workspaces button {
+	all: initial;
 	padding: 3px;
 	color: @content_inactive;
+	background: transparent;
 	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
@@ -95,7 +97,7 @@ tooltip label {
 
 #workspaces button.active {
 	color: @content_main;
-	border-bottom: 3px solid white;
+	border-bottom: 2px solid white;
 }
 
 #workspaces button.focused {
@@ -167,11 +169,12 @@ tooltip label {
 /* === Common Padding === */
 #pulseaudio,
 #network {
-	padding: 0 3px;
+	all: initial;
+	padding: 2px 3px 0px 4px;
 }
 
 #idle_inhibitor {
-	padding: 5px;
+	padding: 5px 5px 7px 5px;
 }
 
 #language,
@@ -181,11 +184,11 @@ tooltip label {
 }
 
 #custom-notification {
-	padding: 0 8px 0 5px;
+	padding: 1px 3px 0 0px;
 }
 
 #clock {
-	padding: 0 12px 0 8px;
+	padding: 1px 12px 0 8px;
 }
 
 #battery {
