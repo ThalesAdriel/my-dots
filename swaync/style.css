@@ -39,7 +39,7 @@
   border:1px solid @border_medium;
   border-top-color:@border_light;
   border-bottom-color:@border_dark;
-  border-radius:12px 0px 0px 12px;
+  border-radius:1px 0px 0px 1px;
   padding:28px;
   min-width:380px;
 }
