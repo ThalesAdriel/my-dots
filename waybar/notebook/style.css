@@ -54,7 +54,7 @@ tooltip label {
 /* === Shared Hover Styles (except workspaces) === */
 #pulseaudio:hover,
 #idle_inhibitor:hover,
-#clock,
+#clock:not(.dmy),
 #custom-hyprsunset:hover,
 #custom-notification:hover,
 #custom-expand:hover,
