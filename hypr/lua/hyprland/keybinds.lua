@@ -10,6 +10,7 @@ hl.bind(main_mod .. " + E", hl.dsp.exec_cmd("nautilus"))
 hl.bind(main_mod .. " + W", hl.dsp.exec_cmd("flatpak run io.gitlab.librewolf-community"))
 hl.bind(main_mod .. " + O", hl.dsp.exec_cmd("flatpak run md.obsidian.Obsidian --ozone-platform=x11"))
 hl.bind("CTRL + " .. main_mod .. " + V", hl.dsp.exec_cmd(scripts .. "/launch_first_available.sh 'pavucontrol'"))
+hl.bind(main_mod .. " + M", hl.dsp.exec_cmd(scripts .. "/fuzzel-sysmenu.sh"))
 
 -- Brightness & Volume (Locked & Repeating)
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(scripts .. "/brightness.sh --inc"), { locked = true, repeating = true })
@@ -37,7 +38,7 @@ hl.bind(
 	main_mod .. " + V",
 	hl.dsp.exec_cmd("pkill fuzzel || cliphist list | fuzzel --dmenu | cliphist decode | wl-copy")
 )
-hl.bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
+hl.bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only --freeze"))
 hl.bind(main_mod .. " + SHIFT + A", hl.dsp.exec_cmd("hyprpicker --autocopy"))
 hl.bind(main_mod .. " + A", hl.dsp.exec_cmd(scripts .. "/audio_output_switch.sh"))
 hl.bind(main_mod .. " + SHIFT + D", hl.dsp.exec_cmd("swaync-client -t -sw"))
@@ -78,7 +79,7 @@ hl.bind(main_mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Special Workspace
 hl.bind(main_mod .. " + S", hl.dsp.workspace.toggle_special("magic"))
-hl.bind(main_mod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+--hl.bind(main_mod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
 -- Session & Media
 hl.bind(main_mod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))
