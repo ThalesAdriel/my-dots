@@ -49,7 +49,7 @@ hl.bind(
 	hl.dsp.exec_cmd("pkill fuzzel || cliphist list | fuzzel --dmenu | cliphist decode | wl-copy")
 )
 hl.bind(main_mod .. " + PERIOD", hl.dsp.exec_cmd("pkill fuzzel || " .. scripts .. "/fuzzel-emoji.sh copy"))
-hl.bind(main_mod .. " + A", hl.dsp.exec_cmd(scripts .. "/audio_output_switch.sh"))
+hl.bind(main_mod .. " + A", hl.dsp.exec_cmd("pkill fuzzel || " .. scripts .. "/audio_output_switch.sh"))
 hl.bind(main_mod .. " + SHIFT + A", hl.dsp.exec_cmd("hyprpicker --autocopy"))
 hl.bind(main_mod .. " + SHIFT + D", hl.dsp.exec_cmd("swaync-client -t -sw"))
 hl.bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only --freeze"))
