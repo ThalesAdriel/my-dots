@@ -102,11 +102,16 @@ hl.window_rule({
 	},
 })
 
--- Steam (janelas secundárias, não a janela principal)
 hl.window_rule({
 	match = {
-		class = "^(steam)$",
-		title = "^(?!Steam$).*$", -- negativo: não é a janela principal
+		class = "^(steamwebhelper)$",
+	},
+	float = true,
+})
+
+hl.window_rule({
+	match = {
+		class = "^(steam|steamwebhelper)$",
 	},
 	float = true,
 })
