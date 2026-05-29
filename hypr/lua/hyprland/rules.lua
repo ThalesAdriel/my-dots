@@ -1,5 +1,3 @@
--- ######## Adições do doc2 ########
-
 -- Network Manager
 hl.window_rule({
 	match = {
