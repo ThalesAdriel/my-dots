@@ -52,7 +52,7 @@ hl.bind(main_mod .. " + PERIOD", hl.dsp.exec_cmd("pkill fuzzel || " .. scripts .
 hl.bind(main_mod .. " + A", hl.dsp.exec_cmd("pkill fuzzel || " .. scripts .. "/audio_output_switch.sh"))
 hl.bind(main_mod .. " + SHIFT + A", hl.dsp.exec_cmd("hyprpicker --autocopy"))
 hl.bind(main_mod .. " + SHIFT + D", hl.dsp.exec_cmd("swaync-client -t -sw"))
-hl.bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only --freeze"))
+hl.bind(main_mod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot -m region --freeze --output-folder ~/Pictures/hyprshot"))
 hl.bind(
 	main_mod .. " + SHIFT + E",
 	hl.dsp.exec_cmd(
