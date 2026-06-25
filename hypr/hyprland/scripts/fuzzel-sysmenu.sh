@@ -3,7 +3,8 @@ set -euo pipefail
 
 MODE="${1:-run}"
 
-action="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --hide-prompt --match-mode fzf --dmenu | cut -d ' ' -f1)"
+# Present options via fuzzel (or rofi/dmenu if you prefer)
+action="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu | cut -d ' ' -f1)"
 
 case "$MODE" in
     run)
@@ -18,7 +19,8 @@ case "$MODE" in
                 systemctl soft-reboot
                 ;;
             lock)
-                loginctl lock-session || echo "Lock command failed"
+                # Try to lock with swaylock, fallback to loginctl if available
+                swaylock || loginctl lock-session || echo "Lock command failed"
                 ;;
             suspend)
                 systemctl suspend
