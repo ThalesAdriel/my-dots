@@ -140,9 +140,9 @@ install_apps() {
 post_fixes() {
     echo "Applying post-install fixes..."
     xdg-user-dirs-update
-    DISPLAY=:0
-    export DISPLAY
-    xhost +SI:localuser:root || true
+    #DISPLAY=:0
+    #export DISPLAY
+    #xhost +SI:localuser:root || true
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" || true
 }
 
