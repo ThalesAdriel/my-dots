@@ -57,6 +57,7 @@ networkmanager
 network-manager-applet
 nmrs
 nwg-look
+pamixer
 pavucontrol
 pipewire
 pipewire-alsa
