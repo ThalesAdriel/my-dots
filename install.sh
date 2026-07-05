@@ -88,6 +88,7 @@ xorg-xhost
 gnome-keyring
 eza
 xdg-desktop-portal-gtk
+ncdu
 "
 
 backup_config() {
