@@ -3,11 +3,18 @@ import Quickshell
 import Quickshell.Wayland
 import "root:/config"
 import "root:/components"
+import "root:/services"
 
 PanelWindow {
     id: root
 
     WlrLayershell.namespace: Theme.barLayerNamespace
+
+    // The bar takes no keyboard at all unless something in a panel is waiting to
+    // be typed into, which today is only the enterprise Wi-Fi form. Left on
+    // OnDemand permanently, every click anywhere on the bar would pull focus off
+    // the window in front of it.
+    WlrLayershell.keyboardFocus: UiState.keyboardCapture ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     required property var modelData
 
@@ -98,6 +105,9 @@ PanelWindow {
             TrayDrawer {
             }
 
+            RecordingIndicator {
+            }
+
             IdleToggle {
             }
 
@@ -105,6 +115,28 @@ PanelWindow {
             }
 
             NotificationBell {
+            }
+
+            // The three optional modules, off until they are switched on in bar
+            // settings. Through a Loader rather than a visible binding: nothing
+            // is compiled or polled while a module is off, and a Quickshell
+            // missing UPower costs the battery module alone rather than the bar.
+            Loader {
+                active: Settings.showNetwork
+                visible: active
+                source: "root:/modules/NetworkIndicator.qml"
+            }
+
+            Loader {
+                active: Settings.showBluetooth
+                visible: active
+                source: "root:/modules/BluetoothIndicator.qml"
+            }
+
+            Loader {
+                active: Settings.showBattery
+                visible: active
+                source: "root:/modules/BatteryIndicator.qml"
             }
 
             DateField {

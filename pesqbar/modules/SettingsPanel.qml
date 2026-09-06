@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "root:/config"
 import "root:/components"
+import "root:/services"
 
 Item {
     id: root
@@ -226,6 +227,10 @@ Item {
         property string label: ""
         property bool enabledAction: true
 
+        // Set on a row that opens something rather than doing something, so the
+        // two do not read the same at a glance.
+        property bool navigates: false
+
         signal triggered
 
         width: parent.width
@@ -247,6 +252,18 @@ Item {
             font.family: Theme.sansFamily
             font.pixelSize: Theme.fontSizeSmall
             font.weight: Theme.fontWeightNormal
+        }
+
+        IconText {
+            anchors.right: parent.right
+            anchors.rightMargin: 12
+            anchors.verticalCenter: parent.verticalCenter
+
+            fillBarHeight: false
+            visible: buttonRow.navigates
+            text: Glyphs.angleRight
+            color: Theme.textMuted
+            font.pixelSize: 10
         }
 
         MouseArea {
@@ -314,6 +331,32 @@ Item {
                 label: "Background blur"
                 checked: Settings.barBlur
                 onToggled: Settings.barBlur = !Settings.barBlur
+            }
+        }
+
+        // Everything here is off out of the box. Each one is a module that talks
+        // to something outside the shell, and none of them should start doing
+        // that on a machine that never asked for them: a desktop has no battery
+        // to report and no reason to be running nmcli every few seconds.
+        Group {
+            title: "Bar components"
+
+            ToggleRow {
+                label: "Wi-Fi and Ethernet"
+                checked: Settings.showNetwork
+                onToggled: Settings.showNetwork = !Settings.showNetwork
+            }
+
+            ToggleRow {
+                label: "Bluetooth"
+                checked: Settings.showBluetooth
+                onToggled: Settings.showBluetooth = !Settings.showBluetooth
+            }
+
+            ToggleRow {
+                label: "Battery"
+                checked: Settings.showBattery
+                onToggled: Settings.showBattery = !Settings.showBattery
             }
         }
 
@@ -481,6 +524,12 @@ Item {
                 checked: Settings.calendarYearView
                 onToggled: Settings.calendarYearView = !Settings.calendarYearView
             }
+        }
+
+        ButtonRow {
+            label: "Display manager"
+            navigates: true
+            onTriggered: UiState.displaysOpen = true
         }
 
         ButtonRow {

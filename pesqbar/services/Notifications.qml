@@ -18,6 +18,13 @@ Singleton {
     readonly property var screenshotWords: ["screenshot", "screen shot", "screencapture", "printscreen", "print screen", "captura", "grim", "hyprshot", "flameshot", "swappy", "satty", "shotman", "spectacle"]
     readonly property string screenshotEditor: "satty"
 
+    // What a link in a notification body is allowed to be. Everything else ends
+    // up at xdg-open, which runs a .desktop file and hands any other path to
+    // whatever claims the type, so an unfiltered href turns one click on a toast
+    // into arbitrary execution. Any process that reaches the session bus can
+    // send a body, so this is not a trusted string.
+    readonly property var linkSchemes: ["http", "https", "mailto"]
+
     readonly property int lowTimeout: 5000
     readonly property int normalTimeout: 10000
     readonly property int minimumTimeout: 1500
@@ -154,8 +161,25 @@ Singleton {
         return Math.floor(hours / 24) + " d";
     }
 
+    // Everything here goes straight into a QML Image, which will fetch a remote
+    // URL as readily as it opens a file. A notification is allowed to name its
+    // own icon, so without this any app on the bus could point the shell at a
+    // server it controls and be told the machine is awake, and from where.
+    // image:// covers Quickshell's own handles: inline image data and icons
+    // resolved out of the theme.
+    function localImage(source: string): string {
+        if (!source)
+            return "";
+
+        const value = String(source);
+        if (value.startsWith("/") || value.startsWith("file://") || value.startsWith("image://"))
+            return value;
+
+        return "";
+    }
+
     function imageSource(notification: var): string {
-        return notification && notification.image !== "" ? notification.image : "";
+        return notification ? root.localImage(notification.image) : "";
     }
 
     function appIconSource(notification: var): string {
@@ -165,9 +189,33 @@ Singleton {
         // Screenshot tools hand the saved file to notify-send with -i, so the app
         // icon is sometimes a path rather than the name of a theme icon.
         if (notification.appIcon.startsWith("/") || notification.appIcon.startsWith("file://"))
-            return notification.appIcon;
+            return root.localImage(notification.appIcon);
 
-        return Quickshell.iconPath(notification.appIcon, true);
+        return root.localImage(Quickshell.iconPath(notification.appIcon, true));
+    }
+
+    // The scheme is the whole check: a link with no scheme at all is a bare path
+    // that xdg-open would resolve against the filesystem, so it is refused too.
+    function safeLink(link: string): string {
+        if (!link)
+            return "";
+
+        const value = String(link);
+        const scheme = value.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):/);
+        if (!scheme)
+            return "";
+
+        return root.linkSchemes.indexOf(scheme[1].toLowerCase()) !== -1 ? value : "";
+    }
+
+    function openLink(link: string): void {
+        const safe = root.safeLink(link);
+        if (safe === "") {
+            console.warn("pesqBar: refused a notification link with a scheme that is not allowed:", link);
+            return;
+        }
+
+        Qt.openUrlExternally(safe);
     }
 
     function looksLikeScreenshot(notification: var): bool {
@@ -193,8 +241,16 @@ Singleton {
                 continue;
 
             const match = String(candidate).match(/(?:file:\/\/)?(\/[^\s"'<>]+\.(?:png|jpg|jpeg|webp))/i);
-            if (match)
-                return match[1];
+            if (!match)
+                continue;
+
+            // The editor is handed this path and writes its result next to it, so
+            // a body that walks back up out of the directory it named would pick
+            // where that file lands. An honest screenshot tool never sends one.
+            if (match[1].indexOf("/../") !== -1)
+                continue;
+
+            return match[1];
         }
 
         return "";
@@ -221,15 +277,39 @@ Singleton {
         Quickshell.execDetached(["sh", "-c", 'exec "$0" --filename "$1" --output-filename "$2"', root.screenshotEditor, path, output]);
     }
 
+    // A body is allowed to carry links, so every <a> is rewritten to one that
+    // either points somewhere openLink would agree to open or points nowhere at
+    // all. A refused link keeps its text but loses the anchor, so it stops
+    // reading as something worth clicking rather than failing under the pointer.
+    // The closing tag is left alone: an empty <a> still matches it.
+    function sanitizeAnchors(text: string): string {
+        return text.replace(/<a\b[^>]*>/gi, tag => {
+            const attribute = tag.match(/href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+            if (!attribute)
+                return "<a>";
+
+            const value = attribute[1] !== undefined ? attribute[1] : attribute[2] !== undefined ? attribute[2] : attribute[3];
+            const safe = root.safeLink(value);
+            if (safe === "")
+                return "<a>";
+
+            // The quote is the only character that could end the attribute early
+            // and start another one; & is left for the escaping pass below.
+            return '<a href="' + safe.replace(/"/g, "%22") + '">';
+        });
+    }
+
     // Markup is advertised as supported, so bodies come in as a mix of real
     // markup and plain text carrying bare & and < characters. Either one makes
     // StyledText drop the rest of the body, so keep the handful of tags the spec
-    // allows and turn everything else into literal text.
+    // allows and turn everything else into literal text. The anchors are cleaned
+    // before the escaping so the hrefs that survive get their & escaped with
+    // everything else.
     function formatBody(text: string): string {
         if (!text)
             return "";
 
-        return text.replace(/<img[^>]*>/gi, "").replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;").replace(/<(?!\/?(?:b|i|u|a|br)[\s\/>])/g, "&lt;");
+        return root.sanitizeAnchors(text.replace(/<img[^>]*>/gi, "")).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;").replace(/<(?!\/?(?:b|i|u|a|br)[\s\/>])/g, "&lt;");
     }
 
     SystemClock {

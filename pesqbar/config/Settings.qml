@@ -30,6 +30,18 @@ Singleton {
     property alias moduleSpacing: adapter.moduleSpacing
     property alias workspaceSpacing: adapter.workspaceSpacing
 
+    // The three bar modules that are off until they are asked for. Each one
+    // costs a polled process while it is on, so nothing here starts on its own.
+    property alias showNetwork: adapter.showNetwork
+    property alias showBluetooth: adapter.showBluetooth
+    property alias showBattery: adapter.showBattery
+
+    // The monitor arrangement the display manager saved, keyed by connector
+    // name. Left out of restoreDefaults on purpose: it is a description of the
+    // hardware on the desk rather than a look, and the display manager has its
+    // own Reset for it.
+    property alias displayLayout: adapter.displayLayout
+
     property alias clockShowSeconds: adapter.clockShowSeconds
     property alias clockUse12Hour: adapter.clockUse12Hour
     property alias clockShowProgress: adapter.clockShowProgress
@@ -62,6 +74,9 @@ Singleton {
         adapter.iconPadding = 3;
         adapter.moduleSpacing = 0;
         adapter.workspaceSpacing = 2;
+        adapter.showNetwork = false;
+        adapter.showBluetooth = false;
+        adapter.showBattery = false;
         adapter.clockShowSeconds = true;
         adapter.clockUse12Hour = false;
         adapter.clockShowProgress = false;
@@ -76,6 +91,12 @@ Singleton {
 
         onFileChanged: reload()
         onAdapterUpdated: writeAdapter()
+
+        // Only to put the file there the first time. This used to be a blind
+        // timer 1.5s after startup, which is a race the defaults can win: the
+        // load is asynchronous, and a slow read meant writing defaults over
+        // settings that had not arrived yet.
+        onLoadFailed: writeAdapter()
 
         JsonAdapter {
             id: adapter
@@ -103,16 +124,16 @@ Singleton {
             property int moduleSpacing: 0
             property int workspaceSpacing: 2
 
+            property bool showNetwork: false
+            property bool showBluetooth: false
+            property bool showBattery: false
+
+            property var displayLayout: ({})
+
             property bool clockShowSeconds: true
             property bool clockUse12Hour: false
             property bool clockShowProgress: false
             property bool calendarYearView: true
         }
-    }
-
-    Timer {
-        interval: 1500
-        running: true
-        onTriggered: fileView.writeAdapter()
     }
 }

@@ -15,13 +15,27 @@ BarButton {
     onCurrentMinuteChanged: root.restartMinuteProgress()
     Component.onCompleted: root.restartMinuteProgress()
 
+    // The line is a minute long, so leaving it running with the setting off
+    // means a property animation ticking every frame for something nothing is
+    // drawing.
     function restartMinuteProgress(): void {
-        const seconds = clock.date.getSeconds();
         progressAnimation.stop();
+        if (!Settings.clockShowProgress)
+            return;
+
+        const seconds = clock.date.getSeconds();
         progressAnimation.from = seconds / 60;
         progressAnimation.to = 1;
         progressAnimation.duration = Math.max((60 - seconds) * 1000, 1);
         progressAnimation.start();
+    }
+
+    Connections {
+        target: Settings
+
+        function onClockShowProgressChanged(): void {
+            root.restartMinuteProgress();
+        }
     }
 
     SystemClock {

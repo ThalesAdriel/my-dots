@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell.Services.Pipewire
 import "root:/config"
 import "root:/components"
+import "root:/services"
 
 Item {
     id: root
@@ -19,28 +20,6 @@ Item {
 
     readonly property int rowHeight: 46
 
-    function describe(node: var): string {
-        const candidates = [];
-        const props = node.properties;
-
-        if (props) {
-            candidates.push(props["application.name"]);
-            candidates.push(props["media.name"]);
-            candidates.push(props["application.process.binary"]);
-            candidates.push(props["node.description"]);
-            candidates.push(props["node.name"]);
-        }
-
-        candidates.push(node.description);
-        candidates.push(node.nickname);
-        candidates.push(node.name);
-
-        for (const candidate of candidates) {
-            if (typeof candidate === "string" && candidate.length > 0)
-                return candidate;
-        }
-        return "Unknown";
-    }
 
     implicitHeight: header.height + (streamsColumn.implicitHeight + 8) * root.expansion
     clip: true
@@ -160,7 +139,7 @@ Item {
                         anchors.leftMargin: 6
                         anchors.rightMargin: 8
 
-                        text: root.describe(streamRow.modelData)
+                        text: Audio.describe(streamRow.modelData)
                         color: Theme.textSecondary
                         font.family: Theme.sansFamily
                         font.pixelSize: Theme.fontSizeSmall

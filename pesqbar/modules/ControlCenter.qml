@@ -14,6 +14,12 @@ BarPopup {
 
     alignRight: true
 
+    readonly property bool displaysVisible: root.shown && UiState.displaysOpen
+
+    // hyprctl is only asked for the monitor layout while the sheet that shows
+    // it is open.
+    onDisplaysVisibleChanged: Displays.watching = root.displaysVisible
+
     onShownChanged: {
         UiState.controlCenterOpen = root.shown;
 
@@ -23,10 +29,12 @@ BarPopup {
 
         // The list below already carries everything, so drop the toasts rather
         // than showing the same notifications twice.
-        if (root.shown)
+        if (root.shown) {
             Notifications.clearPopups();
-        else
+        } else {
             UiState.settingsOpen = false;
+            UiState.displaysOpen = false;
+        }
     }
 
     component ActionButton: Rectangle {
@@ -36,10 +44,14 @@ BarPopup {
         property string tooltip: ""
         property bool engaged: false
 
+        // The header carries the same buttons at the size the Clear button next
+        // to them is, rather than at the size of the row along the bottom.
+        property bool compact: false
+
         signal triggered
 
-        width: 44
-        height: 44
+        width: action.compact ? 32 : 44
+        height: action.compact ? 28 : 44
         radius: Theme.radius
         color: {
             if (actionMouse.containsPress)
@@ -59,7 +71,7 @@ BarPopup {
             anchors.centerIn: parent
             fillBarHeight: false
             text: action.glyph
-            font.pixelSize: 17
+            font.pixelSize: action.compact ? Theme.fontSizeSmall : 17
         }
 
         MouseArea {
@@ -76,6 +88,102 @@ BarPopup {
         }
     }
 
+    // A sheet that covers the whole panel: a back arrow, a name, and whatever it
+    // is showing, scrolling under them. Two of these stack, so the header and
+    // the scrolling live here once rather than in each.
+    component Sheet: Rectangle {
+        id: sheet
+
+        property string title: ""
+        property bool open: false
+        default property alias sheetContent: sheetHolder.data
+
+        signal dismissed
+
+        anchors.fill: parent
+        color: Theme.settingsBackground
+        radius: Theme.cardRadius
+
+        opacity: sheet.open ? 1 : 0
+        visible: sheet.opacity > 0.01
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Theme.durationBase
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easingCurve
+            }
+        }
+
+        Item {
+            id: sheetHeader
+
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: root.panelPadding
+            height: 30
+
+            Rectangle {
+                id: sheetBack
+
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: 32
+                height: 28
+                radius: Theme.radius
+                color: backMouse.containsPress ? Theme.fillPressed : backMouse.containsMouse ? Theme.fillHover : Theme.fillTrack
+
+                IconText {
+                    anchors.centerIn: parent
+                    fillBarHeight: false
+                    text: Glyphs.angleLeft
+                    font.pixelSize: Theme.fontSizeSmall
+                }
+
+                MouseArea {
+                    id: backMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: sheet.dismissed()
+                }
+            }
+
+            Text {
+                anchors.left: sheetBack.right
+                anchors.leftMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                text: sheet.title
+                color: Theme.textSecondary
+                font.family: Theme.sansFamily
+                font.pixelSize: Theme.fontSize
+            }
+        }
+
+        Flickable {
+            anchors.top: sheetHeader.bottom
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: root.panelPadding
+            anchors.rightMargin: root.panelPadding
+            anchors.topMargin: 10
+            anchors.bottomMargin: root.panelPadding
+
+            clip: true
+            contentWidth: width
+            contentHeight: sheetHolder.childrenRect.height
+            boundsBehavior: Flickable.StopAtBounds
+
+            Item {
+                id: sheetHolder
+                width: parent.width
+                height: childrenRect.height
+            }
+        }
+    }
+
     // Whichever action button the pointer is over, or null.
     property var hoveredAction: null
 
@@ -83,62 +191,71 @@ BarPopup {
         id: content
 
         implicitWidth: root.panelWidth
-        implicitHeight: UiState.settingsOpen ? 620 : (musicCard.visible ? musicCard.height + root.panelPadding : 0) + titleRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4
-
-        MusicCard {
-            id: musicCard
-
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: root.panelPadding
-        }
+        implicitHeight: UiState.settingsOpen || UiState.displaysOpen ? 620 : headerRow.height + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
 
         Item {
-            id: titleRow
+            id: headerRow
 
-            anchors.top: musicCard.visible ? musicCard.bottom : parent.top
+            anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding
             anchors.rightMargin: root.panelPadding
             anchors.topMargin: root.panelPadding
 
-            height: 32
+            height: 28
 
-            Text {
+            ActionButton {
+                id: settingsButton
+
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Notifications"
+
+                compact: true
+                glyph: Glyphs.gear
+                tooltip: "System settings"
+                onTriggered: UiState.settingsOpen = true
+            }
+
+            Text {
+                anchors.left: settingsButton.right
+                anchors.right: parent.right
+                anchors.leftMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+
+                text: "System settings"
                 color: Theme.textSecondary
                 font.family: Theme.sansFamily
                 font.pixelSize: Theme.fontSize
+                elide: Text.ElideRight
             }
+        }
+
+        Item {
+            id: actionRow
+
+            anchors.top: headerRow.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: root.panelPadding
+            anchors.rightMargin: root.panelPadding
+            anchors.topMargin: 10
+
+            height: 28
 
             Row {
-                anchors.right: parent.right
+                anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 6
 
-                Rectangle {
-                    width: 32
-                    height: 28
-                    radius: Theme.radius
-                    color: gearMouse.containsPress ? Theme.fillPressed : gearMouse.containsMouse ? Theme.fillHover : Theme.fillTrack
-
-                    IconText {
-                        anchors.centerIn: parent
-                        fillBarHeight: false
-                        text: Glyphs.gear
-                        font.pixelSize: Theme.fontSizeSmall
-                    }
-
-                    MouseArea {
-                        id: gearMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: UiState.settingsOpen = true
-                    }
+                // Do not disturb reads as something you do to the list, so it
+                // sits with Clear rather than in the row of system actions.
+                ActionButton {
+                    compact: true
+                    glyph: Notifications.doNotDisturb ? Glyphs.bellOff : Glyphs.bell
+                    tooltip: Notifications.doNotDisturb ? "Do not disturb is on" : "Do not disturb"
+                    engaged: Notifications.doNotDisturb
+                    onTriggered: Notifications.doNotDisturb = !Notifications.doNotDisturb
                 }
 
                 Rectangle {
@@ -171,7 +288,7 @@ BarPopup {
         Item {
             id: listArea
 
-            anchors.top: titleRow.bottom
+            anchors.top: actionRow.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding
@@ -254,14 +371,7 @@ BarPopup {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.leftMargin: 14
                 anchors.rightMargin: 14
-                spacing: (width - 44 * 5) / 4
-
-                ActionButton {
-                    glyph: Notifications.doNotDisturb ? Glyphs.bellOff : Glyphs.bell
-                    tooltip: Notifications.doNotDisturb ? "Do not disturb is on" : "Do not disturb"
-                    engaged: Notifications.doNotDisturb
-                    onTriggered: Notifications.doNotDisturb = !Notifications.doNotDisturb
-                }
+                spacing: (width - 44 * 4) / 3
 
                 ActionButton {
                     glyph: Glyphs.lock
@@ -318,7 +428,20 @@ BarPopup {
                 const free = content.width - actionTooltip.width - root.panelPadding;
                 return Math.round(Math.min(Math.max(centre - actionTooltip.width / 2, root.panelPadding), free));
             }
-            y: buttonsCard.y - actionTooltip.height - 8
+
+            // Follows whichever button is hovered rather than sitting over the
+            // bottom row: the gear and the do not disturb bell are up in the
+            // header now, where there is nothing above them to sit in, so the
+            // label drops below a button that has no room over it.
+            y: {
+                if (!actionTooltip.anchorButton)
+                    return 0;
+
+                const button = actionTooltip.anchorButton;
+                const top = button.mapToItem(content, 0, 0).y;
+                const above = top - actionTooltip.height - 8;
+                return Math.round(above >= 0 ? above : top + button.height + 8);
+            }
 
             visible: actionTooltip.shown || tooltipSurface.opacity > 0.01
 
@@ -340,6 +463,15 @@ BarPopup {
             }
 
             Behavior on x {
+                enabled: actionTooltip.shown
+                NumberAnimation {
+                    duration: Theme.durationFast
+                    easing.type: Easing.Bezier
+                    easing.bezierCurve: Theme.easingCurve
+                }
+            }
+
+            Behavior on y {
                 enabled: actionTooltip.shown
                 NumberAnimation {
                     duration: Theme.durationFast
@@ -388,89 +520,27 @@ BarPopup {
             }
         }
 
-        Rectangle {
-            id: settingsOverlay
+        Sheet {
+            title: "System settings"
 
-            anchors.fill: parent
-            color: Theme.settingsBackground
-            radius: Theme.cardRadius
+            // Only one sheet is on screen: opening the display manager fades
+            // this one out under it rather than leaving both to render.
+            open: UiState.settingsOpen && !UiState.displaysOpen
+            onDismissed: UiState.settingsOpen = false
 
-            opacity: UiState.settingsOpen ? 1 : 0
-            visible: opacity > 0.01
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.durationBase
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Theme.easingCurve
-                }
+            SettingsPanel {
+                width: parent.width
             }
+        }
 
-            Item {
-                id: settingsHeader
+        Sheet {
+            title: "Display manager"
 
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: root.panelPadding
-                height: 30
+            open: UiState.displaysOpen
+            onDismissed: UiState.displaysOpen = false
 
-                Rectangle {
-                    id: backButton
-
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    width: 32
-                    height: 28
-                    radius: Theme.radius
-                    color: backMouse.containsPress ? Theme.fillPressed : backMouse.containsMouse ? Theme.fillHover : Theme.fillTrack
-
-                    IconText {
-                        anchors.centerIn: parent
-                        fillBarHeight: false
-                        text: Glyphs.angleLeft
-                        font.pixelSize: Theme.fontSizeSmall
-                    }
-
-                    MouseArea {
-                        id: backMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: UiState.settingsOpen = false
-                    }
-                }
-
-                Text {
-                    anchors.left: backButton.right
-                    anchors.leftMargin: 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: "Bar settings"
-                    color: Theme.textSecondary
-                    font.family: Theme.sansFamily
-                    font.pixelSize: Theme.fontSize
-                }
-            }
-
-            Flickable {
-                anchors.top: settingsHeader.bottom
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: root.panelPadding
-                anchors.rightMargin: root.panelPadding
-                anchors.topMargin: 10
-                anchors.bottomMargin: root.panelPadding
-
-                clip: true
-                contentWidth: width
-                contentHeight: settingsPanel.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
-
-                SettingsPanel {
-                    id: settingsPanel
-                    width: parent.width
-                }
+            DisplayManager {
+                width: parent.width
             }
         }
     }

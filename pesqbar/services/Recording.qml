@@ -1,0 +1,89 @@
+pragma Singleton
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+
+// Whether the screen is being recorded, the way macOS reports it: something is
+// capturing, and it has been for this long.
+//
+// gpu-screen-recorder is one process either way, so the flags are what separate
+// a recording from a replay buffer. A replay buffer is started with -r and then
+// left running all day without writing anything until it is asked to; lighting
+// the indicator for that would mean lighting it permanently, which is the one
+// thing an indicator like this must not do.
+Singleton {
+    id: root
+
+    readonly property int interval: 2500
+
+    property bool active: false
+    property int elapsed: 0
+
+    readonly property string elapsedLabel: {
+        const total = root.elapsed;
+        const seconds = total % 60;
+        const minutes = Math.floor(total / 60) % 60;
+        const hours = Math.floor(total / 3600);
+
+        const padded = value => value < 10 ? "0" + value : String(value);
+        return hours > 0 ? hours + ":" + padded(minutes) + ":" + padded(seconds) : minutes + ":" + padded(seconds);
+    }
+
+    // pgrep matches /proc/<pid>/comm, which the kernel truncates to 15
+    // characters, and gpu-screen-recorder is 19 long: -x could never match it
+    // and this indicator never lit up. -f matches the whole command line
+    // instead, which casts wider than it should, so argv[0] is what actually
+    // decides. That also throws out this very script, whose own command line
+    // has the name in it.
+    //
+    // grep -z reads the NUL separated arguments of a cmdline as records, so -x
+    // matches an argument that is exactly -r rather than one that contains it.
+    readonly property string script: `command -v pgrep >/dev/null 2>&1 || exit 127
+for pid in $(pgrep -f gpu-screen-recorder 2>/dev/null); do
+    first=$(tr '\\000' '\\n' < "/proc/$pid/cmdline" 2>/dev/null | head -n 1)
+    case "$first" in
+        */gpu-screen-recorder|gpu-screen-recorder) ;;
+        *) continue ;;
+    esac
+    grep -qzx -- "-r" "/proc/$pid/cmdline" 2>/dev/null && continue
+    ps -o etimes= -p "$pid" 2>/dev/null | tr -d " "
+    exit 0
+done
+exit 0`
+
+    Process {
+        id: probe
+
+        command: ["sh", "-c", root.script, "pesqbar-recording"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const value = this.text.trim();
+                const seconds = parseInt(value, 10);
+
+                if (value === "" || isNaN(seconds)) {
+                    root.active = false;
+                    root.elapsed = 0;
+                    return;
+                }
+
+                root.active = true;
+                root.elapsed = seconds;
+            }
+        }
+    }
+
+    // Runs on the tick rather than counting locally, so the elapsed time is the
+    // recorder's own and survives the shell being restarted mid recording.
+    Timer {
+        interval: root.interval
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (!probe.running)
+                probe.running = true;
+        }
+    }
+}

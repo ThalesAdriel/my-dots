@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import Quickshell
 import "root:/config"
 import "root:/components"
@@ -9,33 +8,21 @@ import "root:/components"
 Item {
     id: root
 
-    property real morph: Settings.calendarYearView ? 1 : 0
     property int offset: 0
-    property int shownOffset: 0
 
-    readonly property bool yearView: root.morph >= 0.5
-
-    // Blur peaks in the middle of a transition and is gone at either end, so the
-    // calendar defocuses while it changes shape and comes back sharp. Both the
-    // month/year morph and the fade between offsets feed it.
-    readonly property real transitionBlur: Math.max(1 - Math.abs(root.morph * 2 - 1), 1 - gridHolder.opacity)
+    readonly property bool yearView: Settings.calendarYearView
 
     readonly property int padding: 16
     readonly property int columnGap: 14
     readonly property int rowGap: 16
-    readonly property int slideDistance: 70
 
     readonly property real monthBodyWidth: 36 * 7 + 34
     readonly property real monthBodyHeight: 30 * 7
     readonly property real yearBodyWidth: (17 * 7 + 26) * 3 + root.columnGap * 2
     readonly property real yearBodyHeight: (18 + 15 * 7) * 4 + root.rowGap * 3
 
-    // The body jumps to its new size the moment the view is switched rather than
-    // growing with the morph. Interpolating it resized the popup window on every
-    // frame of the animation, and a Wayland popup that is resized and
-    // repositioned sixty times a second is where most of the flicker came from.
-    readonly property real bodyWidth: Settings.calendarYearView ? root.yearBodyWidth : root.monthBodyWidth
-    readonly property real bodyHeight: Settings.calendarYearView ? root.yearBodyHeight : root.monthBodyHeight
+    readonly property real bodyWidth: root.yearView ? root.yearBodyWidth : root.monthBodyWidth
+    readonly property real bodyHeight: root.yearView ? root.yearBodyHeight : root.monthBodyHeight
 
     // Pulled out as plain numbers so the whole calendar does not rebuild every
     // time the clock ticks: these only change when the day actually changes.
@@ -45,8 +32,8 @@ Item {
 
     readonly property date anchorDate: {
         if (root.yearView)
-            return new Date(root.todayYear + root.shownOffset, 0, 1);
-        return new Date(root.todayYear, root.todayMonth + root.shownOffset, 1);
+            return new Date(root.todayYear + root.offset, 0, 1);
+        return new Date(root.todayYear, root.todayMonth + root.offset, 1);
     }
 
     readonly property var weekdayNames: {
@@ -75,9 +62,6 @@ Item {
     // An offset counts months in month view and years in year view, so it has to
     // go back to today whenever the view changes or the calendar is reopened.
     function reset(): void {
-        offsetSwap.stop();
-        gridHolder.opacity = 1;
-        root.shownOffset = 0;
         root.offset = 0;
     }
 
@@ -89,22 +73,11 @@ Item {
     implicitWidth: root.bodyWidth + root.padding * 2
     implicitHeight: header.height + root.bodyHeight + root.padding * 3
 
-    // Restarting the swap on every notch meant a fast scroll never reached the
-    // step that puts the new month on screen, so the calendar just sat there
-    // faded out. Let the running swap finish instead: it picks up the newest
-    // offset when it gets there, and runs again if it fell behind.
-    onOffsetChanged: {
-        if (root.offset !== root.shownOffset && !offsetSwap.running)
-            offsetSwap.start();
-    }
-
-    Behavior on morph {
-        NumberAnimation {
-            duration: Theme.durationSlow
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easingCurve
-        }
-    }
+    // Nothing here animates. Stepping a month redraws the grid on the spot and
+    // switching views swaps one layout for the other, so a fast scroll lands on
+    // the month it stopped at instead of chasing a cross fade. The blur, the
+    // slide and the staged opacity swap that used to cover both are gone with
+    // them, and so is the render layer they needed.
 
     SystemClock {
         id: clock
@@ -320,99 +293,46 @@ Item {
         height: root.bodyHeight
         clip: true
 
-        Item {
-            id: gridHolder
+        MonthBlock {
+            id: monthLayout
 
-            anchors.fill: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
 
-            // Only while something is moving: a live layer costs a texture and
-            // a render pass, and the calendar is sharp the rest of the time.
-            layer.enabled: root.transitionBlur > 0.01
-            layer.smooth: true
-            layer.effect: MultiEffect {
-                blurEnabled: true
-                blur: root.transitionBlur
-                blurMax: 24
-            }
+            cellWidth: 36
+            rowHeight: 30
+            weekWidth: 34
+            titleHeight: 0
+            dayFontSize: 12
 
-            MonthBlock {
-                id: monthLayout
+            year: root.anchorDate.getFullYear()
+            monthIndex: root.anchorDate.getMonth()
 
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenterOffset: -root.morph * root.slideDistance
+            visible: !root.yearView
+        }
 
-                cellWidth: 36
-                rowHeight: 30
-                weekWidth: 34
-                titleHeight: 0
-                dayFontSize: 12
+        Grid {
+            id: yearLayout
 
-                year: root.anchorDate.getFullYear()
-                monthIndex: root.anchorDate.getMonth()
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
 
-                opacity: Math.max(0, 1 - root.morph * 1.8)
-                visible: opacity > 0.01
-            }
+            columns: 3
+            columnSpacing: root.columnGap
+            rowSpacing: root.rowGap
 
-            Grid {
-                id: yearLayout
+            visible: root.yearView
 
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenterOffset: (1 - root.morph) * root.slideDistance
+            Repeater {
+                model: 12
 
-                columns: 3
-                columnSpacing: root.columnGap
-                rowSpacing: root.rowGap
+                delegate: MonthBlock {
+                    required property int index
 
-                opacity: Math.max(0, root.morph * 1.8 - 0.8)
-                visible: opacity > 0.01
-
-                Repeater {
-                    model: 12
-
-                    delegate: MonthBlock {
-                        required property int index
-
-                        year: root.anchorDate.getFullYear()
-                        monthIndex: index
-                    }
+                    year: root.anchorDate.getFullYear()
+                    monthIndex: index
                 }
             }
-        }
-    }
-
-    SequentialAnimation {
-        id: offsetSwap
-
-        NumberAnimation {
-            target: gridHolder
-            property: "opacity"
-            to: 0
-            duration: Theme.durationFast
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easingCurve
-        }
-
-        PropertyAction {
-            target: root
-            property: "shownOffset"
-            value: root.offset
-        }
-
-        NumberAnimation {
-            target: gridHolder
-            property: "opacity"
-            to: 1
-            duration: Theme.durationBase
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easingCurve
-        }
-
-        onFinished: {
-            if (root.offset !== root.shownOffset)
-                offsetSwap.start();
         }
     }
 

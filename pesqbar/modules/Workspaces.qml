@@ -36,6 +36,15 @@ Item {
     }
 
     function focusWorkspace(target: string): void {
+        // Pasted into a Lua expression that Hyprland evaluates, so a target that
+        // is not a workspace id or a relative step has no business going in.
+        // Nothing reaches this from outside the shell today; the check is here so
+        // that stays true if something ever does.
+        if (!/^(?:\d+|r[-+]\d+)$/.test(target)) {
+            console.warn("pesqBar: refused a workspace target that is not an id or a step:", target);
+            return;
+        }
+
         Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = '" + target + "' })"]);
     }
 

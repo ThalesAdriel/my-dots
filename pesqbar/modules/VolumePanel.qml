@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell.Services.Pipewire
 import "root:/config"
 import "root:/components"
+import "root:/services"
 
 Item {
     id: root
@@ -24,28 +25,6 @@ Item {
         return Pipewire.nodes.values.filter(node => node && node.isSink && !node.isStream && node.audio !== null);
     }
 
-    function describe(node: var): string {
-        const candidates = [];
-        const props = node.properties;
-
-        if (props) {
-            candidates.push(props["application.name"]);
-            candidates.push(props["media.name"]);
-            candidates.push(props["application.process.binary"]);
-            candidates.push(props["node.description"]);
-            candidates.push(props["node.name"]);
-        }
-
-        candidates.push(node.description);
-        candidates.push(node.nickname);
-        candidates.push(node.name);
-
-        for (const candidate of candidates) {
-            if (typeof candidate === "string" && candidate.length > 0)
-                return candidate;
-        }
-        return "Unknown";
-    }
 
     implicitWidth: 320
     implicitHeight: content.implicitHeight + root.padding * 2
@@ -66,6 +45,13 @@ Item {
         anchors.right: parent.right
         anchors.margins: root.padding
         spacing: 12
+
+        // The player sits with the sound controls rather than with the
+        // notifications: it is the same thing the sliders below it are pointed
+        // at. It hides itself when nothing is playing and the panel shrinks.
+        MusicCard {
+            width: content.width
+        }
 
         Text {
             text: "Sound"
@@ -254,7 +240,7 @@ Item {
                     anchors.rightMargin: 6
                     anchors.verticalCenter: parent.verticalCenter
 
-                    text: root.describe(deviceRow.modelData)
+                    text: Audio.describe(deviceRow.modelData)
                     color: deviceRow.current ? Theme.textPrimary : Theme.textSecondary
                     font.family: Theme.sansFamily
                     font.pixelSize: Theme.fontSizeSmall

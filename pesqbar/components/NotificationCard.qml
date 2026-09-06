@@ -273,7 +273,7 @@ Rectangle {
             maximumLineCount: root.low ? 3 : 6
             wrapMode: Text.Wrap
 
-            onLinkActivated: link => Qt.openUrlExternally(link)
+            onLinkActivated: link => Notifications.openLink(link)
 
             MouseArea {
                 anchors.fill: parent

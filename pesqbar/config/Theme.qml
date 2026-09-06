@@ -13,7 +13,6 @@ Singleton {
     }
 
     readonly property int hoverRadius: Settings.hoverRadius
-    readonly property int borderWidth: 1
     readonly property int moduleSpacing: Settings.moduleSpacing
     readonly property int groupMargin: 8
 
@@ -39,7 +38,6 @@ Singleton {
     readonly property color popupBorder: Qt.rgba(1, 1, 1, 0.18)
     readonly property int panelBorderWidth: Settings.showPanelBorders ? 1 : 0
 
-    readonly property color controlBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, Settings.panelOpacity)
     readonly property color cardTint: Qt.lighter(surfaceBase, 1.55)
     readonly property color cardBackground: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, Math.min(Settings.panelOpacity + 0.06, 1))
 
@@ -56,13 +54,15 @@ Singleton {
     readonly property string panelLayerNamespace: Settings.panelBlur ? "pesqBar-blur" : "pesqBar"
     readonly property color cardBorder: Qt.rgba(1, 1, 1, 0.18)
     readonly property int cardRadius: Settings.panelRadius
-    readonly property int cardPadding: 18
+
+    // Enumerating every installed font is not cheap, and there are seven lists
+    // below asking the same question. Asked once here instead of once each.
+    readonly property var installedFamilies: Qt.fontFamilies()
 
     function resolveFamily(candidates: var): string {
-        const available = Qt.fontFamilies();
-        for (let index = 0; index < candidates.length; index++) {
-            if (available.indexOf(candidates[index]) !== -1)
-                return candidates[index];
+        for (const candidate of candidates) {
+            if (installedFamilies.indexOf(candidate) !== -1)
+                return candidate;
         }
         return "";
     }
@@ -71,6 +71,10 @@ Singleton {
     readonly property string monoFamily: resolveFamily(["JetBrainsMono Nerd Font", "JetBrains Mono", "Ubuntu Mono", "Noto Sans Mono", "DejaVu Sans Mono"])
     readonly property string iconFamily: resolveFamily(["Font Awesome 7 Free Solid", "Font Awesome 6 Free Solid", "Font Awesome 7 Free", "Font Awesome 6 Free", "Font Awesome 5 Free", "Symbols Nerd Font", "JetBrainsMono Nerd Font"])
     readonly property string nerdFamily: resolveFamily(["Symbols Nerd Font", "JetBrainsMono Nerd Font", "NotoSans Nerd Font"])
+
+    // Font Awesome Free splits Brands off into its own family, and the bluetooth
+    // glyph only exists there. Nothing else in the shell needs it.
+    readonly property string brandFamily: resolveFamily(["Font Awesome 7 Brands Regular", "Font Awesome 7 Brands", "Font Awesome 6 Brands Regular", "Font Awesome 6 Brands", "Font Awesome 5 Brands Regular", "Font Awesome 5 Brands", "Symbols Nerd Font"])
     readonly property string glyphFamily: resolveFamily(["Noto Sans CJK JP", "Noto Sans CJK SC", "Source Han Sans", "Noto Serif CJK JP"])
 
     readonly property int fontSize: 13
