@@ -42,6 +42,7 @@ PopupWindow {
         Text {
             id: label
             anchors.centerIn: parent
+            textFormat: Text.PlainText
             text: root.text
             color: Theme.textPrimary
             font.family: Theme.sansFamily

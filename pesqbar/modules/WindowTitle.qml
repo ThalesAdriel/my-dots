@@ -53,6 +53,7 @@ Item {
         anchors.rightMargin: Theme.groupMargin
 
         visible: root.resolved
+        textFormat: Text.PlainText
         text: root.displayText
         color: Theme.textPrimary
         font.family: Theme.sansFamily

@@ -271,6 +271,7 @@ Item {
                         anchors.margins: 4
                         anchors.right: parent.right
 
+                        textFormat: Text.PlainText
                         text: (plate.index + 1) + "  " + plate.modelData.name
                         color: plate.chosen ? Theme.textPrimary : Theme.textSecondary
                         font.family: Theme.monoFamily
@@ -325,6 +326,7 @@ Item {
         Text {
             width: parent.width
             visible: root.selectedMonitor !== null
+            textFormat: Text.PlainText
             text: root.selectedMonitor ? root.selectedMonitor.description : ""
             color: Theme.textPrimary
             font.family: Theme.sansFamily

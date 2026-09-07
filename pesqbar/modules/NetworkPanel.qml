@@ -227,6 +227,7 @@ Item {
                 anchors.top: parent.top
                 anchors.topMargin: 12
 
+                textFormat: Text.PlainText
                 text: Network.wired ? Network.ethernetDevice.connection : Network.ssid
                 color: Theme.textPrimary
                 font.family: Theme.sansFamily
@@ -331,6 +332,7 @@ Item {
                         anchors.rightMargin: 8
                         anchors.verticalCenter: parent.verticalCenter
 
+                        textFormat: Text.PlainText
                         text: pointRow.modelData.ssid + (pointRow.saved ? "  ·  saved" : pointRow.modelData.enterprise ? "  ·  enterprise" : "")
                         color: pointRow.modelData.active ? Theme.textPrimary : Theme.textSecondary
                         font.family: Theme.sansFamily

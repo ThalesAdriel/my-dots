@@ -24,7 +24,7 @@ Rectangle {
     readonly property bool critical: root.urgency === NotificationUrgency.Critical
     readonly property bool low: root.urgency === NotificationUrgency.Low
 
-    readonly property string summary: root.valid ? root.notification.summary : ""
+    readonly property string summary: root.valid ? Notifications.clampText(root.notification.summary) : ""
     readonly property string body: root.valid ? Notifications.formatBody(root.notification.body) : ""
     readonly property bool hasBody: root.body !== ""
 
@@ -98,6 +98,7 @@ Rectangle {
             id: chipLabel
 
             anchors.centerIn: parent
+            textFormat: Text.PlainText
             text: chip.label
             color: Theme.textPrimary
             font.family: Theme.sansFamily
@@ -247,6 +248,7 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.leftMargin: root.critical ? 14 : 0
 
+                textFormat: Text.PlainText
                 text: root.summary
                 color: root.summaryColor
                 font.family: Theme.sansFamily

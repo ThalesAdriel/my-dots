@@ -25,6 +25,13 @@ Singleton {
     // send a body, so this is not a trusted string.
     readonly property var linkSchemes: ["http", "https", "mailto"]
 
+    // A body arrives over the session bus, where one message may be megabytes
+    // long, and the markup parser walks the whole thing before maximumLineCount
+    // ever gets a say. Any process that can send a notification could hang the
+    // bar with a single send, so the text is cut to more than a card could show
+    // and less than a parser will choke on.
+    readonly property int maximumTextLength: 4096
+
     readonly property int lowTimeout: 5000
     readonly property int normalTimeout: 10000
     readonly property int minimumTimeout: 1500
@@ -277,6 +284,15 @@ Singleton {
         Quickshell.execDetached(["sh", "-c", 'exec "$0" --filename "$1" --output-filename "$2"', root.screenshotEditor, path, output]);
     }
 
+    // The cut may not land inside a tag: half of one would leave the escaping
+    // below with an opening bracket it never sees the end of.
+    function clampText(text: string): string {
+        const value = String(text);
+        if (value.length <= root.maximumTextLength)
+            return value;
+        return value.slice(0, root.maximumTextLength).replace(/<[^>]*$/, "");
+    }
+
     // A body is allowed to carry links, so every <a> is rewritten to one that
     // either points somewhere openLink would agree to open or points nowhere at
     // all. A refused link keeps its text but loses the anchor, so it stops
@@ -309,7 +325,7 @@ Singleton {
         if (!text)
             return "";
 
-        return root.sanitizeAnchors(text.replace(/<img[^>]*>/gi, "")).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;").replace(/<(?!\/?(?:b|i|u|a|br)[\s\/>])/g, "&lt;");
+        return root.sanitizeAnchors(root.clampText(text).replace(/<img[^>]*>/gi, "")).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;").replace(/<(?!\/?(?:b|i|u|a|br)[\s\/>])/g, "&lt;");
     }
 
     SystemClock {

@@ -116,6 +116,7 @@ Card {
         anchors.rightMargin: 14
         anchors.topMargin: 2
 
+        textFormat: Text.PlainText
         text: {
             const player = root.player;
             if (player === null || player.trackTitle === "")
@@ -137,6 +138,7 @@ Card {
         anchors.top: titleLabel.bottom
         anchors.topMargin: 3
 
+        textFormat: Text.PlainText
         text: {
             const player = root.player;
             if (player === null)

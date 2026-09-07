@@ -139,6 +139,7 @@ Item {
                         anchors.leftMargin: 6
                         anchors.rightMargin: 8
 
+                        textFormat: Text.PlainText
                         text: Audio.describe(streamRow.modelData)
                         color: Theme.textSecondary
                         font.family: Theme.sansFamily

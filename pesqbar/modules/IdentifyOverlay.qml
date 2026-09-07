@@ -65,6 +65,7 @@ PanelWindow {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 26
 
+            textFormat: Text.PlainText
             text: root.modelData.name
             color: Theme.textSecondary
             font.family: Theme.monoFamily

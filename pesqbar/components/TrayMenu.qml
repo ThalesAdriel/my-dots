@@ -91,6 +91,7 @@ BarPopup {
                             anchors.verticalCenter: parent.verticalCenter
 
                             visible: !entryItem.modelData.isSeparator
+                            textFormat: Text.PlainText
                             text: entryItem.modelData.text
                             color: entryItem.modelData.enabled ? Theme.textPrimary : Theme.textMuted
                             font.family: Theme.sansFamily
@@ -176,6 +177,7 @@ BarPopup {
                                     anchors.verticalCenter: parent.verticalCenter
 
                                     visible: !subEntry.modelData.isSeparator
+                                    textFormat: Text.PlainText
                                     text: subEntry.modelData.text
                                     color: subEntry.modelData.enabled ? Theme.textSecondary : Theme.textMuted
                                     font.family: Theme.sansFamily

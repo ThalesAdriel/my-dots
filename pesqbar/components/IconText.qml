@@ -6,6 +6,8 @@ Text {
 
     property bool fillBarHeight: true
 
+    textFormat: Text.PlainText
+
     height: root.fillBarHeight ? Theme.barHeight : implicitHeight
     verticalAlignment: Text.AlignVCenter
     horizontalAlignment: Text.AlignHCenter

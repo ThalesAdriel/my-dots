@@ -126,6 +126,7 @@ Item {
                         anchors.rightMargin: 8
                         anchors.verticalCenter: parent.verticalCenter
 
+                        textFormat: Text.PlainText
                         text: deviceRow.modelData.name
                         color: deviceRow.modelData.connected ? Theme.textPrimary : Theme.textSecondary
                         font.family: Theme.sansFamily
