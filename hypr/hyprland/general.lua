@@ -1,5 +1,3 @@
--- MONITOR CONFIG
--- monitor=,preferred,auto,1,transform, 0
 hl.monitor({
 	output = "",
 	mode = "1920x1080@165.00Hz",
@@ -7,7 +5,6 @@ hl.monitor({
 	scale = "1",
 })
 
--- HDMI port: mirror display. To see device name, use `hyprctl monitors`
 hl.monitor({
 	output = "HDMI-A-1",
 	mode = "preferred",
@@ -22,14 +19,9 @@ hl.config({
 		gaps_workspaces = 50,
 
 		border_size = 0,
-		col = {
-			active_border = "rgba(0DB7D4FF)",
-			inactive_border = "rgba(31313600)",
-		},
 		resize_on_border = true,
-
 		no_focus_fallback = true,
-		allow_tearing = true, -- This just allows the `immediate` window rule to work
+		allow_tearing = true,
 
 		snap = {
 			enabled = true,
@@ -38,25 +30,25 @@ hl.config({
 
 	dwindle = {
 		preserve_split = true,
-		smart_split = false,
 		smart_resizing = false,
-		-- precise_mouse_move = true,
 	},
 
 	decoration = {
-		rounding_power = 4,
 		rounding = 4,
+		rounding_power = 4,
+
+		dim_inactive = true,
+		dim_strength = 0.025,
+		dim_special = 0.07,
 
 		blur = {
 			enabled = true,
-			xray = true,
-			special = false,
-			new_optimizations = true,
 			size = 14,
 			passes = 4,
 			brightness = 0.2,
-			noise = 0.01,
 			contrast = 1,
+			noise = 0.01,
+			xray = true,
 			popups = true,
 			popups_ignorealpha = 0.6,
 			input_methods = true,
@@ -65,16 +57,11 @@ hl.config({
 
 		shadow = {
 			enabled = true,
-			--ignore_window = true,
 			range = 30,
-			offset = { 0, 2 },
 			render_power = 4,
+			offset = { 0, 2 },
 			color = "rgba(00000010)",
 		},
-
-		dim_inactive = true,
-		dim_strength = 0.025,
-		dim_special = 0.07,
 	},
 
 	input = {
@@ -101,18 +88,11 @@ hl.config({
 	misc = {
 		disable_hyprland_logo = true,
 		disable_splash_rendering = true,
-		--vfr = 1,
-		vrr = 0,
 		mouse_move_enables_dpms = true,
 		key_press_enables_dpms = true,
-		animate_manual_resizes = false,
-		animate_mouse_windowdragging = false,
-		enable_swallow = false,
-		swallow_regex = "(foot|kitty|allacritty|Alacritty)",
-		--new_window_takes_over_fullscreen = 2,
 		allow_session_lock_restore = true,
 		session_lock_xray = true,
-		initial_workspace_tracking = false,
+		initial_workspace_tracking = 0,
 		focus_on_activate = true,
 	},
 
@@ -120,100 +100,26 @@ hl.config({
 		scroll_event_delay = 0,
 		hide_special_on_workspace_change = true,
 	},
-
-	cursor = {
-		zoom_factor = 1,
-		zoom_rigid = false,
-	},
 })
 
--- Curves
 hl.curve("expressiveFastSpatial", { type = "bezier", points = { { 0.42, 1.67 }, { 0.21, 0.90 } } })
-hl.curve("expressiveSlowSpatial", { type = "bezier", points = { { 0.39, 1.29 }, { 0.35, 0.98 } } })
-hl.curve("expressiveDefaultSpatial", { type = "bezier", points = { { 0.38, 1.21 }, { 0.22, 1.00 } } })
 hl.curve("emphasizedDecel", { type = "bezier", points = { { 0.05, 0.7 }, { 0.1, 1 } } })
 hl.curve("emphasizedAccel", { type = "bezier", points = { { 0.3, 0 }, { 0.8, 0.15 } } })
-hl.curve("standardDecel", { type = "bezier", points = { { 0, 0 }, { 0, 1 } } })
 hl.curve("menu_decel", { type = "bezier", points = { { 0.1, 1 }, { 0, 1 } } })
 hl.curve("menu_accel", { type = "bezier", points = { { 0.52, 0.03 }, { 0.72, 0.08 } } })
-hl.curve("easeOutQuint", { type = "bezier", points = { { 0.23, 1 }, { 0.32, 1 } } })
-hl.curve("easeInOutCubic", { type = "bezier", points = { { 0.65, 0.05 }, { 0.36, 1 } } })
-hl.curve("linear", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
-hl.curve("almostLinear", { type = "bezier", points = { { 0.5, 0.5 }, { 0.75, 1 } } })
-hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
-hl.curve("easy", { type = "spring", mass = 1, stiffness = 71.2633, dampening = 15.8273644 })
 
--- Animations
--- windows
-hl.animation({
-	leaf = "windowsIn",
-	enabled = true,
-	speed = 3,
-	bezier = "expressiveFastSpatial",
-	spring = "easy",
-	style = "popin 80%",
-})
-hl.animation({
-	leaf = "windowsOut",
-	enabled = true,
-	speed = 2,
-	bezier = "emphasizedDecel",
-	spring = "easy",
-	style = "popin 90%",
-})
-hl.animation({
-	leaf = "windowsMove",
-	enabled = true,
-	speed = 3,
-	bezier = "emphasizedDecel",
-	style = "slide",
-})
-hl.animation({
-	leaf = "border",
-	enabled = true,
-	speed = 10,
-	bezier = "emphasizedDecel",
-})
--- layers
-hl.animation({
-	leaf = "layersIn",
-	enabled = true,
-	speed = 2.7,
-	bezier = "emphasizedDecel",
-	style = "popin 93%",
-})
-hl.animation({
-	leaf = "layersOut",
-	enabled = true,
-	speed = 2.4,
-	bezier = "menu_accel",
-	style = "popin 94%",
-})
--- fade
+hl.animation({ leaf = "windowsIn", enabled = true, speed = 3, bezier = "expressiveFastSpatial", style = "popin 80%" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 2, bezier = "emphasizedDecel", style = "popin 90%" })
+hl.animation({ leaf = "windowsMove", enabled = true, speed = 3, bezier = "emphasizedDecel", style = "slide" })
+hl.animation({ leaf = "border", enabled = true, speed = 10, bezier = "emphasizedDecel" })
+
+hl.animation({ leaf = "layersIn", enabled = true, speed = 2.7, bezier = "emphasizedDecel", style = "popin 93%" })
+hl.animation({ leaf = "layersOut", enabled = true, speed = 2.4, bezier = "menu_accel", style = "popin 94%" })
 hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 0.5, bezier = "menu_decel" })
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 2.7, bezier = "menu_accel" })
--- workspaces
-hl.animation({
-	leaf = "workspaces",
-	enabled = true,
-	speed = 7,
-	bezier = "menu_decel",
-	style = "slide",
-	spring = "easy",
-})
-hl.animation({
-	leaf = "specialWorkspaceIn",
-	enabled = true,
-	speed = 2.8,
-	bezier = "emphasizedDecel",
-	style = "slidevert",
-})
-hl.animation({
-	leaf = "specialWorkspaceOut",
-	enabled = true,
-	speed = 1.2,
-	bezier = "emphasizedAccel",
-	style = "slidevert",
-})
--- popups
-hl.animation({ leaf = "fadePopups", enabled = false, speed = 0, bezier = "default" })
+
+hl.animation({ leaf = "workspaces", enabled = true, speed = 7, bezier = "menu_decel", style = "slide" })
+hl.animation({ leaf = "specialWorkspaceIn", enabled = true, speed = 2.8, bezier = "emphasizedDecel", style = "slidevert" })
+hl.animation({ leaf = "specialWorkspaceOut", enabled = true, speed = 1.2, bezier = "emphasizedAccel", style = "slidevert" })
+
+hl.animation({ leaf = "fadePopups", enabled = false })
