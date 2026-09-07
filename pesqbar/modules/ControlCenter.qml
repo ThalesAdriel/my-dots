@@ -20,8 +20,17 @@ BarPopup {
     // it is open.
     onDisplaysVisibleChanged: Displays.watching = root.displaysVisible
 
+    // The brightness row is left out entirely on a machine with no backlight,
+    // and the panel closes the gap rather than leaving an empty card behind.
+    readonly property int brightnessRowHeight: Brightness.available ? 28 : 0
+    readonly property int brightnessRowMargin: root.brightnessRowHeight > 0 ? 10 : 0
+
     onShownChanged: {
         UiState.controlCenterOpen = root.shown;
+
+        // brightnessctl is only worth re-reading while the slider that shows it
+        // is on screen and the brightness keys could be moving it underneath.
+        Brightness.watching = root.shown;
 
         // Hiding the panel does not send the pointer anywhere, so nothing would
         // clear this on its own and the tooltip would be waiting on reopen.
@@ -97,6 +106,11 @@ BarPopup {
         property string title: ""
         property bool open: false
         default property alias sheetContent: sheetHolder.data
+
+        // What the content is loaded against: true while the sheet is open and
+        // for as long as it is still fading out. Unloading on `open` alone
+        // would empty the sheet under the fade.
+        readonly property bool populated: sheet.open || sheet.opacity > 0.01
 
         signal dismissed
 
@@ -191,7 +205,7 @@ BarPopup {
         id: content
 
         implicitWidth: root.panelWidth
-        implicitHeight: UiState.settingsOpen || UiState.displaysOpen ? 620 : headerRow.height + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
+        implicitHeight: UiState.settingsOpen || UiState.displaysOpen ? 620 : headerRow.height + brightnessRow.height + root.brightnessRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
 
         Item {
             id: headerRow
@@ -231,10 +245,72 @@ BarPopup {
             }
         }
 
+        // The backlight, directly under System settings: it is something you
+        // reach for rather than read, so it sits at the top with the header
+        // rather than down among the notifications. A bare row rather than a
+        // Card: the header above it and the action row below are both drawn
+        // straight onto the panel, and a filled block around this one alone
+        // reads as a box that wandered in from somewhere else.
+        Item {
+            id: brightnessRow
+
+            anchors.top: headerRow.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: root.panelPadding
+            anchors.rightMargin: root.panelPadding
+            anchors.topMargin: root.brightnessRowMargin
+
+            visible: root.brightnessRowHeight > 0
+            height: root.brightnessRowHeight
+
+            // The same 32 wide slot the gear above and the bell below sit in,
+            // so the slider starts on the column the System settings label and
+            // the Clear button already share rather than ten pixels left of it.
+            IconText {
+                id: brightnessIcon
+
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+
+                fillBarHeight: false
+                width: 32
+                text: Glyphs.sun
+                color: Theme.textSecondary
+            }
+
+            LevelSlider {
+                anchors.left: brightnessIcon.right
+                anchors.leftMargin: 10
+                anchors.right: brightnessValue.left
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+
+                maximum: 100
+                value: Brightness.level
+
+                onMoved: newValue => Brightness.set(newValue)
+            }
+
+            Text {
+                id: brightnessValue
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: 38
+                horizontalAlignment: Text.AlignRight
+                text: Brightness.level + "%"
+                color: Theme.textSecondary
+                font.family: Theme.monoFamily
+                font.pixelSize: Theme.fontSizeSmall
+            }
+        }
+
         Item {
             id: actionRow
 
-            anchors.top: headerRow.bottom
+            anchors.top: brightnessRow.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding
@@ -246,7 +322,10 @@ BarPopup {
             Row {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
+
+                // The same gap the label and the slider above keep from their
+                // own icons, so all three rows start their content on one column.
+                spacing: 10
 
                 // Do not disturb reads as something you do to the list, so it
                 // sits with Clear rather than in the row of system actions.
@@ -520,7 +599,13 @@ BarPopup {
             }
         }
 
+        // Both sheets are built on first use rather than at startup. Between
+        // them they are the two largest trees in the shell, they are two clicks
+        // deep, and there is one of each per output: nothing here is worth
+        // constructing for a session that never opens settings.
         Sheet {
+            id: settingsSheet
+
             title: "System settings"
 
             // Only one sheet is on screen: opening the display manager fades
@@ -528,19 +613,27 @@ BarPopup {
             open: UiState.settingsOpen && !UiState.displaysOpen
             onDismissed: UiState.settingsOpen = false
 
-            SettingsPanel {
+            Loader {
                 width: parent.width
+                active: settingsSheet.populated
+
+                sourceComponent: SettingsPanel {}
             }
         }
 
         Sheet {
+            id: displaysSheet
+
             title: "Display manager"
 
             open: UiState.displaysOpen
             onDismissed: UiState.displaysOpen = false
 
-            DisplayManager {
+            Loader {
                 width: parent.width
+                active: displaysSheet.populated
+
+                sourceComponent: DisplayManager {}
             }
         }
     }

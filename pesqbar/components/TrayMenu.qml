@@ -18,9 +18,14 @@ BarPopup {
             column.expandedIndex = -1;
     }
 
+    // Opening a DBusMenu is a conversation with the application that owns it,
+    // and it stays open for as long as the opener holds it. Every tray icon has
+    // one of these, so binding the handle straight through meant the shell
+    // asking every tray application for its whole menu at startup and holding
+    // all of them open for the session, for menus nobody had clicked yet.
     QsMenuOpener {
         id: opener
-        menu: root.menuHandle
+        menu: root.rendered ? root.menuHandle : null
     }
 
     Item {
@@ -55,9 +60,12 @@ BarPopup {
                     implicitWidth: Math.max(rowLabel.implicitWidth + 46, subColumn.implicitWidth)
                     height: entryRow.height + (entryItem.expanded ? subColumn.height : 0)
 
+                    // Same again one level down: a submenu is opened when it is
+                    // expanded, not when its parent is. hasChildren comes off
+                    // the entry itself, so the arrow still knows to be there.
                     QsMenuOpener {
                         id: subOpener
-                        menu: entryItem.modelData.hasChildren ? entryItem.modelData : null
+                        menu: entryItem.expanded && entryItem.modelData.hasChildren ? entryItem.modelData : null
                     }
 
                     Rectangle {

@@ -16,6 +16,14 @@ PanelWindow {
     // the window in front of it.
     WlrLayershell.keyboardFocus: UiState.keyboardCapture ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
+    // A layer surface is handed its namespace when the compositor creates it and
+    // the protocol has no request to rename one, so the name Hyprland matches its
+    // blur rules against is frozen for the life of the window. Flipping a blur
+    // switch has to throw the window away and ask for it again. Toasts and the
+    // identify overlay come and go on their own and pick the new name up by
+    // themselves; the bar is up from login to logout and never would.
+    visible: !namespaceReload.running
+
     required property var modelData
 
     // The fillets hang below the bar, so the window is taller than the bar
@@ -37,6 +45,20 @@ PanelWindow {
     // Only the bar itself takes input. The fillets sit over the desktop.
     mask: Region {
         item: barArea
+    }
+
+    Timer {
+        id: namespaceReload
+
+        interval: 1
+    }
+
+    Connections {
+        target: Theme
+
+        function onBarLayerNamespaceChanged(): void {
+            namespaceReload.restart();
+        }
     }
 
     Item {
@@ -105,7 +127,10 @@ PanelWindow {
             TrayDrawer {
             }
 
-            RecordingIndicator {
+            Loader {
+                active: Settings.showRecording && Recording.active
+                visible: active
+                source: "root:/modules/RecordingIndicator.qml"
             }
 
             IdleToggle {
@@ -117,10 +142,11 @@ PanelWindow {
             NotificationBell {
             }
 
-            // The three optional modules, off until they are switched on in bar
-            // settings. Through a Loader rather than a visible binding: nothing
-            // is compiled or polled while a module is off, and a Quickshell
-            // missing UPower costs the battery module alone rather than the bar.
+            // The remaining optional modules, off until they are switched on in
+            // bar settings. Through a Loader rather than a visible binding:
+            // nothing is compiled or polled while a module is off, and a
+            // Quickshell missing UPower costs the battery module alone rather
+            // than the bar.
             Loader {
                 active: Settings.showNetwork
                 visible: active

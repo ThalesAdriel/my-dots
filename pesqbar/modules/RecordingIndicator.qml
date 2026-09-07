@@ -10,8 +10,6 @@ import "root:/services"
 BarButton {
     id: root
 
-    visible: Recording.active
-
     IconStack {
         IconText {
             id: dot
@@ -21,10 +19,9 @@ BarButton {
             color: Theme.urgent
             font.pixelSize: Theme.iconSize - 2
 
-            // Slow enough to read as a state rather than as an alarm, and only
-            // running while the dot is on screen.
+            // Slow enough to read as a state rather than as an alarm.
             SequentialAnimation on opacity {
-                running: Recording.active
+                running: true
                 loops: Animation.Infinite
                 alwaysRunToEnd: false
 
@@ -46,7 +43,7 @@ BarButton {
 
     BarTooltip {
         anchorItem: root
-        shown: root.containsMouse && Recording.active
+        shown: root.containsMouse
         text: "Recording the screen, " + Recording.elapsedLabel
     }
 }

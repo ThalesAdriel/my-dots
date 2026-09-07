@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
+import "root:/config"
 import "root:/services"
 
 Singleton {
@@ -32,8 +33,10 @@ Singleton {
     // and less than a parser will choke on.
     readonly property int maximumTextLength: 4096
 
-    readonly property int lowTimeout: 5000
-    readonly property int normalTimeout: 10000
+    // Low urgency is not worth as much of the screen's time as normal, so it
+    // keeps its half of whatever the setting says.
+    readonly property int normalTimeout: Math.max(Settings.notificationSeconds, 1) * 1000
+    readonly property int lowTimeout: Math.round(root.normalTimeout / 2)
     readonly property int minimumTimeout: 1500
     readonly property int maximumTimeout: 120000
 
@@ -189,6 +192,65 @@ Singleton {
         return notification ? root.localImage(notification.image) : "";
     }
 
+    // Nothing in the shell is drawn out of an icon theme: every icon on the bar
+    // is a Font Awesome glyph, and a machine that never installed a theme has
+    // nothing for a name like `audio-volume-high` to resolve to. The volume and
+    // brightness keybinds send exactly those names, and the placeholder square
+    // the icon provider hands back for one it cannot find was what turned up on
+    // the toast instead of a speaker. The names the spec settled on are drawn as
+    // glyphs here rather than looked up, so they render the same as the bar.
+    readonly property var iconGlyphs: ({
+        "audio-volume-muted": Glyphs.volumeOff,
+        "audio-volume-low": Glyphs.volumeLow,
+        "audio-volume-medium": Glyphs.volumeLow,
+        "audio-volume-high": Glyphs.volumeHigh,
+        "audio-input-microphone": Glyphs.microphone,
+        "microphone-sensitivity-muted": Glyphs.microphoneMuted,
+        "display-brightness": Glyphs.sun
+    })
+
+    // The name behind whatever a notification is pointing at, or "" for
+    // something that is a picture rather than a name. An app_icon reaches the
+    // card down two different roads: as the bare name the sender wrote, and
+    // already wrapped in the icon handle Quickshell resolved it to. The second
+    // one is what the volume keys came in on, and it is why matching on the
+    // name alone was not enough to keep the placeholder off the card.
+    function iconName(source: string): string {
+        if (!source)
+            return "";
+
+        const value = String(source);
+        const handle = "image://icon/";
+        if (value.startsWith(handle))
+            return value.slice(handle.length).split("?")[0];
+
+        // A path, inline image data, or any other handle: a real picture, and
+        // nothing a glyph should be standing in for.
+        if (value.startsWith("/") || value.startsWith("file://") || value.startsWith("image://"))
+            return "";
+
+        return value;
+    }
+
+    function iconGlyph(notification: var): string {
+        if (!notification)
+            return "";
+
+        for (const candidate of [notification.appIcon, notification.image]) {
+            const name = root.iconName(candidate);
+            if (name === "")
+                continue;
+
+            // Themes ship half of these under a -symbolic name as well, and
+            // the two are the same icon as far as a glyph is concerned.
+            const glyph = root.iconGlyphs[name.replace(/-symbolic$/, "")];
+            if (glyph !== undefined)
+                return glyph;
+        }
+
+        return "";
+    }
+
     function appIconSource(notification: var): string {
         if (!notification || notification.appIcon === "")
             return "";
@@ -229,7 +291,7 @@ Singleton {
         if (!notification)
             return false;
 
-        const haystack = (notification.appName + " " + notification.summary + " " + notification.desktopEntry).toLowerCase();
+        const haystack = (root.clampText(notification.appName) + " " + root.clampText(notification.summary) + " " + root.clampText(notification.desktopEntry)).toLowerCase();
         return root.screenshotWords.some(word => haystack.indexOf(word) !== -1);
     }
 
@@ -247,7 +309,7 @@ Singleton {
             if (!candidate)
                 continue;
 
-            const match = String(candidate).match(/(?:file:\/\/)?(\/[^\s"'<>]+\.(?:png|jpg|jpeg|webp))/i);
+            const match = root.clampText(candidate).match(/(?:file:\/\/)?(\/[^\s"'<>]+\.(?:png|jpg|jpeg|webp))/i);
             if (!match)
                 continue;
 

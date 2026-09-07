@@ -93,12 +93,16 @@ BarButton {
             Network.detailed = networkPopup.shown;
             if (networkPopup.shown)
                 Network.rescan();
-            else
-                panel.reset();
+            else if (panelLoader.item)
+                panelLoader.item.reset();
         }
 
-        NetworkPanel {
-            id: panel
+        Loader {
+            id: panelLoader
+
+            active: networkPopup.rendered
+
+            sourceComponent: NetworkPanel {}
         }
     }
 

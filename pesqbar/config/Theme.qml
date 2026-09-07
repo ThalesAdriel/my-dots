@@ -52,8 +52,18 @@ Singleton {
         return Settings.barBlur ? "pesqBar-blur" : "pesqBar";
     }
     readonly property string panelLayerNamespace: Settings.panelBlur ? "pesqBar-blur" : "pesqBar"
+
+    // The overview makes the settings sheet's argument and then some. A window
+    // preview is a capture of a surface that carries its own alpha, and drawing
+    // it over anything translucent lets the compositor blur the desktop up
+    // through it: a dark window comes out washed to white. Everything under a
+    // capture is opaque, and the layer it all sits on is not a blurred one.
+    readonly property color overviewBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
+    readonly property color overviewCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
+    readonly property string overviewLayerNamespace: "pesqBar"
     readonly property color cardBorder: Qt.rgba(1, 1, 1, 0.18)
     readonly property int cardRadius: Settings.panelRadius
+
 
     // Enumerating every installed font is not cheap, and there are seven lists
     // below asking the same question. Asked once here instead of once each.

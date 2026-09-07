@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "root:/config"
 
 // Whether the screen is being recorded, the way macOS reports it: something is
 // capturing, and it has been for this long.
@@ -15,7 +16,16 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property int interval: 2500
+    readonly property bool enabled: Settings.showRecording
+
+    // The probe walks every process in /proc and reads each one's cmdline, which
+    // is not something to do twenty four times a minute for the rest of the
+    // session on the chance a recorder turns up. Nothing is recording almost all
+    // of the time, so the scan runs slowly until something is, and only then
+    // goes back to the tick that keeps the elapsed time moving.
+    readonly property int idleInterval: 10000
+    readonly property int activeInterval: 2500
+    readonly property int interval: root.active ? root.activeInterval : root.idleInterval
 
     property bool active: false
     property int elapsed: 0
@@ -78,12 +88,19 @@ exit 0`
     // recorder's own and survives the shell being restarted mid recording.
     Timer {
         interval: root.interval
-        running: true
+        running: root.enabled
         repeat: true
         triggeredOnStart: true
         onTriggered: {
             if (!probe.running)
                 probe.running = true;
+        }
+    }
+
+    onEnabledChanged: {
+        if (!root.enabled) {
+            root.active = false;
+            root.elapsed = 0;
         }
     }
 }

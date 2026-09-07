@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import Quickshell.Services.Pipewire
 import "root:/config"
 import "root:/components"
@@ -8,6 +9,12 @@ import "root:/services"
 
 Item {
     id: root
+
+    // False until the popup carrying this has been opened. Binding a PipeWire
+    // object subscribes the shell to its parameter updates for as long as the
+    // binding holds, and a panel nobody has opened has no reason to be reading
+    // the volume of every sink on the machine.
+    property bool active: true
 
     readonly property int padding: 14
     readonly property int iconSlot: Theme.iconSize + 10
@@ -30,7 +37,7 @@ Item {
     implicitHeight: content.implicitHeight + root.padding * 2
 
     PwObjectTracker {
-        objects: root.sinkNodes
+        objects: root.active ? root.sinkNodes : []
     }
 
     PwObjectTracker {
@@ -201,6 +208,7 @@ Item {
         AppVolumeSection {
             width: content.width
             height: implicitHeight
+            active: root.active
         }
 
         Rectangle {
@@ -219,7 +227,9 @@ Item {
         }
 
         Repeater {
-            model: root.sinkNodes.length > 1 ? root.sinkNodes : []
+            model: ScriptModel {
+                values: root.sinkNodes.length > 1 ? root.sinkNodes : []
+            }
 
             delegate: Rectangle {
                 id: deviceRow
@@ -240,6 +250,7 @@ Item {
                     anchors.rightMargin: 6
                     anchors.verticalCenter: parent.verticalCenter
 
+                    textFormat: Text.PlainText
                     text: Audio.describe(deviceRow.modelData)
                     color: deviceRow.current ? Theme.textPrimary : Theme.textSecondary
                     font.family: Theme.sansFamily

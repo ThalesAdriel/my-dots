@@ -28,6 +28,12 @@ Singleton {
     readonly property int idleInterval: 6000
     readonly property int activeInterval: 2500
 
+    // What the poll drops to once `nmcli monitor` is alive and carrying the
+    // state changes. It does not go away entirely: signal strength is not a
+    // state change and nothing reports it, and a monitor that died has to be
+    // noticed by something.
+    readonly property int watchedInterval: 60000
+
     property bool available: true
     property bool wifiRadio: true
     property bool scanning: false
@@ -414,17 +420,53 @@ exit 0`
         }
     }
 
+    // NetworkManager knows the moment anything changes, so the read does not
+    // have to keep asking. `nmcli monitor` is one process for the life of the
+    // session that prints a line whenever a device, a connection or the radio
+    // changes state, and the read runs off that instead of off the clock. In
+    // steady state this is the difference between four processes every six
+    // seconds and none at all.
+    Process {
+        id: monitorProcess
+
+        command: ["nmcli", "monitor"]
+
+        stdout: SplitParser {
+            onRead: settleTimer.restart()
+        }
+    }
+
+    // nmcli monitor reports one user action as a run of lines, so they collapse
+    // into one read on the trailing edge rather than one read each.
     Timer {
-        interval: root.detailed ? root.activeInterval : root.idleInterval
-        running: root.enabled && root.available
-        repeat: true
-        triggeredOnStart: true
+        id: settleTimer
+
+        interval: 250
         onTriggered: root.refresh()
     }
 
-    onEnabledChanged: {
-        if (root.enabled)
+    Timer {
+        // Started from the tick rather than from a binding on `running`: a
+        // monitor that cannot start exits immediately, and a binding would
+        // respawn it as fast as it fails.
+        interval: root.detailed ? root.activeInterval : monitorProcess.running ? root.watchedInterval : root.idleInterval
+        running: root.enabled && root.available
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (!monitorProcess.running)
+                monitorProcess.running = true;
             root.refresh();
+        }
+    }
+
+    onEnabledChanged: {
+        if (root.enabled) {
+            root.refresh();
+        } else {
+            monitorProcess.running = false;
+            settleTimer.stop();
+        }
     }
 
     onDetailedChanged: {

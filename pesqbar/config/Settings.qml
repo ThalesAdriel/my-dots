@@ -30,17 +30,47 @@ Singleton {
     property alias moduleSpacing: adapter.moduleSpacing
     property alias workspaceSpacing: adapter.workspaceSpacing
 
-    // The three bar modules that are off until they are asked for. Each one
+    // The four bar modules that are off until they are asked for. Each one
     // costs a polled process while it is on, so nothing here starts on its own.
     property alias showNetwork: adapter.showNetwork
     property alias showBluetooth: adapter.showBluetooth
     property alias showBattery: adapter.showBattery
+    property alias showRecording: adapter.showRecording
 
     // The monitor arrangement the display manager saved, keyed by connector
     // name. Left out of restoreDefaults on purpose: it is a description of the
     // hardware on the desk rather than a look, and the display manager has its
     // own Reset for it.
     property alias displayLayout: adapter.displayLayout
+
+    // Where the brightness slider was left, on a machine with no backlight for
+    // it to read back from: hyprsunset applies a gamma but will not say which
+    // one it is applying, so the shell has to remember. Left out of
+    // restoreDefaults for the same reason as the layout above, and doubly so
+    // here, since resetting the look should not black out the screen.
+    property alias gammaBrightness: adapter.gammaBrightness
+
+    // Where a toast is drawn. "integrated" hangs it off the bar as part of the
+    // same surface, which is the default; "floating" is the detached card in the
+    // top right corner. Only the presentation changes: the same notification,
+    // the same timeout and the same control centre list either way.
+    property alias notificationStyle: adapter.notificationStyle
+
+    // How wide a toast is drawn, and how long one that did not ask for its own
+    // timeout stays. An app is still allowed to name a shorter or longer life
+    // for its own notification; this is only what happens when it does not.
+    property alias notificationWidth: adapter.notificationWidth
+
+    // A floor rather than a fixed height: a toast never comes out shorter than
+    // this, and still grows for a body that needs the room. Setting a hard
+    // height would clip the notifications that have the most to say.
+    property alias notificationHeight: adapter.notificationHeight
+    property alias notificationSeconds: adapter.notificationSeconds
+
+    // Captures of the real surfaces in the overview. Off falls back to the
+    // application icon, which costs nothing and always draws, on a compositor or
+    // a window that will not hand a frame over.
+    property alias overviewPreviews: adapter.overviewPreviews
 
     property alias clockShowSeconds: adapter.clockShowSeconds
     property alias clockUse12Hour: adapter.clockUse12Hour
@@ -77,6 +107,12 @@ Singleton {
         adapter.showNetwork = false;
         adapter.showBluetooth = false;
         adapter.showBattery = false;
+        adapter.showRecording = false;
+        adapter.notificationStyle = "integrated";
+        adapter.notificationWidth = 380;
+        adapter.notificationHeight = 64;
+        adapter.notificationSeconds = 10;
+        adapter.overviewPreviews = true;
         adapter.clockShowSeconds = true;
         adapter.clockUse12Hour = false;
         adapter.clockShowProgress = false;
@@ -90,7 +126,13 @@ Singleton {
         watchChanges: true
 
         onFileChanged: reload()
-        onAdapterUpdated: writeAdapter()
+
+        // Not written on the spot. A slider hands over a new value on every
+        // mouse move, and writing there meant serialising the whole file and
+        // going to disk sixty times a second for the length of a drag, with the
+        // change watcher reading each one back. The write lands once the value
+        // stops moving instead.
+        onAdapterUpdated: writeTimer.restart()
 
         // Only to put the file there the first time. This used to be a blind
         // timer 1.5s after startup, which is a race the defaults can win: the
@@ -127,13 +169,30 @@ Singleton {
             property bool showNetwork: false
             property bool showBluetooth: false
             property bool showBattery: false
+            property bool showRecording: false
 
             property var displayLayout: ({})
+
+            property int gammaBrightness: 100
+
+            property string notificationStyle: "integrated"
+            property int notificationWidth: 380
+            property int notificationHeight: 64
+            property int notificationSeconds: 10
+
+            property bool overviewPreviews: true
 
             property bool clockShowSeconds: true
             property bool clockUse12Hour: false
             property bool clockShowProgress: false
             property bool calendarYearView: true
         }
+    }
+
+    Timer {
+        id: writeTimer
+
+        interval: 400
+        onTriggered: fileView.writeAdapter()
     }
 }

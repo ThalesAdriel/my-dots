@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import Quickshell.Services.Pipewire
 import "root:/config"
 import "root:/components"
@@ -8,6 +9,10 @@ import "root:/services"
 
 Item {
     id: root
+
+    // Handed down from the panel. Streams come and go every time a browser tab
+    // plays a sound, and each one bound here is a subscription the shell holds.
+    property bool active: true
 
     property bool expanded: false
     property real expansion: root.expanded ? 1 : 0
@@ -32,8 +37,10 @@ Item {
         }
     }
 
+    // Only while the rows are actually being drawn. The count in the header
+    // reads the list length, which does not need the objects bound.
     PwObjectTracker {
-        objects: root.streams
+        objects: root.active && root.expansion > 0 ? root.streams : []
     }
 
     Rectangle {
@@ -118,7 +125,11 @@ Item {
             }
 
             Repeater {
-                model: root.streams
+                // Identity diffed rather than rebuilt: a stream appearing must
+                // not tear down the row of every other application playing.
+                model: ScriptModel {
+                    values: root.streams
+                }
 
                 delegate: Item {
                     id: streamRow

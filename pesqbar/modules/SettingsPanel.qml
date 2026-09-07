@@ -358,6 +358,12 @@ Item {
                 checked: Settings.showBattery
                 onToggled: Settings.showBattery = !Settings.showBattery
             }
+
+            ToggleRow {
+                label: "Screen recording"
+                checked: Settings.showRecording
+                onToggled: Settings.showRecording = !Settings.showRecording
+            }
         }
 
         Group {
@@ -495,6 +501,58 @@ Item {
                 maximum: 20
                 suffix: "px"
                 onAdjusted: newValue => Settings.hoverRadius = Math.round(newValue)
+            }
+        }
+
+        Group {
+            title: "Notifications"
+
+            // A string rather than a bool in settings, so a third style later is
+            // a new value rather than a second flag to keep consistent with the
+            // first.
+            ToggleRow {
+                label: "Attach toasts to the bar"
+                checked: Settings.notificationStyle === "integrated"
+                onToggled: Settings.notificationStyle = Settings.notificationStyle === "integrated" ? "floating" : "integrated"
+            }
+
+            SliderRow {
+                label: "Width"
+                value: Settings.notificationWidth
+                minimum: 280
+                maximum: 560
+                suffix: "px"
+                onAdjusted: newValue => Settings.notificationWidth = Math.round(newValue)
+            }
+
+            SliderRow {
+                label: "Minimum height"
+                value: Settings.notificationHeight
+                minimum: 44
+                maximum: 140
+                suffix: "px"
+                onAdjusted: newValue => Settings.notificationHeight = Math.round(newValue)
+            }
+
+            // What a notification that named no timeout of its own gets. Critical
+            // still waits to be dismissed however this is set.
+            SliderRow {
+                label: "Time on screen"
+                value: Settings.notificationSeconds
+                minimum: 2
+                maximum: 30
+                suffix: "s"
+                onAdjusted: newValue => Settings.notificationSeconds = Math.round(newValue)
+            }
+        }
+
+        Group {
+            title: "Overview"
+
+            ToggleRow {
+                label: "Window previews"
+                checked: Settings.overviewPreviews
+                onToggled: Settings.overviewPreviews = !Settings.overviewPreviews
             }
         }
 

@@ -71,7 +71,13 @@ Item {
                 spacing: root.itemSpacing
 
                 Repeater {
-                    model: root.resolved ? root.trayItems : [1, 2, 3]
+                    // A plain array rebuilds every delegate whenever the tray
+                    // changes, and each delegate here carries a menu window and
+                    // a tooltip window. One application adding an icon should
+                    // not tear down and rebuild the others.
+                    model: ScriptModel {
+                        values: root.resolved ? root.trayItems : [1, 2, 3]
+                    }
 
                     delegate: Item {
                         id: trayEntry

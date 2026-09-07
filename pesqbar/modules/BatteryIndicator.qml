@@ -139,15 +139,19 @@ BarButton {
         // in the shell shows it.
         onShownChanged: PowerProfiles.detailed = batteryPopup.shown
 
-        BatteryPanel {
-            present: root.present
-            level: root.level
-            percent: root.percent
-            stateLabel: root.stateLabel
-            timeLabel: root.timeLabel
-            low: root.low
-            charging: root.charging
-            health: root.present ? Math.round(root.device.healthPercentage) : 0
+        Loader {
+            active: batteryPopup.rendered
+
+            sourceComponent: BatteryPanel {
+                present: root.present
+                level: root.level
+                percent: root.percent
+                stateLabel: root.stateLabel
+                timeLabel: root.timeLabel
+                low: root.low
+                charging: root.charging
+                health: root.present ? Math.round(root.device.healthPercentage) : 0
+            }
         }
     }
 

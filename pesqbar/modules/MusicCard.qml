@@ -33,6 +33,19 @@ Card {
         return player !== null && player.loopState !== MprisLoopState.None;
     }
 
+    function localArt(source: string): string {
+        if (!source)
+            return "";
+
+        const value = String(source);
+        if (value.startsWith("/") || value.startsWith("file://") || value.startsWith("image://"))
+            return value;
+
+        return "";
+    }
+
+    readonly property string artSource: root.player !== null ? root.localArt(root.player.trackArtUrl) : ""
+
     implicitHeight: 100
     visible: root.active
 
@@ -87,19 +100,21 @@ Card {
         clip: true
 
         Image {
+            id: artImage
+
             anchors.fill: parent
-            source: root.player !== null && root.player.trackArtUrl ? root.player.trackArtUrl : ""
+            source: root.artSource
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             sourceSize.width: 144
             sourceSize.height: 144
-            visible: status === Image.Ready
+            visible: artImage.status === Image.Ready
         }
 
         IconText {
             anchors.centerIn: parent
             fillBarHeight: false
-            visible: root.player === null || !root.player.trackArtUrl
+            visible: !artImage.visible
             text: root.playing ? Glyphs.pause : Glyphs.play
             color: Theme.textMuted
             font.pixelSize: 22

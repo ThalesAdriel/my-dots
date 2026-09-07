@@ -20,7 +20,12 @@ Singleton {
 
     property bool detailed: false
 
-    readonly property int idleInterval: 6000
+    // bluetoothctl has no monitor mode worth running and eavesdropping on bluez
+    // over the system bus is refused to anything that is not root, so this one
+    // stays a poll. What it does instead is cost less per tick and tick less
+    // often: an adapter only changes state because somebody did something to it,
+    // and the panel asks for its own read the moment it opens.
+    readonly property int idleInterval: 10000
     readonly property int activeInterval: 2500
 
     property bool available: true
@@ -151,11 +156,14 @@ Singleton {
 export LC_ALL=C
 echo "#adapter"
 timeout 5 bluetoothctl show 2>/dev/null
-echo "#paired"
-timeout 5 bluetoothctl devices Paired 2>/dev/null | grep "^Device " || timeout 5 bluetoothctl paired-devices 2>/dev/null | grep "^Device "
 echo "#connected"
 timeout 5 bluetoothctl devices Connected 2>/dev/null | grep "^Device "
+# The paired list is the panel's, and the panel is the only thing that reads
+# the flag. A brief read is the bar indicator asking whether anything is
+# connected, and does not need two more bluetoothctl runs to answer that.
 if [ "$1" = full ]; then
+    echo "#paired"
+    timeout 5 bluetoothctl devices Paired 2>/dev/null | grep "^Device " || timeout 5 bluetoothctl paired-devices 2>/dev/null | grep "^Device "
     echo "#seen"
     timeout 5 bluetoothctl devices 2>/dev/null | grep "^Device "
 fi

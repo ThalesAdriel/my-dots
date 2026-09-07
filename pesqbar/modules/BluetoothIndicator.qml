@@ -52,7 +52,10 @@ BarButton {
 
         onShownChanged: Bluetooth.detailed = bluetoothPopup.shown
 
-        BluetoothPanel {
+        Loader {
+            active: bluetoothPopup.rendered
+
+            sourceComponent: BluetoothPanel {}
         }
     }
 

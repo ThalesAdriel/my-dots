@@ -8,6 +8,11 @@ Singleton {
     readonly property string volumeHigh: ""
     readonly property string microphone: ""
     readonly property string microphoneMuted: ""
+
+    // The backlight, on the control center slider and on the notification the
+    // XF86MonBrightness keybinds send.
+    readonly property string sun: ""
+
     readonly property string bell: ""
     readonly property string bellOff: ""
     readonly property string bellNerd: "󱨇"

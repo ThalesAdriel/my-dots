@@ -42,6 +42,11 @@ BarButton {
 
         Calendar {
             id: calendar
+
+            // Built on the first open rather than at startup. Stepping and
+            // switching views from the bar still work while it is empty: both
+            // only move numbers the grid reads when it is there.
+            active: calendarPopup.rendered
         }
     }
 }

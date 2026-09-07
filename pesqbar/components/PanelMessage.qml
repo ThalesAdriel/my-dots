@@ -7,6 +7,7 @@ import "root:/config"
 Text {
     property bool warning: false
 
+    textFormat: Text.PlainText
     color: warning ? Theme.urgent : Theme.textMuted
     font.family: Theme.sansFamily
     font.pixelSize: Theme.fontSizeSmall

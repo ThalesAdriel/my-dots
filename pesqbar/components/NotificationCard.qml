@@ -48,10 +48,22 @@ Rectangle {
     property bool imageBroken: false
     property bool iconFailed: false
 
-    readonly property string imageSource: root.valid ? Notifications.imageSource(root.notification) : ""
-    readonly property string fallbackSource: root.valid ? Notifications.appIconSource(root.notification) : ""
+    // A glyph for the icon this notification named, or "" for a name the shell
+    // has none for. A glyph wins over both of the other two: an
+    // `audio-volume-high` off the volume keybind has nothing to resolve to on a
+    // machine with no icon theme, and what the icon handle draws instead is a
+    // placeholder square, which is a perfectly valid image as far as the loader
+    // below is concerned. Nothing further down would ever have refused it, so
+    // the only place to turn it away is before it is asked for.
+    readonly property string glyph: root.valid ? Notifications.iconGlyph(root.notification) : ""
+
+    readonly property string imageSource: root.valid && root.glyph === "" ? Notifications.imageSource(root.notification) : ""
+    readonly property string fallbackSource: root.valid && root.glyph === "" ? Notifications.appIconSource(root.notification) : ""
+
     readonly property string iconSource: !root.imageBroken && root.imageSource !== "" ? root.imageSource : root.fallbackSource
-    readonly property bool showIcon: root.iconSource !== "" && !root.iconFailed
+    readonly property bool showImage: root.iconSource !== "" && !root.iconFailed
+    readonly property bool showGlyph: !root.showImage && root.glyph !== ""
+    readonly property bool showIcon: root.showImage || root.showGlyph
 
     onImageSourceChanged: {
         root.imageBroken = false;
@@ -130,7 +142,7 @@ Rectangle {
         return Theme.cardBackground;
     }
 
-    implicitHeight: Math.max(textColumn.implicitHeight, root.showIcon ? 32 : 0) + root.padding * 2
+    implicitHeight: Math.max(Math.max(textColumn.implicitHeight, root.showIcon ? 32 : 0) + root.padding * 2, Settings.notificationHeight)
 
     color: root.surfaceColor
     border.color: root.frameColor
@@ -157,12 +169,22 @@ Rectangle {
         width: root.showIcon ? 32 : 0
         height: root.showIcon ? 32 : 0
 
+        IconText {
+            anchors.centerIn: parent
+            visible: root.showGlyph
+
+            fillBarHeight: false
+            text: root.glyph
+            color: root.low ? Theme.textSecondary : Theme.textPrimary
+            font.pixelSize: 20
+        }
+
         Image {
             id: iconImage
 
             anchors.fill: parent
             source: root.iconSource
-            visible: iconImage.status === Image.Ready
+            visible: root.showImage && iconImage.status === Image.Ready
             fillMode: Image.PreserveAspectFit
             asynchronous: true
             sourceSize.width: 32

@@ -25,7 +25,14 @@ Item {
     implicitWidth: root.resolved ? Math.min(label.implicitWidth, root.maximumWidth) + Theme.groupMargin * 2 : 120
     implicitHeight: Theme.barHeight
 
+    // The fade belongs to the skeleton going away, not to the title changing. A
+    // terminal running a build, a player counting through a track and a browser
+    // with a live tab title all rewrite this several times a second, and
+    // restarting the animation on each one meant the bar was never idle.
     onDisplayTextChanged: {
+        if (root.resolved)
+            return;
+
         root.resolved = true;
         fadeIn.restart();
     }

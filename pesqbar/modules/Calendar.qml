@@ -8,6 +8,13 @@ import "root:/components"
 Item {
     id: root
 
+    // Set by whatever is holding the calendar, and false until the popup that
+    // carries it has actually been opened once. The year view is twelve month
+    // blocks of forty two day cells: around eighteen hundred items, per screen,
+    // built at startup for a panel most sessions never open. Nothing below the
+    // header exists until this goes true.
+    property bool active: true
+
     property int offset: 0
 
     readonly property bool yearView: Settings.calendarYearView
@@ -36,9 +43,11 @@ Item {
         return new Date(root.todayYear, root.todayMonth + root.offset, 1);
     }
 
+    readonly property int firstWeekday: Qt.locale().firstDayOfWeek
+
     readonly property var weekdayNames: {
         const locale = Qt.locale();
-        const first = locale.firstDayOfWeek;
+        const first = root.firstWeekday;
         const names = [];
         for (let index = 0; index < 7; index++)
             names.push(locale.dayName((first + index) % 7, Locale.NarrowFormat));
@@ -97,7 +106,7 @@ Item {
         property real dayFontSize: 9
 
         readonly property date firstDay: new Date(block.year, block.monthIndex, 1)
-        readonly property int lead: (block.firstDay.getDay() - Qt.locale().firstDayOfWeek + 7) % 7
+        readonly property int lead: (block.firstDay.getDay() - root.firstWeekday + 7) % 7
         readonly property int dayCount: new Date(block.year, block.monthIndex + 1, 0).getDate()
         readonly property int rowCount: Math.ceil((block.lead + block.dayCount) / 7)
 
@@ -293,44 +302,47 @@ Item {
         height: root.bodyHeight
         clip: true
 
-        MonthBlock {
-            id: monthLayout
-
+        // One layout at a time, and neither until the calendar is on screen.
+        // The body has a fixed size taken from plain numbers, so an empty
+        // loader does not collapse the panel it sits in.
+        Loader {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
 
-            cellWidth: 36
-            rowHeight: 30
-            weekWidth: 34
-            titleHeight: 0
-            dayFontSize: 12
+            active: root.active && !root.yearView
 
-            year: root.anchorDate.getFullYear()
-            monthIndex: root.anchorDate.getMonth()
+            sourceComponent: MonthBlock {
+                cellWidth: 36
+                rowHeight: 30
+                weekWidth: 34
+                titleHeight: 0
+                dayFontSize: 12
 
-            visible: !root.yearView
+                year: root.anchorDate.getFullYear()
+                monthIndex: root.anchorDate.getMonth()
+            }
         }
 
-        Grid {
-            id: yearLayout
-
+        Loader {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
 
-            columns: 3
-            columnSpacing: root.columnGap
-            rowSpacing: root.rowGap
+            active: root.active && root.yearView
 
-            visible: root.yearView
+            sourceComponent: Grid {
+                columns: 3
+                columnSpacing: root.columnGap
+                rowSpacing: root.rowGap
 
-            Repeater {
-                model: 12
+                Repeater {
+                    model: 12
 
-                delegate: MonthBlock {
-                    required property int index
+                    delegate: MonthBlock {
+                        required property int index
 
-                    year: root.anchorDate.getFullYear()
-                    monthIndex: index
+                        year: root.anchorDate.getFullYear()
+                        monthIndex: index
+                    }
                 }
             }
         }

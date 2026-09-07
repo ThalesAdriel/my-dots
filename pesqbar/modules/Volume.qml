@@ -48,6 +48,16 @@ BarButton {
         interval: 1400
     }
 
+    Timer {
+        id: sinkSettle
+
+        property bool expired: false
+
+        interval: 1500
+        running: true
+        onTriggered: sinkSettle.expired = true
+    }
+
     IconStack {
         IconText {
             anchors.centerIn: parent
@@ -88,7 +98,7 @@ BarButton {
             anchors.centerIn: parent
             width: 16
             height: 12
-            active: !root.sinkReady
+            active: !root.sinkReady && !sinkSettle.expired
         },
 
         Rectangle {
@@ -136,7 +146,12 @@ BarButton {
         anchorItem: root
         alignRight: true
 
-        VolumePanel {
+        Loader {
+            active: volumePopup.rendered
+
+            sourceComponent: VolumePanel {
+                active: volumePopup.rendered
+            }
         }
     }
 

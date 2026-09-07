@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell
 import Quickshell.Hyprland
 import "root:/config"
 
@@ -12,7 +11,9 @@ Item {
     readonly property int itemWidth: Theme.glyphSize + 7
     readonly property int itemSpacing: Settings.workspaceSpacing
 
-    readonly property var workspaceList: {
+    // State first, and keyed by id. Everything the row draws is looked up out of
+    // here, which is a binding re-evaluating rather than a delegate being built.
+    readonly property var workspaceState: {
         const table = {};
         for (const id of root.persistentIds)
             table[id] = {
@@ -32,7 +33,21 @@ Item {
             };
         }
 
-        return Object.keys(table).map(key => table[key]).sort((left, right) => left.id - right.id);
+        return table;
+    }
+
+    // The model, and only the model: a fresh array handed to a Repeater rebuilds
+    // every delegate under it, and Hyprland sends an event for every focus
+    // change, window open and window close. The set of workspaces almost never
+    // moves, so this is only replaced when it really has, and the six delegates
+    // survive the rest of the session.
+    property var workspaceIds: root.persistentIds
+
+    onWorkspaceStateChanged: {
+        const ids = Object.keys(root.workspaceState).map(key => parseInt(key, 10)).sort((left, right) => left - right);
+
+        if (ids.length !== root.workspaceIds.length || ids.some((id, index) => id !== root.workspaceIds[index]))
+            root.workspaceIds = ids;
     }
 
     function focusWorkspace(target: string): void {
@@ -45,11 +60,11 @@ Item {
             return;
         }
 
-        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = '" + target + "' })"]);
+        Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = '${target}' })` : "workspace " + target);
     }
 
     readonly property int focusedId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
-    readonly property int focusedIndex: root.workspaceList.findIndex(entry => entry.id === root.focusedId)
+    readonly property int focusedIndex: root.workspaceIds.indexOf(root.focusedId)
 
     implicitWidth: workspaceRow.implicitWidth + Theme.groupMargin * 2
     implicitHeight: Theme.barHeight
@@ -90,14 +105,17 @@ Item {
         spacing: root.itemSpacing
 
         Repeater {
-            model: root.workspaceList
+            model: root.workspaceIds
 
             delegate: Item {
                 id: workspaceItem
 
-                required property var modelData
+                required property int modelData
 
-                readonly property bool focused: workspaceItem.modelData.id === root.focusedId
+                readonly property var entry: root.workspaceState[workspaceItem.modelData]
+                readonly property bool focused: workspaceItem.modelData === root.focusedId
+                readonly property bool occupied: workspaceItem.entry !== undefined && workspaceItem.entry.occupied
+                readonly property bool urgent: workspaceItem.entry !== undefined && workspaceItem.entry.urgent
 
                 width: root.itemWidth
                 height: Theme.barHeight - 8
@@ -113,16 +131,16 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: -1
 
-                    text: Glyphs.workspaceLabel(workspaceItem.modelData.id)
+                    text: Glyphs.workspaceLabel(workspaceItem.modelData)
                     font.family: Theme.glyphFamily
                     font.pixelSize: Theme.glyphSize
 
                     color: {
-                        if (workspaceItem.modelData.urgent)
+                        if (workspaceItem.urgent)
                             return Theme.urgent;
                         if (workspaceItem.focused)
                             return Theme.textPrimary;
-                        if (workspaceItem.modelData.occupied)
+                        if (workspaceItem.occupied)
                             return Theme.textSecondary;
                         return Theme.textMuted;
                     }
@@ -140,7 +158,7 @@ Item {
                     id: workspaceMouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: root.focusWorkspace(String(workspaceItem.modelData.id))
+                    onClicked: root.focusWorkspace(String(workspaceItem.modelData))
                 }
             }
         }
