@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/sh
+set -f
 for cmd in "$@"; do
-    eval "command -v ${cmd%% *}" >/dev/null 2>&1 || continue
-    eval "$cmd" &
-    exit
+	set -- $cmd
+	command -v "$1" >/dev/null 2>&1 && exec "$@"
 done
 exit 1

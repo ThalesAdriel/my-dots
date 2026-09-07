@@ -43,9 +43,10 @@ hl.config({
 
 		blur = {
 			enabled = true,
-			size = 14,
-			passes = 4,
-			brightness = 0.2,
+			size = 10,
+			passes = 3,
+
+			brightness = 0.8,
 			contrast = 1,
 			noise = 0.01,
 			xray = true,
@@ -57,8 +58,8 @@ hl.config({
 
 		shadow = {
 			enabled = true,
-			range = 30,
-			render_power = 4,
+			range = 20,
+			render_power = 3,
 			offset = { 0, 2 },
 			color = "rgba(00000010)",
 		},
@@ -111,7 +112,7 @@ hl.curve("menu_accel", { type = "bezier", points = { { 0.52, 0.03 }, { 0.72, 0.0
 hl.animation({ leaf = "windowsIn", enabled = true, speed = 3, bezier = "expressiveFastSpatial", style = "popin 80%" })
 hl.animation({ leaf = "windowsOut", enabled = true, speed = 2, bezier = "emphasizedDecel", style = "popin 90%" })
 hl.animation({ leaf = "windowsMove", enabled = true, speed = 3, bezier = "emphasizedDecel", style = "slide" })
-hl.animation({ leaf = "border", enabled = true, speed = 10, bezier = "emphasizedDecel" })
+hl.animation({ leaf = "border", enabled = false })
 
 hl.animation({ leaf = "layersIn", enabled = true, speed = 2.7, bezier = "emphasizedDecel", style = "popin 93%" })
 hl.animation({ leaf = "layersOut", enabled = true, speed = 2.4, bezier = "menu_accel", style = "popin 94%" })

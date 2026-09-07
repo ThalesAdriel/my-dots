@@ -1,42 +1,45 @@
 #!/usr/bin/env bash
+set -uo pipefail
 
-getdate() {
-    date '+%Y-%m-%d_%H.%M.%S'
-}
-getaudiooutput() {
-    pactl list sources | grep 'Name' | grep 'monitor' | cut -d ' ' -f2
-}
-getactivemonitor() {
-    hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .name'
+audio_monitor() {
+	pactl list short sources | awk '/\.monitor\b/ { print $2; exit }'
 }
 
-xdgvideo="$(xdg-user-dir VIDEOS)"
-if [[ $xdgvideo = "$HOME" ]]; then
-  unset xdgvideo
+active_monitor() {
+	hyprctl monitors -j | jq -r 'first(.[] | select(.focused) | .name)'
+}
+
+if pgrep -x wf-recorder >/dev/null; then
+	pkill -INT -x wf-recorder
+	notify-send "Recording Stopped" "Stopped" -a Recorder
+	exit 0
 fi
-mkdir -p "${xdgvideo:-$HOME/Videos}"
-cd "${xdgvideo:-$HOME/Videos}" || exit
 
-if pgrep wf-recorder > /dev/null; then
-    notify-send "Recording Stopped" "Stopped" -a 'Recorder' &
-    pkill wf-recorder &
-else
-    if [[ "$1" == "--fullscreen-sound" ]]; then
-        notify-send "Starting recording" 'recording_'"$(getdate)"'.mp4' -a 'Recorder' & disown
-        wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --audio="$(getaudiooutput)"
-    elif [[ "$1" == "--fullscreen" ]]; then
-        notify-send "Starting recording" 'recording_'"$(getdate)"'.mp4' -a 'Recorder' & disown
-        wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t
-    else
-        if ! region="$(slurp 2>&1)"; then
-            notify-send "Recording cancelled" "Selection was cancelled" -a 'Recorder' & disown
-            exit 1
-        fi
-        notify-send "Starting recording" 'recording_'"$(getdate)"'.mp4' -a 'Recorder' & disown
-        if [[ "$1" == "--sound" ]]; then
-            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --geometry "$region" --audio="$(getaudiooutput)"
-        else
-            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --geometry "$region"
-        fi
-    fi
-fi
+target=$(xdg-user-dir VIDEOS 2>/dev/null)
+[ -n "$target" ] && [ "$target" != "$HOME" ] || target=$HOME/Videos
+mkdir -p "$target" || exit 1
+
+name="recording_$(date '+%Y-%m-%d_%H.%M.%S').mp4"
+args=(--pixel-format yuv420p -t -f "$target/$name")
+
+case "${1-}" in
+--fullscreen | --fullscreen-sound)
+	args+=(-o "$(active_monitor)")
+	;;
+*)
+	if ! region=$(slurp 2>/dev/null); then
+		notify-send "Recording cancelled" "Selection was cancelled" -a Recorder
+		exit 1
+	fi
+	args+=(--geometry "$region")
+	;;
+esac
+
+case "${1-}" in
+--fullscreen-sound | --sound)
+	args+=(--audio="$(audio_monitor)")
+	;;
+esac
+
+notify-send "Starting recording" "$name" -a Recorder
+exec wf-recorder "${args[@]}"

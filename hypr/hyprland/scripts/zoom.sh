@@ -1,54 +1,39 @@
 #!/usr/bin/env bash
+set -uo pipefail
 
-# Controls Hyprland's cursor zoom_factor, clamped between 1.0 and 3.0
-
-# Get current zoom level
 get_zoom() {
-  hyprctl getoption -j cursor:zoom_factor | jq '.float'
+	hyprctl getoption -j cursor:zoom_factor | jq -r '.float'
 }
 
-# Clamp a value between 1.0 and 3.0
-clamp() {
-  local val="$1"
-  awk "BEGIN {
-        v = $val;
-        if (v < 1.0) v = 1.0;
-        if (v > 3.0) v = 3.0;
-        print v;
-    }"
-}
-
-# Set zoom level
 set_zoom() {
-  local value="$1"
-  clamped=$(clamp "$value")
-  hyprctl eval "hl.config({ cursor = { zoom_factor = $clamped } })"
+	local clamped
+	clamped=$(awk -v v="$1" 'BEGIN { if (v < 1) v = 1; if (v > 3) v = 3; printf "%.3f\n", v }')
+	hyprctl eval "hl.config({ cursor = { zoom_factor = $clamped } })"
 }
 
-case "$1" in
+need_step() {
+	case ${1-} in
+	'' | *[!0-9.]* | *.*.*)
+		echo "usage: ${0##*/} {reset|increase STEP|decrease STEP}" >&2
+		exit 1
+		;;
+	esac
+}
+
+case "${1-}" in
 reset)
-  set_zoom 1.0
-  ;;
+	set_zoom 1
+	;;
 increase)
-  if [[ -z "$2" ]]; then
-    echo "Usage: $0 increase STEP"
-    exit 1
-  fi
-  current=$(get_zoom)
-  new=$(awk "BEGIN { print $current + $2 }")
-  set_zoom "$new"
-  ;;
+	need_step "${2-}"
+	set_zoom "$(awk -v c="$(get_zoom)" -v s="$2" 'BEGIN { print c + s }')"
+	;;
 decrease)
-  if [[ -z "$2" ]]; then
-    echo "Usage: $0 decrease STEP"
-    exit 1
-  fi
-  current=$(get_zoom)
-  new=$(awk "BEGIN { print $current - $2 }")
-  set_zoom "$new"
-  ;;
+	need_step "${2-}"
+	set_zoom "$(awk -v c="$(get_zoom)" -v s="$2" 'BEGIN { print c - s }')"
+	;;
 *)
-  echo "Usage: $0 {reset|increase STEP|decrease STEP}"
-  exit 1
-  ;;
+	echo "usage: ${0##*/} {reset|increase STEP|decrease STEP}" >&2
+	exit 1
+	;;
 esac

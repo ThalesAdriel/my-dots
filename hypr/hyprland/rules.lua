@@ -10,12 +10,12 @@ hl.window_rule({
 })
 
 hl.window_rule({
-	match = { title = ".*mpv.*" },
+	match = { class = "^(mpv)$" },
 	float = true,
 })
 
 hl.window_rule({
-	match = { title = "^(satty)$" },
+	match = { class = "^(com\\.gabm\\.satty|satty)$" },
 	float = true,
 })
 
@@ -46,8 +46,9 @@ hl.layer_rule({
 
 hl.layer_rule({
 	name = "pesqBar-blur",
-	match = { namespace = "^pesqBar-blur" },
+	match = { namespace = "^pesqBar-blur(-popups)?$" },
 	blur = true,
+	xray = false,
 	ignore_alpha = 0.1,
 })
 

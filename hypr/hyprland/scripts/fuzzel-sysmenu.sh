@@ -1,40 +1,26 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 MODE="${1:-run}"
 
-# Present options via fuzzel (or rofi/dmenu if you prefer)
 action="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu | cut -d ' ' -f1)"
 
 case "$MODE" in
     run)
         case "$action" in
-            shutdown)
-                systemctl poweroff
-                ;;
-            reboot)
-                systemctl reboot
-                ;;
-            soft-reboot)
-                systemctl soft-reboot
-                ;;
-            lock)
-                # Try to lock with swaylock, fallback to loginctl if available
-                swaylock || loginctl lock-session || echo "Lock command failed"
-                ;;
-            suspend)
-                systemctl suspend
-                ;;
-            *)
-                echo "No valid action selected or canceled."
-                ;;
+            shutdown)    systemctl poweroff ;;
+            reboot)      systemctl reboot ;;
+            soft-reboot) systemctl soft-reboot ;;
+            lock)        loginctl lock-session ;;
+            suspend)     systemctl suspend ;;
+            *)           exit 0 ;;
         esac
         ;;
     echo)
         echo "$action"
         ;;
     *)
-        echo "Usage: $0 [run|echo]"
+        echo "Usage: $0 [run|echo]" >&2
         exit 1
         ;;
 esac

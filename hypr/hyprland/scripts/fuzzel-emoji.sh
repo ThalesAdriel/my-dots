@@ -1,23 +1,25 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail
 
 MODE="${1:-type}"
 
-emoji="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu | cut -d ' ' -f 1 | tr -d '\n')"
+line="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu)"
+emoji=${line%% *}
+[ -n "$emoji" ] || exit 0
 
 case "$MODE" in
     type)
-        wtype "${emoji}" || wl-copy "${emoji}"
+        wtype "$emoji" || wl-copy "$emoji"
         ;;
     copy)
-        wl-copy "${emoji}"
+        wl-copy "$emoji"
         ;;
     both)
-        wtype "${emoji}" || true
-        wl-copy "${emoji}"
+        wtype "$emoji" || true
+        wl-copy "$emoji"
         ;;
     *)
-        echo "Usage: $0 [type|copy|both]"
+        echo "Usage: $0 [type|copy|both]" >&2
         exit 1
         ;;
 esac

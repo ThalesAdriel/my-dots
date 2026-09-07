@@ -1,77 +1,65 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -uo pipefail
+shopt -s extglob
 
 format_name() {
-  name="$1"
+	local name=$1 lower=${1,,} clean type
 
-  lower=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+	if [[ $lower == *hdmi* || $lower == *displayport* ]]; then
+		if [[ $lower =~ (hdmi|displayport)[^0-9]*([0-9]+) ]]; then
+			printf 'HDMI %s [hdmi]\n' "${BASH_REMATCH[2]}"
+		else
+			printf 'HDMI [hdmi]\n'
+		fi
+		return
+	fi
 
-  if [[ "$lower" == *"hdmi"* ]] || [[ "$lower" == *"displayport"* ]]; then
-    num=$(echo "$name" | grep -o '[0-9]\+' | head -n1)
-    if [ -n "$num" ]; then
-      echo "HDMI $num [hdmi]"
-    else
-      echo "HDMI [hdmi]"
-    fi
-    return
-  fi
+	clean=${name//Raptor Lake-+([^ ]) /}
+	clean=${clean//cAVS /}
+	clean=${clean//Analog Stereo/}
+	clean=${clean//Output/}
+	clean=${clean//+( )/ }
+	clean=${clean##+( )}
+	clean=${clean%%+( )}
 
-  clean=$(echo "$name" | sed -E '
-        s/Raptor Lake-[^ ]+ //g;
-        s/cAVS //g;
-        s/Analog Stereo//g;
-        s/Output//g;
-        s/ +/ /g;
-        s/^ //;
-        s/ $//;
-    ')
+	lower=${clean,,}
+	case $lower in
+	*headphone*) type=headphone ;;
+	*speaker* | *line*) type=speaker ;;
+	*bluetooth* | *a2dp*) type=bluetooth ;;
+	*usb*) type=usb ;;
+	*) type=audio ;;
+	esac
 
-  lower=$(echo "$clean" | tr '[:upper:]' '[:lower:]')
-
-  if [[ "$lower" == *"headphone"* ]]; then
-    type="headphone"
-  elif [[ "$lower" == *"speaker"* ]] || [[ "$lower" == *"line"* ]]; then
-    type="speaker"
-  elif [[ "$lower" == *"bluetooth"* ]] || [[ "$lower" == *"a2dp"* ]]; then
-    type="bluetooth"
-  elif [[ "$lower" == *"usb"* ]]; then
-    type="usb"
-  else
-    type="audio"
-  fi
-
-  echo "$clean [$type]"
+	printf '%s [%s]\n' "$clean" "$type"
 }
 
-mapfile -t sinks < <(pactl -f json list sinks | jq -r '.[] | "\(.description)|\(.name)"')
+declare -A map=()
+menu=()
 
-menu=""
-declare -A map
+while IFS='|' read -r desc real; do
+	[ -n "$real" ] || continue
 
-for s in "${sinks[@]}"; do
-  desc="${s%%|*}"
-  real="${s##*|}"
+	pretty=$(format_name "$desc")
+	base=$pretty
+	count=1
+	while [ -n "${map[$pretty]-}" ]; do
+		count=$((count + 1))
+		pretty="$base $count"
+	done
 
-  pretty=$(format_name "$desc")
+	menu+=("$pretty")
+	map[$pretty]=$real
+done < <(pactl -f json list sinks | jq -r '.[] | "\(.description)|\(.name)"')
 
-  count=1
-  base="$pretty"
-  while [[ -n "${map[$pretty]}" ]]; do
-    ((count++))
-    pretty="$base $count"
-  done
+[ ${#menu[@]} -gt 0 ] || exit 0
 
-  menu+="$pretty\n"
-  map["$pretty"]="$real"
-done
+choice=$(printf '%s\n' "${menu[@]}" | fuzzel --dmenu)
+sink=${map[$choice]-}
+[ -n "$sink" ] || exit 0
 
-choice=$(echo -e "$menu" | fuzzel --dmenu)
+pactl set-default-sink "$sink" || exit 1
 
-sink="${map[$choice]}"
-
-if [ -n "$sink" ]; then
-  pactl set-default-sink "$sink"
-
-  for input in $(pactl list short sink-inputs | awk '{print $1}'); do
-    pactl move-sink-input "$input" "$sink"
-  done
-fi
+while read -r input _; do
+	[ -n "$input" ] && pactl move-sink-input "$input" "$sink"
+done < <(pactl list short sink-inputs)

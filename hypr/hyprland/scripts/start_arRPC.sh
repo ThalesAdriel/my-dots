@@ -1,3 +1,5 @@
-#!/usr/bin/env bash
-cd  /home/thales/Downloads/arrpc-3.5.0/
-npx arrpc
+#!/bin/sh
+set -eu
+dir=${ARRPC_DIR:-$HOME/Downloads/arrpc-3.5.0}
+cd "$dir" || exit 1
+exec npx --no-install arrpc
