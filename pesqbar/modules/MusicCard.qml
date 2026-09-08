@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Services.Mpris
 import "root:/config"
 import "root:/components"
+import "root:/services"
 
 Card {
     id: root
@@ -33,18 +34,11 @@ Card {
         return player !== null && player.loopState !== MprisLoopState.None;
     }
 
-    function localArt(source: string): string {
-        if (!source)
-            return "";
-
-        const value = String(source);
-        if (value.startsWith("/") || value.startsWith("file://") || value.startsWith("image://"))
-            return value;
-
-        return "";
-    }
-
-    readonly property string artSource: root.player !== null ? root.localArt(root.player.trackArtUrl) : ""
+    // Never the URL the player named. `AlbumArt` keeps a local file for it and
+    // hands the path back once it has one, so the Image is only ever pointed at
+    // this machine and a cover on a CDN — which is the only kind Spotify has —
+    // still reaches the card.
+    readonly property string artSource: root.player !== null ? AlbumArt.art(root.player.trackArtUrl) : ""
 
     implicitHeight: 100
     visible: root.active
