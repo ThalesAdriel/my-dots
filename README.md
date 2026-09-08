@@ -5,8 +5,17 @@ OBS: Some of my configs are still messy or broken. I plan to clean and fix them 
 <details>
 <summary>Screenshots</summary>
 
-  ![alt text](screenshots/screenshot_01.png "Screenshot")
-  ![alt text](screenshots/screenshot_02.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_01.png "Screenshot")
+  ![alt text](screenshots/Screenshot_02.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_03.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_04.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_05.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_06.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_07.png "Screenshot"))
+
+
+
+
 
 </details>
 
