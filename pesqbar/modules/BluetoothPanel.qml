@@ -12,8 +12,7 @@ Item {
     readonly property int panelPadding: 16
     readonly property int panelWidth: 340
 
-    // Paired devices first, then whatever the scan turned up. Anything already
-    // connected sorts to the top of its own group.
+    // Paired devices first, then whatever the scan turned up, with anything already connected sorted to the top of its own group.
     readonly property var listed: {
         const paired = Bluetooth.devices.filter(device => device.paired);
         const rest = Bluetooth.devices.filter(device => !device.paired);
@@ -151,9 +150,7 @@ Item {
                         font.pixelSize: Theme.fontSizeSmall
                     }
 
-                    // Left click is the one thing the row does; right click on a
-                    // paired device removes it, the same gesture the network list
-                    // uses to forget a saved network.
+                    // Left click is the one thing the row does; right click on a paired device removes it, the same gesture the network list uses to forget a saved network.
                     MouseArea {
                         id: deviceMouse
 

@@ -30,46 +30,29 @@ Singleton {
     property alias moduleSpacing: adapter.moduleSpacing
     property alias workspaceSpacing: adapter.workspaceSpacing
 
-    // The four bar modules that are off until they are asked for. Each one
-    // costs a polled process while it is on, so nothing here starts on its own.
+    // The four bar modules that stay off until asked for: each costs a polled process while it is on.
     property alias showNetwork: adapter.showNetwork
     property alias showBluetooth: adapter.showBluetooth
     property alias showBattery: adapter.showBattery
     property alias showRecording: adapter.showRecording
 
-    // The monitor arrangement the display manager saved, keyed by connector
-    // name. Left out of restoreDefaults on purpose: it is a description of the
-    // hardware on the desk rather than a look, and the display manager has its
-    // own Reset for it.
+    // The saved monitor arrangement, keyed by connector. Out of restoreDefaults on purpose: it describes the hardware rather than a look, and has its own Reset.
     property alias displayLayout: adapter.displayLayout
 
-    // Where the brightness slider was left, on a machine with no backlight for
-    // it to read back from: hyprsunset applies a gamma but will not say which
-    // one it is applying, so the shell has to remember. Left out of
-    // restoreDefaults for the same reason as the layout above, and doubly so
-    // here, since resetting the look should not black out the screen.
+    // Where the brightness slider was left on a machine with no backlight to read back from, since hyprsunset never reports the gamma it applies. Out of restoreDefaults so a reset cannot black out the screen.
     property alias gammaBrightness: adapter.gammaBrightness
 
-    // Where a toast is drawn. "integrated" hangs it off the bar as part of the
-    // same surface, which is the default; "floating" is the detached card in the
-    // top right corner. Only the presentation changes: the same notification,
-    // the same timeout and the same control centre list either way.
+    // Where a toast is drawn: "integrated" hangs it off the bar, "floating" is the detached card. Only the presentation changes.
     property alias notificationStyle: adapter.notificationStyle
 
-    // How wide a toast is drawn, and how long one that did not ask for its own
-    // timeout stays. An app is still allowed to name a shorter or longer life
-    // for its own notification; this is only what happens when it does not.
+    // How wide a toast is drawn, and how long one that named no timeout of its own stays; an app can still name its own.
     property alias notificationWidth: adapter.notificationWidth
 
-    // A floor rather than a fixed height: a toast never comes out shorter than
-    // this, and still grows for a body that needs the room. Setting a hard
-    // height would clip the notifications that have the most to say.
+    // A floor rather than a fixed height: a toast never comes out shorter, and still grows for a body that needs the room.
     property alias notificationHeight: adapter.notificationHeight
     property alias notificationSeconds: adapter.notificationSeconds
 
-    // Captures of the real surfaces in the overview. Off falls back to the
-    // application icon, which costs nothing and always draws, on a compositor or
-    // a window that will not hand a frame over.
+    // Real surface captures in the overview; off falls back to the application icon, which costs nothing and always draws.
     property alias overviewPreviews: adapter.overviewPreviews
 
     property alias clockShowSeconds: adapter.clockShowSeconds
@@ -127,17 +110,10 @@ Singleton {
 
         onFileChanged: reload()
 
-        // Not written on the spot. A slider hands over a new value on every
-        // mouse move, and writing there meant serialising the whole file and
-        // going to disk sixty times a second for the length of a drag, with the
-        // change watcher reading each one back. The write lands once the value
-        // stops moving instead.
+        // Debounced rather than written on the spot: a drag hands over a value per mouse move, and writing there serialised the whole file sixty times a second.
         onAdapterUpdated: writeTimer.restart()
 
-        // Only to put the file there the first time. This used to be a blind
-        // timer 1.5s after startup, which is a race the defaults can win: the
-        // load is asynchronous, and a slow read meant writing defaults over
-        // settings that had not arrived yet.
+        // Only to put the file there the first time. A blind startup timer raced the asynchronous load and wrote defaults over settings that had not arrived yet.
         onLoadFailed: writeAdapter()
 
         JsonAdapter {

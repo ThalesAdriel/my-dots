@@ -11,8 +11,7 @@ Item {
     readonly property int itemWidth: Theme.glyphSize + 7
     readonly property int itemSpacing: Settings.workspaceSpacing
 
-    // State first, and keyed by id. Everything the row draws is looked up out of
-    // here, which is a binding re-evaluating rather than a delegate being built.
+    // State first, and keyed by id: everything the row draws is looked up out of here, which is a binding re-evaluating rather than a delegate being built.
     readonly property var workspaceState: {
         const table = {};
         for (const id of root.persistentIds)
@@ -36,11 +35,7 @@ Item {
         return table;
     }
 
-    // The model, and only the model: a fresh array handed to a Repeater rebuilds
-    // every delegate under it, and Hyprland sends an event for every focus
-    // change, window open and window close. The set of workspaces almost never
-    // moves, so this is only replaced when it really has, and the six delegates
-    // survive the rest of the session.
+    // The model, and only the model: a fresh array handed to a Repeater rebuilds every delegate, and Hyprland sends an event for every focus change and window open or close, so this is only replaced when the set of workspaces really moved.
     property var workspaceIds: root.persistentIds
 
     onWorkspaceStateChanged: {
@@ -51,10 +46,7 @@ Item {
     }
 
     function focusWorkspace(target: string): void {
-        // Pasted into a Lua expression that Hyprland evaluates, so a target that
-        // is not a workspace id or a relative step has no business going in.
-        // Nothing reaches this from outside the shell today; the check is here so
-        // that stays true if something ever does.
+        // Pasted into a Lua expression that Hyprland evaluates, so a target that is not a workspace id or a relative step has no business going in; nothing reaches this from outside the shell today, and the check keeps it that way.
         if (!/^(?:\d+|r[-+]\d+)$/.test(target)) {
             console.warn("pesqBar: refused a workspace target that is not an id or a step:", target);
             return;

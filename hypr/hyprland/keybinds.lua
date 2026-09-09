@@ -2,7 +2,7 @@ local home = os.getenv("HOME")
 local scripts = home .. "/.config/hypr/hyprland/scripts"
 local qsbar = "qs ipc -p " .. home .. "/.config/qsbar/shell.qml call"
 local terminals = "'kitty -1' 'foot' 'alacritty' 'wezterm' 'konsole'"
-local shots = "~/Pictures/hyprshot"
+local shots = home .. "/Pictures/Screenshots"
 local stamp = "\"$(date '+%Y-%m-%d_%H.%M.%S').png\""
 
 local locked = { locked = true }
@@ -18,12 +18,38 @@ local function run(command)
 	return hl.dsp.exec_cmd(command)
 end
 
+local function script_path(name, args)
+	return scripts .. "/" .. name .. (args and " " .. args or "")
+end
+
 local function script(name, args)
-	return hl.dsp.exec_cmd(scripts .. "/" .. name .. (args and " " .. args or ""))
+	return run(script_path(name, args))
 end
 
 local function launcher(command)
-	return hl.dsp.exec_cmd("pkill fuzzel || " .. command)
+	return run("pkill fuzzel || " .. command)
+end
+
+local function menu(name, args)
+	return launcher(script_path(name, args))
+end
+
+local function power(action)
+	return script("power.sh", action)
+end
+
+local function shot(mode, extra)
+	return run(
+		"mkdir -p "
+			.. shots
+			.. " && hyprshot -m "
+			.. mode
+			.. " --freeze --filename "
+			.. stamp
+			.. " --output-folder "
+			.. shots
+			.. (extra or "")
+	)
 end
 
 local function zoom(step)
@@ -40,34 +66,19 @@ hl.bind(super("E"), run("nautilus"))
 hl.bind(super("W"), run("flatpak run io.gitlab.librewolf-community"))
 hl.bind(super("X"), run("flatpak run com.vscodium.codium"))
 hl.bind(super("O"), run("flatpak run md.obsidian.Obsidian --ozone-platform=x11"))
-hl.bind(super("M"), launcher(scripts .. "/fuzzel-sysmenu.sh"))
+hl.bind(super("M"), menu("fuzzel-sysmenu.sh"))
 hl.bind(super("CTRL + V"), script("launch_first_available.sh", "'pavucontrol-qt' 'pavucontrol'"))
 
 hl.bind(super("V"), launcher("cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"))
-hl.bind(super("PERIOD"), launcher(scripts .. "/fuzzel-emoji.sh copy"))
-hl.bind(super("A"), launcher(scripts .. "/audio_output_switch.sh"))
+hl.bind(super("PERIOD"), menu("fuzzel-emoji.sh", "copy"))
+hl.bind(super("A"), menu("audio_output_switch.sh"))
 hl.bind(super("SHIFT + A"), run("hyprpicker --autocopy"))
 hl.bind(super("TAB"), run(qsbar .. " overview toggle"))
 
-hl.bind(super("SHIFT + S"), run("hyprshot -m region --freeze --output-folder " .. shots))
-hl.bind(
-	super("SHIFT + E"),
-	run(
-		"hyprshot -m region --freeze --filename "
-			.. stamp
-			.. " --output-folder "
-			.. shots
-			.. " --postcommand "
-			.. scripts
-			.. "/screenshot_edit.sh"
-	)
-)
-hl.bind("Print", run("hyprshot -m output --freeze --filename " .. stamp .. " --output-folder " .. shots), locked)
-hl.bind(
-	"CTRL + Print",
-	run("mkdir -p ~/Pictures/Screenshots && grim ~/Pictures/Screenshots/Screenshot_" .. stamp),
-	locked
-)
+hl.bind(super("SHIFT + S"), shot("region"))
+hl.bind(super("SHIFT + E"), shot("region", " --postcommand " .. script_path("screenshot_edit.sh")))
+hl.bind("Print", shot("output"), locked)
+hl.bind("CTRL + Print", run("mkdir -p " .. shots .. " && grim " .. shots .. "/Screenshot_" .. stamp), locked)
 
 hl.bind("XF86MonBrightnessUp", script("brightness.sh", "--inc"), locked_repeat)
 hl.bind("XF86MonBrightnessDown", script("brightness.sh", "--dec"), locked_repeat)
@@ -124,6 +135,6 @@ hl.bind(super("SHIFT + mouse_up"), hl.dsp.window.move({ workspace = "r-1" }))
 hl.bind(super("S"), hl.dsp.workspace.toggle_special("magic"))
 hl.bind(super("ALT + S"), hl.dsp.window.move({ workspace = "special:magic", follow = false }))
 
-hl.bind(super("L"), run("loginctl lock-session"))
-hl.bind(super("SHIFT + L"), run("sleep 0.1 && systemctl suspend || loginctl suspend"))
-hl.bind("CTRL + SHIFT + ALT + SUPER + Delete", run("systemctl poweroff || loginctl poweroff"))
+hl.bind(super("L"), power("lock"))
+hl.bind(super("SHIFT + L"), power("suspend"))
+hl.bind("CTRL + SHIFT + ALT + SUPER + Delete", power("poweroff"))

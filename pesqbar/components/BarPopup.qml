@@ -1,9 +1,12 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import "root:/config"
+import "root:/services"
 
-PopupWindow {
+// Welded to the bar, but a layer surface of its own rather than an xdg popup of it. Hyprland sends every popup down the live blur path and never lets one read the pre blurred background: renderLayer marks popups with popup = true, and SurfacePassElement answers that with needsLiveBlur true and needsPrecomputeBlur false whatever the layer's xray rule says. A blurred popup hanging off a blurred bar therefore blurs the framebuffer the bar is already painted into, and drags the bar's own pixels down into its top edge. On a layer of its own it takes the same namespace, and the same blur, as the toasts.
+PanelWindow {
     id: root
 
     default property alias popupContent: contentHolder.data
@@ -15,9 +18,11 @@ PopupWindow {
     property bool dismissing: false
     property bool rendered: false
 
-    // Room on either side of the panel for the fillets that weld it to the bar.
-    // The window grows outwards, so the panel itself stays where it was.
+    // Room on either side of the panel for the fillets that weld it to the bar; the window grows outwards, so the panel itself stays where it was.
     readonly property int cornerSize: Settings.outerCorners ? Settings.outerCornerRadius : 0
+
+    // Where the window sits along the bar. A layer surface is placed against the screen rather than against the button it belongs to, so the button's position has to be carried across by hand and kept up to date as the bar reflows.
+    property real anchorOffset: 0
 
     function toggle(): void {
         if (root.dismissing)
@@ -25,21 +30,80 @@ PopupWindow {
         root.shown = !root.shown;
     }
 
-    anchor.item: anchorItem
-    anchor.rect.y: anchorItem ? anchorItem.height + root.gap : 0
-    anchor.rect.x: {
-        if (!anchorItem)
-            return 0;
-        return root.alignRight ? anchorItem.width - root.implicitWidth : (anchorItem.width - root.implicitWidth) / 2;
+    function reposition(): void {
+        if (!root.anchorItem)
+            return;
+
+        // The bar spans the screen from its left edge, so a position in its scene is already a position on the screen.
+        const base = root.anchorItem.mapToItem(null, 0, 0).x;
+        const align = root.alignRight ? root.anchorItem.width - root.implicitWidth : (root.anchorItem.width - root.implicitWidth) / 2;
+        const rightmost = root.screen ? root.screen.width - root.implicitWidth : base + align;
+
+        // A layer surface is placed in whole pixels, so the panel is rounded here rather than left to land between two.
+        root.anchorOffset = Math.round(Math.max(Math.min(base + align, rightmost), 0));
     }
+
+    // The screen the bar carrying the anchor is on, so a panel opens over the monitor it was asked from rather than over the first one.
+    screen: {
+        if (!root.anchorItem)
+            return null;
+        const barWindow = root.anchorItem.QsWindow.window;
+        return barWindow ? barWindow.screen : null;
+    }
+
+    WlrLayershell.namespace: Theme.popupLayerNamespace
+
+    // Only while something in a panel is waiting to be typed into, which today is the enterprise Wi-Fi form alone. The bar took this on behalf of the popups it carried; they are their own surfaces now and take it themselves.
+    WlrLayershell.keyboardFocus: UiState.keyboardCapture ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+
+    // The bar already reserves its own height, so a top anchored layer starts right below it and the gap counts from that edge.
+    anchors {
+        top: true
+        left: true
+    }
+
+    margins.top: root.gap
+    margins.left: root.anchorOffset
+
+    exclusiveZone: 0
+    color: "transparent"
 
     implicitWidth: contentHolder.implicitWidth + root.cornerSize * 2
     implicitHeight: contentHolder.implicitHeight
 
-    color: "transparent"
     visible: root.rendered
 
+    // A panel is built on its first open, so its width only settles as it comes up; each of these lands before the surface is on screen.
+    onImplicitWidthChanged: root.reposition()
+    onShownChanged: root.reposition()
+    onScreenChanged: root.reposition()
+
     data: [
+        Connections {
+            target: root.anchorItem
+
+            function onXChanged(): void {
+                root.reposition();
+            }
+
+            function onWidthChanged(): void {
+                root.reposition();
+            }
+        },
+
+        // The button also moves when the group holding it reflows, which is what a tray icon arriving or the drawer opening does to everything on its left.
+        Connections {
+            target: root.anchorItem ? root.anchorItem.parent : null
+
+            function onXChanged(): void {
+                root.reposition();
+            }
+
+            function onWidthChanged(): void {
+                root.reposition();
+            }
+        },
+
         HyprlandFocusGrab {
             windows: [root]
             active: root.shown
@@ -79,8 +143,7 @@ PopupWindow {
             Rectangle {
                 id: surface
 
-                // Welded to the bar, the panel's top corners are pushed up out
-                // of the clip so they come out square against it.
+                // Welded to the bar, the panel's top corners are pushed up out of the clip so they come out square against it.
                 readonly property int lift: root.cornerSize > 0 ? Theme.cardRadius : 0
 
                 x: root.cornerSize

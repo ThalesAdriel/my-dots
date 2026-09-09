@@ -1,10 +1,7 @@
 import QtQuick
 import "root:/config"
 
-// The small flat button every panel is built out of: a word, or a single glyph
-// where there is no room for one. The network, bluetooth and display panels each
-// carried their own copy of this, which had already drifted apart by a couple of
-// pixels of padding between them.
+// The small flat button every panel is built out of: a word, or a single glyph where there is no room for one. The network, bluetooth and display panels each carried their own copy, already drifted apart by a couple of pixels of padding.
 Rectangle {
     id: root
 

@@ -12,9 +12,7 @@ Item {
     readonly property int panelPadding: 16
     readonly property int panelWidth: 380
 
-    // The access point the form below is filling in for, "" when there is no
-    // form. Enterprise networks get the full form, everything else gets one
-    // password field, and a saved or open network gets neither.
+    // The access point the form below is filling in for, "" when there is no form: enterprise networks get the full form, everything else one password field, and a saved or open network neither.
     property string pendingName: ""
     property bool pendingEnterprise: false
     property bool advancedOpen: false
@@ -25,10 +23,7 @@ Item {
     property string eap: "peap"
     property string phase2: "mschapv2"
 
-    // Typing into a popup needs the bar's layer surface to be focusable, and it
-    // is only focusable while a form is up. The rest of the time the bar takes
-    // no keyboard at all, so clicking it does not pull focus off whatever was
-    // in front.
+    // Typing into a popup needs the bar's layer surface focusable, and it only is while a form is up; the rest of the time the bar takes no keyboard, so clicking it does not pull focus off whatever was in front.
     onPendingNameChanged: UiState.keyboardCapture = root.pendingName !== ""
 
     function reset(): void {
@@ -47,8 +42,7 @@ Item {
     }
 
     function begin(point: var): void {
-        // Already known to NetworkManager, so it has the secret and there is
-        // nothing to ask for.
+        // Already known to NetworkManager, so it has the secret and there is nothing to ask for.
         if (Network.isSaved(point.ssid)) {
             Network.connectSaved(point.ssid);
             return;
@@ -78,16 +72,14 @@ Item {
         else
             Network.connectPersonal(root.pendingName, passwordField.text);
 
-        // The password is gone from here the moment it has been handed over. It
-        // was never written anywhere else.
+        // The password is gone from here the moment it has been handed over, and it was never written anywhere else.
         root.reset();
     }
 
     implicitWidth: root.panelWidth
     implicitHeight: content.implicitHeight + root.panelPadding * 2
 
-    // A row of mutually exclusive words. Small enough that a dropdown would be
-    // more machinery than the choice is worth.
+    // A row of mutually exclusive words, small enough that a dropdown would be more machinery than the choice is worth.
     component ChoiceRow: Item {
         id: choiceRow
 
@@ -375,8 +367,7 @@ Item {
             }
         }
 
-        // The form. One password field for a personal network, the whole 802.1X
-        // set for an enterprise one, which is what eduroam is.
+        // The form: one password field for a personal network, the whole 802.1X set for an enterprise one, which is what eduroam is.
         Column {
             id: form
 

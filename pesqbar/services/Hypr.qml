@@ -5,15 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 
-// The window geometry Quickshell.Hyprland does not carry. Quickshell knows which
-// toplevels exist and which workspace is focused, but not where a window sits or
-// how big it is, and an overview is nothing without that. hyprctl -j is the only
-// place to get it.
-//
-// Read only while something is looking. The overview is the only caller, it is
-// open for a few seconds at a time, and a shell that shells out to hyprctl every
-// couple of seconds for the rest of the session to keep a panel warm that nobody
-// has open is a shell that costs more than it is worth.
+// The window geometry Quickshell.Hyprland does not carry, out of hyprctl -j, and read only while the overview is looking: keeping a panel nobody has open warm would cost more than it is worth.
 Singleton {
     id: root
 
@@ -27,15 +19,12 @@ Singleton {
     // [{ id, name, x, y, width, height, scale, reserved: [l, t, r, b], transform }]
     property var monitors: []
 
-    // Addresses come back from hyprctl and go straight into a dispatch string,
-    // so they are checked for the shape of one first. Nothing untrusted reaches
-    // this today; the check is here so that stays true if something ever does.
+    // Addresses come back from hyprctl and go straight into a dispatch string, so they are checked for the shape of one first; nothing untrusted reaches this today, and the check keeps it that way.
     function isAddress(address: string): bool {
         return /^0x[0-9A-Fa-f]+$/.test(address);
     }
 
-    // Hyprland reads its config in Lua now, and the classic "workspace 3" string
-    // is not what it answers to there. Quickshell reports which one is in use.
+    // Hyprland reads its config in Lua now, where the classic "workspace 3" string is not what it answers to; Quickshell reports which one is in use.
     function dispatch(lua: string, classic: string): void {
         Hyprland.dispatch(Hyprland.usingLua ? lua : classic);
     }
@@ -58,9 +47,7 @@ Singleton {
         root.dispatch(`hl.dsp.window.close('address:${address}')`, "closewindow address:" + address);
     }
 
-    // follow = false is what makes it a move rather than a move and a jump: the
-    // window goes, the view stays, which is what dragging a preview onto another
-    // workspace in the overview means.
+    // follow = false makes it a move rather than a move and a jump: the window goes, the view stays, which is what dragging a preview onto another workspace means.
     function moveWindowToWorkspace(address: string, id: int): void {
         if (!root.isAddress(address))
             return;
@@ -96,10 +83,7 @@ Singleton {
             root.refresh();
     }
 
-    // Hyprland fires a burst of events for one user action: opening a window is
-    // openwindow, then activewindow, then workspace. Reading on each one would
-    // run hyprctl three times for a single change, so they collapse into one
-    // read on the trailing edge.
+    // Hyprland fires a burst of events for one action (openwindow, then activewindow, then workspace), so they collapse into one read on the trailing edge rather than three hyprctl runs.
     Connections {
         target: Hyprland
 

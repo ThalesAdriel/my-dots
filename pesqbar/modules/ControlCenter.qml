@@ -16,28 +16,23 @@ BarPopup {
 
     readonly property bool displaysVisible: root.shown && UiState.displaysOpen
 
-    // hyprctl is only asked for the monitor layout while the sheet that shows
-    // it is open.
+    // hyprctl is only asked for the monitor layout while the sheet that shows it is open.
     onDisplaysVisibleChanged: Displays.watching = root.displaysVisible
 
-    // The brightness row is left out entirely on a machine with no backlight,
-    // and the panel closes the gap rather than leaving an empty card behind.
+    // The brightness row is left out entirely on a machine with no backlight, and the panel closes the gap rather than leaving an empty card behind.
     readonly property int brightnessRowHeight: Brightness.available ? 28 : 0
     readonly property int brightnessRowMargin: root.brightnessRowHeight > 0 ? 10 : 0
 
     onShownChanged: {
         UiState.controlCenterOpen = root.shown;
 
-        // brightnessctl is only worth re-reading while the slider that shows it
-        // is on screen and the brightness keys could be moving it underneath.
+        // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath.
         Brightness.watching = root.shown;
 
-        // Hiding the panel does not send the pointer anywhere, so nothing would
-        // clear this on its own and the tooltip would be waiting on reopen.
+        // Hiding the panel does not send the pointer anywhere, so nothing would clear this on its own and the tooltip would be waiting on reopen.
         root.hoveredAction = null;
 
-        // The list below already carries everything, so drop the toasts rather
-        // than showing the same notifications twice.
+        // The list below already carries everything, so drop the toasts rather than showing the same notifications twice.
         if (root.shown) {
             Notifications.clearPopups();
         } else {
@@ -53,8 +48,7 @@ BarPopup {
         property string tooltip: ""
         property bool engaged: false
 
-        // The header carries the same buttons at the size the Clear button next
-        // to them is, rather than at the size of the row along the bottom.
+        // The header carries the same buttons at the size the Clear button next to them is, rather than at the size of the row along the bottom.
         property bool compact: false
 
         signal triggered
@@ -97,9 +91,7 @@ BarPopup {
         }
     }
 
-    // A sheet that covers the whole panel: a back arrow, a name, and whatever it
-    // is showing, scrolling under them. Two of these stack, so the header and
-    // the scrolling live here once rather than in each.
+    // A sheet that covers the whole panel: a back arrow, a name, and whatever it is showing scrolling under them. Two of these stack, so the header and the scrolling live here once rather than in each.
     component Sheet: Rectangle {
         id: sheet
 
@@ -107,9 +99,7 @@ BarPopup {
         property bool open: false
         default property alias sheetContent: sheetHolder.data
 
-        // What the content is loaded against: true while the sheet is open and
-        // for as long as it is still fading out. Unloading on `open` alone
-        // would empty the sheet under the fade.
+        // What the content is loaded against: true while the sheet is open and for as long as it is still fading out, since unloading on `open` alone would empty the sheet under the fade.
         readonly property bool populated: sheet.open || sheet.opacity > 0.01
 
         signal dismissed
@@ -245,12 +235,7 @@ BarPopup {
             }
         }
 
-        // The backlight, directly under System settings: it is something you
-        // reach for rather than read, so it sits at the top with the header
-        // rather than down among the notifications. A bare row rather than a
-        // Card: the header above it and the action row below are both drawn
-        // straight onto the panel, and a filled block around this one alone
-        // reads as a box that wandered in from somewhere else.
+        // The backlight, directly under System settings: something you reach for rather than read, so it sits at the top. A bare row rather than a Card, since the header above and the action row below are drawn straight onto the panel.
         Item {
             id: brightnessRow
 
@@ -264,9 +249,7 @@ BarPopup {
             visible: root.brightnessRowHeight > 0
             height: root.brightnessRowHeight
 
-            // The same 32 wide slot the gear above and the bell below sit in,
-            // so the slider starts on the column the System settings label and
-            // the Clear button already share rather than ten pixels left of it.
+            // The same 32 wide slot the gear above and the bell below sit in, so the slider starts on the column the System settings label and the Clear button already share.
             IconText {
                 id: brightnessIcon
 
@@ -323,12 +306,10 @@ BarPopup {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
 
-                // The same gap the label and the slider above keep from their
-                // own icons, so all three rows start their content on one column.
+                // The same gap the label and the slider above keep from their own icons, so all three rows start their content on one column.
                 spacing: 10
 
-                // Do not disturb reads as something you do to the list, so it
-                // sits with Clear rather than in the row of system actions.
+                // Do not disturb reads as something you do to the list, so it sits with Clear rather than in the row of system actions.
                 ActionButton {
                     compact: true
                     glyph: Notifications.doNotDisturb ? Glyphs.bellOff : Glyphs.bell
@@ -415,8 +396,7 @@ BarPopup {
                 spacing: 10
                 boundsBehavior: Flickable.StopAtBounds
 
-                // Newest first, and wrapped so an arriving or dismissed
-                // notification does not rebuild every card in the list.
+                // Newest first, and wrapped so an arriving or dismissed notification does not rebuild every card in the list.
                 model: ScriptModel {
                     values: Notifications.history
                 }
@@ -478,17 +458,11 @@ BarPopup {
             }
         }
 
-        // One tooltip for the whole action row, sitting above whichever button
-        // is hovered. Drawn inside the panel rather than as its own window: a
-        // popup anchored to an item that is itself inside a popup is two levels
-        // of xdg popup for a label that fits in the space above the buttons.
+        // One tooltip for the whole action row, above whichever button is hovered, drawn inside the panel rather than as its own window: a popup anchored inside a popup is two levels of xdg popup for a label that fits in the space above the buttons.
         Item {
             id: actionTooltip
 
-            // What the pointer is over, and what the tooltip is drawing. They
-            // have to be separate: the fade out outlives the pointer leaving, and
-            // reading the live button on the way out collapsed the tooltip to an
-            // empty box in the corner of the panel for the length of the fade.
+            // What the pointer is over and what the tooltip is drawing have to be separate: the fade out outlives the pointer leaving, and reading the live button on the way out collapsed the tooltip to an empty box for the length of the fade.
             readonly property string target: root.hoveredAction ? root.hoveredAction.tooltip : ""
 
             property var anchorButton: null
@@ -508,10 +482,7 @@ BarPopup {
                 return Math.round(Math.min(Math.max(centre - actionTooltip.width / 2, root.panelPadding), free));
             }
 
-            // Follows whichever button is hovered rather than sitting over the
-            // bottom row: the gear and the do not disturb bell are up in the
-            // header now, where there is nothing above them to sit in, so the
-            // label drops below a button that has no room over it.
+            // Follows whichever button is hovered rather than sitting over the bottom row: the gear and the do not disturb bell are up in the header now, so the label drops below a button that has no room over it.
             y: {
                 if (!actionTooltip.anchorButton)
                     return 0;
@@ -524,9 +495,7 @@ BarPopup {
 
             visible: actionTooltip.shown || tooltipSurface.opacity > 0.01
 
-            // The delay is per button, but only until one is on screen: once it
-            // is, sliding along the row swaps the label straight away rather
-            // than making you wait again at every button.
+            // The delay is per button, but only until one is on screen: after that, sliding along the row swaps the label straight away rather than waiting again at every button.
             onTargetChanged: {
                 if (actionTooltip.target === "") {
                     delayTimer.stop();
@@ -599,17 +568,13 @@ BarPopup {
             }
         }
 
-        // Both sheets are built on first use rather than at startup. Between
-        // them they are the two largest trees in the shell, they are two clicks
-        // deep, and there is one of each per output: nothing here is worth
-        // constructing for a session that never opens settings.
+        // Both sheets are built on first use rather than at startup: between them the two largest trees in the shell, two clicks deep, one of each per output, and not worth constructing for a session that never opens settings.
         Sheet {
             id: settingsSheet
 
             title: "System settings"
 
-            // Only one sheet is on screen: opening the display manager fades
-            // this one out under it rather than leaving both to render.
+            // Only one sheet is on screen: opening the display manager fades this one out under it rather than leaving both to render.
             open: UiState.settingsOpen && !UiState.displaysOpen
             onDismissed: UiState.settingsOpen = false
 

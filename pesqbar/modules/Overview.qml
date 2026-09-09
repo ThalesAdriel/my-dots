@@ -8,14 +8,7 @@ import Quickshell.Hyprland
 import "root:/config"
 import "root:/services"
 
-// Every workspace at once, each drawn to the shape of the output it lives on
-// with its windows in the places they actually occupy. Click a window to go to
-// it, middle click to close it, drag it onto another workspace to move it there,
-// click the empty part of a workspace to switch to it.
-//
-// The previews are live captures of the real surfaces rather than icons, which
-// is the whole point of an overview: you recognise a window by what is in it.
-// They only run while this is on screen.
+// Every workspace at once, drawn to the shape of the output it lives on with its windows where they actually are: click to focus, middle click to close, drag onto another workspace to move. The previews are live captures rather than icons, which is the whole point, and only run while this is on screen.
 Scope {
     id: scope
 
@@ -25,21 +18,17 @@ Scope {
     // The same six the bar keeps a dot for, laid out the same way round.
     readonly property int workspaceCount: scope.columns * scope.rows
 
-    // A row with nothing on it is a row of empty rectangles. Hidden unless the
-    // workspace you are standing on is in it.
+    // A row with nothing on it is a row of empty rectangles, so it is hidden unless the workspace you are standing on is in it.
     readonly property bool hideEmptyRows: true
 
-    // How much of the space it could take it actually takes. The grid at full
-    // width crowds the screen edges; this leaves it sitting in the middle.
+    // How much of the space it could take it actually takes: the grid at full width crowds the screen edges, and this leaves it sitting in the middle.
     readonly property real sizeFactor: 0.66
 
-    // The workspace a dragged window is currently over, or -1. Lives here rather
-    // than per screen so a tile can light up while the pointer is inside it.
+    // The workspace a dragged window is currently over, or -1; lives here rather than per screen so a tile can light up while the pointer is inside it.
     property int dropTarget: -1
     property bool dragging: false
 
-    // What the pointer is over, for the strip along the bottom. Cleared on the
-    // way out so it does not describe a window that is no longer under it.
+    // What the pointer is over, for the strip along the bottom; cleared on the way out so it does not describe a window that is no longer under it.
     property var hoveredClient: null
 
     function toggle(): void {
@@ -55,8 +44,7 @@ Scope {
             scope.dropTarget = -1;
     }
 
-    // Closing while a preview is mid drag would leave the flags set for the next
-    // time it opens.
+    // Closing while a preview is mid drag would leave the flags set for the next time it opens.
     Connections {
         target: UiState
 
@@ -89,9 +77,7 @@ Scope {
 
             readonly property int activeWorkspace: root.hyprMonitor && root.hyprMonitor.activeWorkspace ? root.hyprMonitor.activeWorkspace.id : 1
 
-            // The overview only takes the keyboard while it is up, and only on
-            // the output the pointer is actually on. Two exclusive keyboard
-            // grabs at once is one too many.
+            // The overview only takes the keyboard while it is up, and only on the output the pointer is on: two exclusive keyboard grabs at once is one too many.
             readonly property bool focusedHere: Hyprland.focusedMonitor && root.hyprMonitor && Hyprland.focusedMonitor.id === root.hyprMonitor.id
 
             WlrLayershell.namespace: Theme.overviewLayerNamespace
@@ -110,9 +96,7 @@ Scope {
                 right: true
             }
 
-            // The logical size of this output, which is what window coordinates
-            // are measured in. Falls back to the screen while hyprctl has not
-            // answered yet, so the first frame is laid out rather than collapsed.
+            // The logical size of this output, which is what window coordinates are measured in; falls back to the screen while hyprctl has not answered, so the first frame is laid out rather than collapsed.
             readonly property real monitorWidth: root.monitorData && root.monitorData.width > 0 ? root.monitorData.width / (root.monitorData.scale || 1) : root.modelData.width
             readonly property real monitorHeight: root.monitorData && root.monitorData.height > 0 ? root.monitorData.height / (root.monitorData.scale || 1) : root.modelData.height
             readonly property real monitorX: root.monitorData ? root.monitorData.x : 0
@@ -120,8 +104,7 @@ Scope {
 
             readonly property int gap: 12
 
-            // Which workspaces get a tile. Whole rows drop out together, so the
-            // grid keeps its shape instead of reflowing into a ragged block.
+            // Which workspaces get a tile: whole rows drop out together, so the grid keeps its shape instead of reflowing into a ragged block.
             readonly property var visibleWorkspaces: {
                 const all = [];
                 for (let id = 1; id <= scope.workspaceCount; id++)
@@ -138,15 +121,13 @@ Scope {
                         kept.push(...ids);
                 }
 
-                // Never everything hidden: an overview with no tiles tells you
-                // nothing and gives you nowhere to click.
+                // Never everything hidden: an overview with no tiles tells you nothing and gives you nowhere to click.
                 return kept.length > 0 ? kept : all.slice(0, scope.columns);
             }
 
             readonly property int visibleRows: Math.max(Math.ceil(root.visibleWorkspaces.length / scope.columns), 1)
 
-            // Sized so the whole grid fits either way round, then taken in a bit
-            // so it does not run to the screen edges.
+            // Sized so the whole grid fits either way round, then taken in a bit so it does not run to the screen edges.
             readonly property real tileWidth: {
                 const byWidth = (width * scope.sizeFactor - root.gap * (scope.columns - 1)) / scope.columns;
                 const byHeight = ((height * scope.sizeFactor - root.gap * (root.visibleRows - 1)) / root.visibleRows) * (root.monitorWidth / Math.max(root.monitorHeight, 1));
@@ -175,9 +156,7 @@ Scope {
                 onClicked: scope.close()
             }
 
-            // Focus grab rather than only the click catcher above: a keybind that
-            // opens something else, or a window taking focus on its own, should
-            // put the overview away too.
+            // Focus grab rather than only the click catcher above: a keybind that opens something else, or a window taking focus on its own, should put the overview away too.
             HyprlandFocusGrab {
                 windows: [root]
                 active: UiState.overviewOpen && root.focusedHere
@@ -188,10 +167,7 @@ Scope {
                 anchors.fill: parent
                 focus: UiState.overviewOpen && root.focusedHere
 
-                // Arrows and hjkl walk the grid, wrapping at the edges; the
-                // number row jumps straight to one. Walking moves the focus
-                // without putting the overview away, so you can look around
-                // before committing; Enter and Escape are what close it.
+                // Arrows and hjkl walk the grid wrapping at the edges, the number row jumps straight to one; walking moves focus without closing, so you can look around before committing, and Enter and Escape are what close it.
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         scope.close();
@@ -256,7 +232,10 @@ Scope {
                     }
 
                     Repeater {
-                        model: root.visibleWorkspaces
+                        // Diffed rather than handed over as a fresh array: the list is rebuilt whenever Hypr replaces its client map, which is every window event while the overview is open, and a raw array would tear down every tile and restart every capture underneath it.
+                        model: ScriptModel {
+                            values: root.visibleWorkspaces
+                        }
 
                         delegate: Rectangle {
                             id: tile
@@ -267,10 +246,7 @@ Scope {
                             readonly property bool active: root.activeWorkspace === tile.workspaceId
                             readonly property bool targeted: scope.dragging && scope.dropTarget === tile.workspaceId
 
-                            // Windows on this workspace, matched back to the live
-                            // toplevel that can be captured. Quickshell knows the
-                            // surface, hyprctl knows where it is; the address is
-                            // what ties the two together.
+                            // Windows on this workspace, matched back to the live toplevel that can be captured: Quickshell knows the surface, hyprctl knows where it is, and the address ties the two together.
                             readonly property var entries: {
                                 if (!UiState.overviewOpen || !ToplevelManager.toplevels)
                                     return [];
@@ -287,11 +263,7 @@ Scope {
                             height: root.tileHeight
                             radius: Theme.cardRadius
 
-                            // Clipping is what keeps a window inside its own
-                            // workspace, and exactly what has to stop while one
-                            // is being dragged out of it. The tile being dragged
-                            // from is lifted over its neighbours for the same
-                            // reason.
+                            // Clipping is what keeps a window inside its own workspace, and exactly what has to stop while one is being dragged out of it; the tile being dragged from is lifted over its neighbours for the same reason.
                             clip: !scope.dragging
                             z: scope.dragging ? 1 : 0
 
@@ -299,17 +271,14 @@ Scope {
                             border.width: tile.targeted || tile.active ? 2 : Theme.panelBorderWidth
                             border.color: tile.targeted ? Theme.accent : tile.active ? Theme.accent : Theme.cardBorder
 
-                            // Never below 1: the tiles carry the previews, and a
-                            // tile at 96% is a tile the desktop shows through.
-                            // The drop target reads as the accent border instead.
+                            // Never below 1: the tiles carry the previews, and a tile at 96% is one the desktop shows through, so the drop target reads as the accent border instead.
                             Behavior on border.color {
                                 ColorAnimation {
                                     duration: Theme.durationFast
                                 }
                             }
 
-                            // Under the windows, so a click that misses one is a
-                            // click on the workspace itself.
+                            // Under the windows, so a click that misses one is a click on the workspace itself.
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
@@ -318,8 +287,7 @@ Scope {
                                 }
                             }
 
-                            // Lights the tile up while a dragged window is over
-                            // it, and is what the drop is resolved against.
+                            // Lights the tile up while a dragged window is over it, and is what the drop is resolved against.
                             DropArea {
                                 anchors.fill: parent
                                 onEntered: scope.dropTarget = tile.workspaceId
@@ -366,9 +334,7 @@ Scope {
                                     readonly property var client: Hypr.clientByAddress["0x" + preview.modelData.HyprlandToplevel.address]
                                     readonly property string address: preview.client ? preview.client.address : ""
 
-                                    // The tile is the output shrunk by this much,
-                                    // so a window shrinks by the same and lands in
-                                    // the same relative spot.
+                                    // The tile is the output shrunk by this much, so a window shrinks by the same and lands in the same relative spot.
                                     readonly property real factor: root.tileWidth / Math.max(root.monitorWidth, 1)
 
                                     readonly property real homeX: preview.client ? (preview.client.at[0] - root.monitorX) * preview.factor : 0
@@ -381,8 +347,7 @@ Scope {
 
                                     visible: preview.client !== undefined && preview.client !== null
 
-                                    // Follows the pointer while dragged, back to
-                                    // where the window really is when let go.
+                                    // Follows the pointer while dragged, back to where the window really is when let go.
                                     Drag.active: dragArea.drag.active
                                     Drag.hotSpot.x: preview.width / 2
                                     Drag.hotSpot.y: preview.height / 2
@@ -391,9 +356,7 @@ Scope {
 
                                     z: preview.dragActive ? 10 : 0
 
-                                    // Pressing is not dragging. Flipping the flag
-                                    // on press would unclip every tile on a plain
-                                    // click, which flickers.
+                                    // Pressing is not dragging: flipping the flag on press would unclip every tile on a plain click, which flickers.
                                     onDragActiveChanged: {
                                         if (preview.dragActive)
                                             scope.dragging = true;
@@ -413,11 +376,7 @@ Scope {
                                         }
                                     }
 
-                                    // What the window calls itself, resolved to a
-                                    // desktop entry so there is something to draw
-                                    // while the capture is not ready. The icon
-                                    // arrives as an image:// handle; the plate
-                                    // below wants the name inside it.
+                                    // What the window calls itself, resolved to a desktop entry so there is something to draw while the capture is not ready; the icon arrives as an image:// handle and the plate below wants the name inside it.
                                     readonly property var entry: preview.client ? DesktopEntries.heuristicLookup(preview.client["class"]) : null
 
                                     readonly property string iconPath: {
@@ -426,21 +385,14 @@ Scope {
                                         return Quickshell.iconPath(name !== "" ? name : "application-x-executable", true);
                                     }
 
-                                    // Opaque, and dark. This is what the capture
-                                    // is composited onto, and what shows in the
-                                    // letterbox bars beside it.
+                                    // Opaque, and dark: this is what the capture is composited onto, and what shows in the letterbox bars beside it.
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: Theme.radius
                                         color: Theme.overviewBackground
                                     }
 
-                                    // A capture is not ready the moment it is
-                                    // asked for, and a view drawn before it has a
-                                    // frame is a blank rectangle. The icon holds
-                                    // the place until there is really something to
-                                    // show, and stays for good on a window the
-                                    // compositor will not hand over.
+                                    // A capture is not ready the moment it is asked for, and a view drawn before it has a frame is a blank rectangle; the icon holds the place until there is something to show, and stays for good on a window the compositor will not hand over.
                                     Image {
                                         anchors.centerIn: parent
                                         visible: !capture.hasContent && preview.iconPath !== ""
@@ -460,9 +412,7 @@ Scope {
 
                                         anchors.centerIn: parent
 
-                                        // Letterboxed rather than stretched: the
-                                        // tile is the shape of the output, and a
-                                        // window is rarely the same shape as it.
+                                        // Letterboxed rather than stretched: the tile is the shape of the output, and a window is rarely the same shape as it.
                                         readonly property real sourceAspect: {
                                             if (!preview.client)
                                                 return 1;
@@ -477,15 +427,7 @@ Scope {
                                         captureSource: UiState.overviewOpen && Settings.overviewPreviews ? preview.modelData : null
                                         visible: capture.hasContent
 
-                                        // One frame, not a stream. A live capture
-                                        // asks the compositor for a new frame
-                                        // forever, and a window sitting on a
-                                        // workspace nobody is looking at is not
-                                        // being drawn: the first frame comes back
-                                        // as the window really looks and every one
-                                        // after it comes back empty, which is the
-                                        // preview going white a moment after it
-                                        // appeared. A snapshot keeps the good one.
+                                        // One frame, not a stream: a live capture asks the compositor forever, and a window on a workspace nobody is looking at is not being drawn, so the first frame comes back real and every one after it empty — the preview going white a moment after it appeared. A snapshot keeps the good one.
                                         live: false
 
                                         onCaptureSourceChanged: {
@@ -517,20 +459,14 @@ Scope {
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
 
-                                        // The hover strip along the bottom reads
-                                        // this rather than the preview drawing its
-                                        // own label, which at this size would be
-                                        // smaller than it is readable.
+                                        // The hover strip along the bottom reads this rather than the preview drawing its own label, which at this size would be smaller than it is readable.
                                         onEntered: scope.hoveredClient = preview.client
                                         onExited: {
                                             if (scope.hoveredClient === preview.client)
                                                 scope.hoveredClient = null;
                                         }
 
-                                        // clicked() still arrives after a drag,
-                                        // so the release records what happened and
-                                        // the click reads it rather than focusing a
-                                        // window that was only being moved.
+                                        // clicked() still arrives after a drag, so the release records what happened and the click reads it rather than focusing a window that was only being moved.
                                         property bool wasDragged: false
 
                                         onReleased: {
@@ -540,10 +476,7 @@ Scope {
                                             dragArea.wasDragged = wasDragging;
                                             scope.dragging = false;
 
-                                            // Snapping back has to be a binding
-                                            // again: dragging wrote over x and y
-                                            // directly and broke the ones that
-                                            // put the preview where the window is.
+                                            // Snapping back has to be a binding again: dragging wrote over x and y directly and broke the ones that put the preview where the window is.
                                             preview.x = Qt.binding(() => preview.homeX);
                                             preview.y = Qt.binding(() => preview.homeY);
 
@@ -578,9 +511,7 @@ Scope {
                     }
                 }
 
-                // What the pointer is on, written where there is room to write
-                // it. Both halves come from the application, so both are drawn as
-                // the plain text they are rather than as possible markup.
+                // What the pointer is on, written where there is room to write it; both halves come from the application, so both are drawn as the plain text they are rather than as possible markup.
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: grid.bottom

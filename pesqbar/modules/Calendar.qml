@@ -8,11 +8,7 @@ import "root:/components"
 Item {
     id: root
 
-    // Set by whatever is holding the calendar, and false until the popup that
-    // carries it has actually been opened once. The year view is twelve month
-    // blocks of forty two day cells: around eighteen hundred items, per screen,
-    // built at startup for a panel most sessions never open. Nothing below the
-    // header exists until this goes true.
+    // Set by whatever holds the calendar, and false until its popup has been opened once: the year view is twelve blocks of forty two day cells, around eighteen hundred items per screen, so nothing below the header exists until this goes true.
     property bool active: true
 
     property int offset: 0
@@ -31,8 +27,7 @@ Item {
     readonly property real bodyWidth: root.yearView ? root.yearBodyWidth : root.monthBodyWidth
     readonly property real bodyHeight: root.yearView ? root.yearBodyHeight : root.monthBodyHeight
 
-    // Pulled out as plain numbers so the whole calendar does not rebuild every
-    // time the clock ticks: these only change when the day actually changes.
+    // Pulled out as plain numbers so the whole calendar does not rebuild on every clock tick: these only change when the day actually changes.
     readonly property int todayYear: clock.date.getFullYear()
     readonly property int todayMonth: clock.date.getMonth()
     readonly property int todayDay: clock.date.getDate()
@@ -68,8 +63,7 @@ Item {
         root.offset += direction;
     }
 
-    // An offset counts months in month view and years in year view, so it has to
-    // go back to today whenever the view changes or the calendar is reopened.
+    // An offset counts months in month view and years in year view, so it has to go back to today whenever the view changes or the calendar is reopened.
     function reset(): void {
         root.offset = 0;
     }
@@ -82,11 +76,7 @@ Item {
     implicitWidth: root.bodyWidth + root.padding * 2
     implicitHeight: header.height + root.bodyHeight + root.padding * 3
 
-    // Nothing here animates. Stepping a month redraws the grid on the spot and
-    // switching views swaps one layout for the other, so a fast scroll lands on
-    // the month it stopped at instead of chasing a cross fade. The blur, the
-    // slide and the staged opacity swap that used to cover both are gone with
-    // them, and so is the render layer they needed.
+    // Nothing here animates: stepping a month redraws the grid on the spot and switching views swaps one layout for the other, so a fast scroll lands on the month it stopped at rather than chasing a cross fade.
 
     SystemClock {
         id: clock
@@ -302,9 +292,7 @@ Item {
         height: root.bodyHeight
         clip: true
 
-        // One layout at a time, and neither until the calendar is on screen.
-        // The body has a fixed size taken from plain numbers, so an empty
-        // loader does not collapse the panel it sits in.
+        // One layout at a time, and neither until the calendar is on screen; the body has a fixed size taken from plain numbers, so an empty loader does not collapse the panel.
         Loader {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
@@ -348,9 +336,7 @@ Item {
         }
     }
 
-    // Sits over the whole calendar for the wheel and for the right click that
-    // switches views. Left clicks are not accepted, so they fall through to the
-    // header buttons underneath.
+    // Sits over the whole calendar for the wheel and for the right click that switches views; left clicks are not accepted, so they fall through to the header buttons underneath.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton

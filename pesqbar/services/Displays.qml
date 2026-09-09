@@ -5,33 +5,20 @@ import Quickshell
 import Quickshell.Io
 import "root:/config"
 
-// The monitor layout, read out of hyprctl and written back with it.
-//
-// hyprctl reports a monitor's mode in physical pixels and its position in
-// logical ones, so the two only agree once the scale is divided out. Everything
-// below works in logical coordinates, which is what the arrangement is actually
-// in, and converts back at the edges.
-//
-// Nothing is written to the Hyprland config. The layout lives in the shell's own
-// settings.json and is applied with `hyprctl keyword` when the bar comes up,
-// which works the same whether the config is hyprlang or Lua and undoes itself
-// by being deleted.
+// The monitor layout, read out of hyprctl and written back with it. Everything below works in logical coordinates, since hyprctl reports a mode in physical pixels and a position in logical ones, and the layout lives in settings.json rather than the Hyprland config, applied with hyprctl keyword.
 Singleton {
     id: root
 
-    // Polled while the settings sheet is open. The rest of the time the layout
-    // is only read when something changes it.
+    // Polled while the settings sheet is open; the rest of the time the layout is only read when something changes it.
     property bool watching: false
 
     property bool available: true
     property string lastError: ""
 
-    // [{ name, description, x, y, width, height, refresh, scale,
-    //    modes: [{ width, height, refresh, label }] }]
+    // [{ name, description, x, y, width, height, refresh, scale, modes: [{ width, height, refresh, label }] }]
     property var monitors: []
 
-    // What the panel is editing: name -> { x, y, width, height, refresh, scale }.
-    // Held apart from `monitors` so an edit survives the next poll.
+    // What the panel is editing: name -> { x, y, width, height, refresh, scale }, held apart from `monitors` so an edit survives the next poll.
     property var draft: ({})
     property string selected: ""
 
@@ -42,8 +29,7 @@ Singleton {
     // What was on screen before a preview started, so it can be put back.
     property var previousLayout: ({})
 
-    // A saved layout is put back once, when the monitors are first read. Doing
-    // it on every read would fight anyone changing a monitor by hand.
+    // A saved layout is put back once, when the monitors are first read; doing it on every read would fight anyone changing a monitor by hand.
     property bool restored: false
 
     readonly property int previewTimeout: 12
@@ -91,17 +77,12 @@ Singleton {
         return -1;
     }
 
-    // Hyprland's own names, so this is not about escaping anything a stranger
-    // sent. It is that the spec below is joined into one batch string with ; and
-    // , as separators, and a name has to be unable to reach either.
+    // Hyprland's own names, so not about escaping a stranger's input: the spec is joined into one batch string with ; and , as separators, and a name must be unable to reach either.
     function usableName(name: string): bool {
         return /^[A-Za-z0-9_.:-]+$/.test(name);
     }
 
-    // The same argument for the numbers, and a stronger one: a saved layout is
-    // read back out of settings.json, which is a file on disk that anything can
-    // edit, and every one of these ends up interpolated into that batch string.
-    // A value that is not a plain number in a sane range does not get that far.
+    // The same argument for the numbers, and a stronger one: a saved layout is read back out of settings.json, which anything can edit, and every value is interpolated into that batch string.
     function sanitiseEntry(entry: var): var {
         if (!entry)
             return null;
@@ -173,9 +154,7 @@ Singleton {
             if (!item || !root.usableName(item.name))
                 continue;
 
-            // A disabled output reports 0x0 at 0 Hz. There is nothing to place
-            // and nothing here that turns one back on, so it is left out rather
-            // than drawn as an eight pixel stub with a nonsense mode.
+            // A disabled output reports 0x0 at 0 Hz: nothing to place and nothing here turns one back on, so it is left out rather than drawn as a stub.
             if (item.disabled === true || !(item.width > 0) || !(item.height > 0))
                 continue;
 
@@ -191,8 +170,7 @@ Singleton {
                 modes.push(mode);
             }
 
-            // Whatever it is running now belongs in the list even when the
-            // driver did not report it as available.
+            // Whatever it is running now belongs in the list even when the driver did not report it as available.
             const current = {
                 width: item.width,
                 height: item.height,
@@ -221,8 +199,7 @@ Singleton {
         if (root.selected === "" || root.indexOf(root.selected) === -1)
             root.selected = list.length > 0 ? list[0].name : "";
 
-        // An edit in progress owns the draft; a poll must not pull it back to
-        // what the compositor is still showing.
+        // An edit in progress owns the draft; a poll must not pull it back to what the compositor is still showing.
         if (!root.dirty || Object.keys(root.draft).length === 0)
             root.syncDraft();
 
@@ -273,8 +250,7 @@ Singleton {
         if (steps.length === 0)
             return;
 
-        // One batch rather than a call each, so the monitors never sit in a
-        // half moved arrangement between two of them.
+        // One batch rather than a call each, so the monitors never sit in a half moved arrangement between two of them.
         root.lastError = "";
         applyProcess.command = ["hyprctl", "--batch", steps.join(" ; ")];
         applyProcess.running = true;
@@ -295,9 +271,7 @@ Singleton {
         return layout;
     }
 
-    // Applies the draft for a while and puts the old arrangement back on its
-    // own. A layout that leaves a screen dark cannot be undone from a panel
-    // nobody can see, so nothing here is permanent until it is confirmed.
+    // Applies the draft for a while and puts the old arrangement back on its own: a layout that leaves a screen dark cannot be undone from a panel nobody can see.
     function preview(): void {
         if (root.previewing)
             return;
@@ -322,8 +296,7 @@ Singleton {
     }
 
     function save(): void {
-        // The layout is on screen already, so the restore below has nothing to
-        // put back and should not run when the setting lands.
+        // The layout is on screen already, so the restore below has nothing to put back and should not run when the setting lands.
         root.restored = true;
         root.cancelPreview(false);
         root.apply(root.draft);
@@ -335,8 +308,7 @@ Singleton {
         Settings.displayLayout = layout;
     }
 
-    // Back to what the compositor itself is showing, and nothing remembered:
-    // the next session gets whatever Hyprland works out on its own.
+    // Back to what the compositor itself is showing, and nothing remembered: the next session gets whatever Hyprland works out on its own.
     function reset(): void {
         root.cancelPreview(true);
         Settings.displayLayout = ({});
@@ -352,17 +324,14 @@ Singleton {
         if (root.restored || root.monitors.length === 0)
             return;
 
-        // Not marked done until there is something to be done: settings.json is
-        // read asynchronously, so the first hyprctl answer usually beats it and
-        // an unconditional flag here would drop the saved layout on every boot.
+        // Not marked done until there is something to be done: settings.json is read asynchronously, and an unconditional flag would drop the saved layout on every boot.
         const saved = Settings.displayLayout;
         if (!saved || Object.keys(saved).length === 0)
             return;
 
         root.restored = true;
 
-        // Only the monitors that are actually plugged in, and only if the
-        // arrangement is not already the one that was saved.
+        // Only the monitors that are actually plugged in, and only if the arrangement is not already the one that was saved.
         const layout = {};
         let differs = false;
 
@@ -380,8 +349,7 @@ Singleton {
             root.apply(layout);
     }
 
-    // settings.json can finish loading after the monitors have been read, which
-    // is when a saved layout arrives too late for the read that would apply it.
+    // settings.json can finish loading after the monitors have been read, which is when a saved layout arrives too late for the read that would apply it.
     Connections {
         target: Settings
 

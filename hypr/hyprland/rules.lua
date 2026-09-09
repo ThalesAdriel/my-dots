@@ -46,9 +46,9 @@ hl.layer_rule({
 
 hl.layer_rule({
 	name = "pesqBar-blur",
-	match = { namespace = "^pesqBar-blur(-popups)?$" },
+	match = { namespace = "^pesqBar-blur(-popups|-panel)?$" },
 	blur = true,
-	xray = false,
+	xray = true,
 	ignore_alpha = 0.1,
 })
 
@@ -56,4 +56,10 @@ hl.layer_rule({
 	name = "pesqBar-blur-popups",
 	match = { namespace = "^pesqBar-blur-popups$" },
 	blur_popups = true,
+})
+
+hl.layer_rule({
+	name = "pesqBar-panel",
+	match = { namespace = "^pesqBar(-blur)?-panel$" },
+	no_anim = true,
 })

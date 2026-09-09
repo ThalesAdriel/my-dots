@@ -4,18 +4,13 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// The one module that needs Quickshell.Services.UPower. It is reached through a
-// Loader in the bar so that a Quickshell built without it costs this module and
-// nothing else, the same way the idle inhibitor is loaded.
+// The one module that needs Quickshell.Services.UPower, reached through a Loader in the bar so a Quickshell built without it costs this module and nothing else.
 BarButton {
     id: root
 
     readonly property var device: UPower.displayDevice
 
-    // The percentage is the second half of the test rather than trusting the
-    // laptop flag alone: a desktop's display device is ready and reports 0, so a
-    // machine with no battery still comes out empty handed, while a real battery
-    // is not lost if that flag is not where this expects it.
+    // The percentage is the second half of the test rather than trusting the laptop flag alone: a desktop's display device is ready and reports 0, so a machine with no battery still comes out empty handed while a real battery is not lost.
     readonly property bool present: !!root.device && root.device.ready === true && (root.device.isLaptopBattery === true || root.device.percentage > 0)
     readonly property real level: root.present ? root.device.percentage : 0
     readonly property int percent: Math.round(root.level * 100)
@@ -25,14 +20,10 @@ BarButton {
     readonly property bool full: root.state === UPowerDeviceState.FullyCharged
     readonly property bool low: root.present && !root.charging && !root.full && root.level <= 0.15
 
-    // Five glyphs across the range, so each one covers a quarter with the ends
-    // taking half a step. 0% is empty, 100% is full, and nothing in between
-    // lands on a shape that overstates what is left.
+    // Five glyphs across the range, so each covers a quarter with the ends taking half a step: 0% is empty, 100% is full, and nothing in between overstates what is left.
     readonly property string levelGlyph: Glyphs.batteryLevels[Math.min(Math.max(Math.round(root.level * 4), 0), 4)]
 
-    // The badge over the battery, the way the reference sheet draws them: a bolt
-    // while charging, a plug once it is done, a cross when there is no battery
-    // to report on at all.
+    // The badge over the battery, the way the reference sheet draws them: a bolt while charging, a plug once done, a cross when there is no battery to report on.
     readonly property string badge: {
         if (!root.present)
             return Glyphs.xmark;
@@ -107,9 +98,7 @@ BarButton {
             }
         }
 
-        // Sits inside the battery body rather than centred on the glyph: the
-        // terminal nub is on the right, so the middle of the outline is a little
-        // left of the middle of the character.
+        // Sits inside the battery body rather than centred on the glyph: the terminal nub is on the right, so the middle of the outline is a little left of the middle of the character.
         IconText {
             anchors.centerIn: parent
             anchors.horizontalCenterOffset: -1
@@ -135,8 +124,7 @@ BarButton {
         anchorItem: root
         alignRight: true
 
-        // The profile list is only re-read while the panel is up; nothing else
-        // in the shell shows it.
+        // The profile list is only re-read while the panel is up; nothing else in the shell shows it.
         onShownChanged: PowerProfiles.detailed = batteryPopup.shown
 
         Loader {

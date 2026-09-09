@@ -1,18 +1,14 @@
 import QtQuick
 import QtQuick.Shapes
 
-// The quarter circle that flares a surface out into the edge it sits against,
-// the way serpantinum draws the corners of its bar and its launcher. Placed
-// just outside the surface and filled with the surface's own colour, the two
-// read as one shape and the background corner between them comes out rounded.
+// The quarter circle that flares a surface out into the edge it sits against: placed just outside the surface and filled with its colour, the two read as one shape and the background corner between them comes out rounded.
 Shape {
     id: root
 
     property int size: 0
     property color fillColor: "black"
 
-    // The corner of this item the quarter circle is centred on, which is also
-    // the corner of the surface it flares out from.
+    // The corner of this item the quarter circle is centred on, which is also the corner of the surface it flares out from.
     property bool centreRight: true
     property bool centreBottom: false
 

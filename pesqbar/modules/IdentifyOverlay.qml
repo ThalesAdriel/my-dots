@@ -5,9 +5,7 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// What "Identify" puts on each screen: the number the arrangement canvas gives
-// it, and the connector it belongs to. Over everything, reserving nothing, and
-// with an empty input mask so it cannot take a click from whatever is under it.
+// What "Identify" puts on each screen: the number the arrangement canvas gives it and the connector it belongs to. Over everything, reserving nothing, with an empty input mask so it cannot take a click.
 PanelWindow {
     id: root
 

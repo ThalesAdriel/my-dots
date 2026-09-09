@@ -10,31 +10,20 @@ import "root:/services"
 Singleton {
     id: root
 
-    // Toasts on screen at once. Anything past this still lands in the control
-    // center, it just does not pile up down the side of the display.
+    // Toasts on screen at once; anything past this still lands in the control center, it just does not pile up down the side of the display.
     readonly property int maxPopups: 4
 
-    // What a screenshot notification calls itself. Anything with one of these in
-    // its name or summary and a real file behind it gets the editor button.
+    // What a screenshot notification calls itself: anything with one of these in its name or summary and a real file behind it gets the editor button.
     readonly property var screenshotWords: ["screenshot", "screen shot", "screencapture", "printscreen", "print screen", "captura", "grim", "hyprshot", "flameshot", "swappy", "satty", "shotman", "spectacle"]
     readonly property string screenshotEditor: "satty"
 
-    // What a link in a notification body is allowed to be. Everything else ends
-    // up at xdg-open, which runs a .desktop file and hands any other path to
-    // whatever claims the type, so an unfiltered href turns one click on a toast
-    // into arbitrary execution. Any process that reaches the session bus can
-    // send a body, so this is not a trusted string.
+    // What a link in a notification body may be. Everything else ends up at xdg-open, which runs a .desktop file and hands any other path to whatever claims the type, so an unfiltered href turns one click into arbitrary execution — and any process on the session bus can send a body.
     readonly property var linkSchemes: ["http", "https", "mailto"]
 
-    // A body arrives over the session bus, where one message may be megabytes
-    // long, and the markup parser walks the whole thing before maximumLineCount
-    // ever gets a say. Any process that can send a notification could hang the
-    // bar with a single send, so the text is cut to more than a card could show
-    // and less than a parser will choke on.
+    // A body arrives over the session bus where one message may be megabytes long, and the markup parser walks all of it before maximumLineCount gets a say, so the text is cut to more than a card can show and less than a parser will choke on.
     readonly property int maximumTextLength: 4096
 
-    // Low urgency is not worth as much of the screen's time as normal, so it
-    // keeps its half of whatever the setting says.
+    // Low urgency is not worth as much of the screen's time as normal, so it keeps its half of whatever the setting says.
     readonly property int normalTimeout: Math.max(Settings.notificationSeconds, 1) * 1000
     readonly property int lowTimeout: Math.round(root.normalTimeout / 2)
     readonly property int minimumTimeout: 1500
@@ -54,10 +43,7 @@ Singleton {
             root.clearPopups();
     }
 
-    // expireTimeout arrives straight off the bus in milliseconds: -1 asks the
-    // server to pick, and 0 means the notification never times out on its own.
-    // Critical is held the same way, which is what swaync's timeout-critical = 0
-    // did. A returned 0 means "no timer".
+    // expireTimeout arrives off the bus in milliseconds: -1 asks the server to pick, 0 means it never times out on its own, and critical is held the same way swaync's timeout-critical = 0 did. A returned 0 means "no timer".
     function popupTimeout(notification: var): int {
         if (!notification)
             return 0;
@@ -75,8 +61,7 @@ Singleton {
     }
 
     function shouldPopup(): bool {
-        // The control center lists everything already, so there is nothing to
-        // gain from toasting over the top of it.
+        // The control center lists everything already, so there is nothing to gain from toasting over the top of it.
         return !root.doNotDisturb && !UiState.controlCenterOpen;
     }
 
@@ -100,16 +85,14 @@ Singleton {
             root.popups = [];
     }
 
-    // The toast ran out on its own. Transient notifications asked not to be kept
-    // in a notification area, so they leave with it instead of filling the list.
+    // The toast ran out on its own; transient notifications asked not to be kept in a notification area, so they leave with it rather than filling the list.
     function releasePopup(notification: var): void {
         root.removePopup(notification);
         if (notification && notification.transient)
             notification.expire();
     }
 
-    // The user closed the toast: the app should hear that it was dismissed
-    // rather than that it timed out.
+    // The user closed the toast, so the app should hear that it was dismissed rather than that it timed out.
     function close(notification: var): void {
         root.removePopup(notification);
         if (notification)
@@ -125,18 +108,14 @@ Singleton {
         root.arrivals = times;
     }
 
-    // An app replacing a notification reuses the same object and the same id, so
-    // the server never emits `notification` a second time. The text changing is
-    // the only sign there is something new to show.
+    // An app replacing a notification reuses the same object and id, so the server never emits `notification` twice and the text changing is the only sign there is something new.
     function refresh(notification: var): void {
         root.markArrival(notification);
         if (root.shouldPopup())
             root.pushPopup(notification);
     }
 
-    // Only the arrival time. A toast still on screen owns its own removal so it
-    // can animate out first, and the lock it holds keeps the notification alive
-    // until it has.
+    // Only the arrival time: a toast still on screen owns its own removal so it can animate out first, and the lock it holds keeps the notification alive until it has.
     function forget(notification: var): void {
         if (!notification)
             return;
@@ -171,12 +150,7 @@ Singleton {
         return Math.floor(hours / 24) + " d";
     }
 
-    // Everything here goes straight into a QML Image, which will fetch a remote
-    // URL as readily as it opens a file. A notification is allowed to name its
-    // own icon, so without this any app on the bus could point the shell at a
-    // server it controls and be told the machine is awake, and from where.
-    // image:// covers Quickshell's own handles: inline image data and icons
-    // resolved out of the theme.
+    // Everything here goes into a QML Image, which fetches a remote URL as readily as it opens a file, and a notification names its own icon — so without this any app on the bus could point the shell at a server it controls and learn the machine is awake. image:// covers Quickshell's own handles.
     function localImage(source: string): string {
         if (!source)
             return "";
@@ -192,13 +166,7 @@ Singleton {
         return notification ? root.localImage(notification.image) : "";
     }
 
-    // Nothing in the shell is drawn out of an icon theme: every icon on the bar
-    // is a Font Awesome glyph, and a machine that never installed a theme has
-    // nothing for a name like `audio-volume-high` to resolve to. The volume and
-    // brightness keybinds send exactly those names, and the placeholder square
-    // the icon provider hands back for one it cannot find was what turned up on
-    // the toast instead of a speaker. The names the spec settled on are drawn as
-    // glyphs here rather than looked up, so they render the same as the bar.
+    // Nothing in the shell is drawn out of an icon theme, so a name like `audio-volume-high` from the volume and brightness keybinds resolved to the icon provider's placeholder square; the names the spec settled on are drawn as glyphs here instead, so they render like the bar.
     readonly property var iconGlyphs: ({
         "audio-volume-muted": Glyphs.volumeOff,
         "audio-volume-low": Glyphs.volumeLow,
@@ -209,12 +177,7 @@ Singleton {
         "display-brightness": Glyphs.sun
     })
 
-    // The name behind whatever a notification is pointing at, or "" for
-    // something that is a picture rather than a name. An app_icon reaches the
-    // card down two different roads: as the bare name the sender wrote, and
-    // already wrapped in the icon handle Quickshell resolved it to. The second
-    // one is what the volume keys came in on, and it is why matching on the
-    // name alone was not enough to keep the placeholder off the card.
+    // The name behind whatever a notification points at, or "" for a picture rather than a name: an app_icon reaches the card both as the bare name the sender wrote and already wrapped in the handle Quickshell resolved it to, which is why matching the name alone was not enough.
     function iconName(source: string): string {
         if (!source)
             return "";
@@ -224,8 +187,7 @@ Singleton {
         if (value.startsWith(handle))
             return value.slice(handle.length).split("?")[0];
 
-        // A path, inline image data, or any other handle: a real picture, and
-        // nothing a glyph should be standing in for.
+        // A path, inline image data, or any other handle: a real picture, and nothing a glyph should be standing in for.
         if (value.startsWith("/") || value.startsWith("file://") || value.startsWith("image://"))
             return "";
 
@@ -241,8 +203,7 @@ Singleton {
             if (name === "")
                 continue;
 
-            // Themes ship half of these under a -symbolic name as well, and
-            // the two are the same icon as far as a glyph is concerned.
+            // Themes ship half of these under a -symbolic name as well, and the two are the same icon as far as a glyph is concerned.
             const glyph = root.iconGlyphs[name.replace(/-symbolic$/, "")];
             if (glyph !== undefined)
                 return glyph;
@@ -255,16 +216,14 @@ Singleton {
         if (!notification || notification.appIcon === "")
             return "";
 
-        // Screenshot tools hand the saved file to notify-send with -i, so the app
-        // icon is sometimes a path rather than the name of a theme icon.
+        // Screenshot tools hand the saved file to notify-send with -i, so the app icon is sometimes a path rather than the name of a theme icon.
         if (notification.appIcon.startsWith("/") || notification.appIcon.startsWith("file://"))
             return root.localImage(notification.appIcon);
 
         return root.localImage(Quickshell.iconPath(notification.appIcon, true));
     }
 
-    // The scheme is the whole check: a link with no scheme at all is a bare path
-    // that xdg-open would resolve against the filesystem, so it is refused too.
+    // The scheme is the whole check: a link with no scheme is a bare path that xdg-open would resolve against the filesystem, so it is refused too.
     function safeLink(link: string): string {
         if (!link)
             return "";
@@ -295,11 +254,7 @@ Singleton {
         return root.screenshotWords.some(word => haystack.indexOf(word) !== -1);
     }
 
-    // The file a screenshot notification is pointing at, or "" if there is none
-    // to point at. The tools all report it differently: grimblast and hyprshot
-    // pass it to notify-send as the icon and name it again in the body, others
-    // set the image-path hint, and some only ever hand over raw image data that
-    // never reaches the disk and so cannot be reopened by anything.
+    // The file a screenshot notification points at, or "" if there is none: grimblast and hyprshot pass it as the icon and name it again in the body, others set the image-path hint, and some only hand over raw image data that never reaches disk.
     function screenshotPath(notification: var): string {
         if (!root.looksLikeScreenshot(notification))
             return "";
@@ -313,9 +268,7 @@ Singleton {
             if (!match)
                 continue;
 
-            // The editor is handed this path and writes its result next to it, so
-            // a body that walks back up out of the directory it named would pick
-            // where that file lands. An honest screenshot tool never sends one.
+            // The editor is handed this path and writes its result next to it, so a body that walks back up out of the directory it named would pick where that file lands; an honest screenshot tool never sends one.
             if (match[1].indexOf("/../") !== -1)
                 continue;
 
@@ -330,24 +283,17 @@ Singleton {
         if (path === "")
             return;
 
-        // Satty disables saving entirely unless it is told where to save, so it
-        // gets a name next to the original rather than an editor whose save
-        // button does nothing. The timestamp is built here instead of with
-        // Satty's own format specifiers, which only newer versions understand.
+        // Satty disables saving entirely unless told where to save, so it gets a name next to the original; the timestamp is built here rather than with Satty's own format specifiers, which only newer versions understand.
         const directory = path.slice(0, path.lastIndexOf("/") + 1);
         const output = directory + "satty-" + Qt.formatDateTime(new Date(), "yyyyMMdd-hhmmss") + ".png";
 
         console.log("pesqBar: opening", path, "in", root.screenshotEditor);
 
-        // Through sh rather than straight at the binary: execDetached throws away
-        // everything QProcess says about a failed start, so an editor that is not
-        // installed fails without a word. This way "satty: not found" lands in the
-        // shell's log. Paths go in as arguments, so spaces in them are fine.
+        // Through sh rather than straight at the binary: execDetached throws away everything QProcess says about a failed start, so this way "satty: not found" lands in the log. Paths go in as arguments, so spaces are fine.
         Quickshell.execDetached(["sh", "-c", 'exec "$0" --filename "$1" --output-filename "$2"', root.screenshotEditor, path, output]);
     }
 
-    // The cut may not land inside a tag: half of one would leave the escaping
-    // below with an opening bracket it never sees the end of.
+    // The cut may not land inside a tag: half of one would leave the escaping below with an opening bracket it never sees the end of.
     function clampText(text: string): string {
         const value = String(text);
         if (value.length <= root.maximumTextLength)
@@ -355,11 +301,7 @@ Singleton {
         return value.slice(0, root.maximumTextLength).replace(/<[^>]*$/, "");
     }
 
-    // A body is allowed to carry links, so every <a> is rewritten to one that
-    // either points somewhere openLink would agree to open or points nowhere at
-    // all. A refused link keeps its text but loses the anchor, so it stops
-    // reading as something worth clicking rather than failing under the pointer.
-    // The closing tag is left alone: an empty <a> still matches it.
+    // Every <a> is rewritten to one that either points somewhere openLink would open or points nowhere at all; a refused link keeps its text but loses the anchor, and the closing tag is left alone since an empty <a> still matches it.
     function sanitizeAnchors(text: string): string {
         return text.replace(/<a\b[^>]*>/gi, tag => {
             const attribute = tag.match(/href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
@@ -371,18 +313,12 @@ Singleton {
             if (safe === "")
                 return "<a>";
 
-            // The quote is the only character that could end the attribute early
-            // and start another one; & is left for the escaping pass below.
+            // The quote is the only character that could end the attribute early and start another one; & is left for the escaping pass below.
             return '<a href="' + safe.replace(/"/g, "%22") + '">';
         });
     }
 
-    // Markup is advertised as supported, so bodies come in as a mix of real
-    // markup and plain text carrying bare & and < characters. Either one makes
-    // StyledText drop the rest of the body, so keep the handful of tags the spec
-    // allows and turn everything else into literal text. The anchors are cleaned
-    // before the escaping so the hrefs that survive get their & escaped with
-    // everything else.
+    // Markup is advertised as supported, so bodies mix real markup with plain text carrying bare & and < that make StyledText drop the rest: keep the tags the spec allows, literalise the rest, and clean the anchors first so surviving hrefs get escaped with everything else.
     function formatBody(text: string): string {
         if (!text)
             return "";
@@ -393,15 +329,12 @@ Singleton {
     SystemClock {
         id: clock
 
-        // Only the age labels read this, and they are only on screen when there
-        // is something in the list.
+        // Only the age labels read this, and they are only on screen when there is something in the list.
         enabled: root.count > 0
         precision: SystemClock.Minutes
     }
 
-    // One watcher per tracked notification. Closing has to clean up after itself
-    // or the arrival times grow for the life of the session, and a replacement
-    // has to be noticed here because the server signal never fires twice.
+    // One watcher per tracked notification: closing has to clean up after itself or the arrival times grow for the life of the session, and a replacement has to be noticed here because the server signal never fires twice.
     Instantiator {
         model: ScriptModel {
             values: root.tracked

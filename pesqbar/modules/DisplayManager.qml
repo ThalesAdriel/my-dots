@@ -5,19 +5,13 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// The arrangement canvas and the fields for whichever display is selected on
-// it, filling its own sheet off the bottom of settings. Still a narrow column,
-// so the mode list opens inline rather than as a dropdown: a popup anchored
-// inside a popup is two levels of xdg popup for a list the sheet can scroll.
+// The arrangement canvas and the fields for the selected display, filling its own sheet off the bottom of settings. Still a narrow column, so the mode list opens inline: a popup anchored inside a popup is two levels of xdg popup for a list the sheet can scroll.
 Item {
     id: root
 
     readonly property int canvasHeight: 240
 
-    // How close a pull is, measured on screen, and how far it is ever allowed to
-    // reach in the arrangement itself. The canvas covers thousands of logical
-    // pixels in a few hundred, so without the second number a snap would drag a
-    // display from a third of a screen away.
+    // How close a pull is, measured on screen, and how far it may reach in the arrangement itself: the canvas covers thousands of logical pixels in a few hundred, so without the second number a snap would drag a display from a third of a screen away.
     readonly property int snapDistance: 14
     readonly property int snapLimit: 160
 
@@ -34,8 +28,7 @@ Item {
 
     readonly property var selectedEntry: Displays.entryFor(Displays.selected)
 
-    // The rectangle every display fits inside, in logical coordinates, with a
-    // little air so a display never sits flush against the canvas edge.
+    // The rectangle every display fits inside, in logical coordinates, with a little air so a display never sits flush against the canvas edge.
     readonly property var liveBounds: {
         const names = Object.keys(Displays.draft);
         if (names.length === 0)
@@ -69,10 +62,7 @@ Item {
         };
     }
 
-    // Frozen for the length of a drag. The bounds follow the arrangement, the
-    // scale follows the bounds and every plate's position follows the scale, so
-    // left live the whole canvas would rescale under the pointer as the display
-    // being dragged pushed the edges of the arrangement around.
+    // Frozen for the length of a drag: bounds follow the arrangement, scale follows the bounds and every plate's position follows the scale, so left live the canvas would rescale under the pointer as the dragged display pushed the edges around.
     property var bounds: root.liveBounds
 
     onDraggingChanged: {
@@ -91,8 +81,7 @@ Item {
         return Math.min(canvas.width / box.width, canvas.height / box.height);
     }
 
-    // Centred rather than parked in the corner, so a single display sits in the
-    // middle of the canvas the way it sits in the middle of the desk.
+    // Centred rather than parked in the corner, so a single display sits in the middle of the canvas the way it sits in the middle of the desk.
     readonly property real offsetX: (canvas.width - root.bounds.width * root.canvasScale) / 2
     readonly property real offsetY: (canvas.height - root.bounds.height * root.canvasScale) / 2
 
@@ -104,9 +93,7 @@ Item {
         return root.offsetY + (logical - root.bounds.y) * root.canvasScale;
     }
 
-    // Edges and centres of every other display, plus the origin, are what a
-    // dragged display sticks to. Everything is in logical pixels, so the pull
-    // is the same however far the canvas is zoomed out.
+    // Edges and centres of every other display, plus the origin, are what a dragged display sticks to; everything is in logical pixels, so the pull is the same however far the canvas is zoomed out.
     function snapAxis(name: string, value: real, size: real, horizontal: bool): real {
         const targets = [0];
 
@@ -127,9 +114,7 @@ Item {
         let bestDistance = threshold;
 
         for (const target of targets) {
-            // The leading edge, the trailing edge and the centre all get to
-            // stick, which is what makes two displays line up along a shared
-            // edge as readily as along their middles.
+            // The leading edge, the trailing edge and the centre all get to stick, which is what makes two displays line up along a shared edge as readily as along their middles.
             for (const candidate of [target, target - size, target - size / 2]) {
                 const distance = Math.abs(value - candidate);
                 if (distance < bestDistance) {
@@ -306,9 +291,7 @@ Item {
                             if (!plateMouse.pressed || !plate.entry)
                                 return;
 
-                            // Back out to logical pixels before snapping, so the
-                            // pull is measured against the arrangement rather
-                            // than against however big the canvas happens to be.
+                            // Back out to logical pixels before snapping, so the pull is measured against the arrangement rather than against however big the canvas happens to be.
                             const deltaX = (event.x - plateMouse.grabX) / root.canvasScale;
                             const deltaY = (event.y - plateMouse.grabY) / root.canvasScale;
 

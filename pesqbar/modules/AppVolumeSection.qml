@@ -10,8 +10,7 @@ import "root:/services"
 Item {
     id: root
 
-    // Handed down from the panel. Streams come and go every time a browser tab
-    // plays a sound, and each one bound here is a subscription the shell holds.
+    // Handed down from the panel: streams come and go every time a browser tab plays a sound, and each one bound here is a subscription the shell holds.
     property bool active: true
 
     property bool expanded: false
@@ -37,8 +36,7 @@ Item {
         }
     }
 
-    // Only while the rows are actually being drawn. The count in the header
-    // reads the list length, which does not need the objects bound.
+    // Only while the rows are actually being drawn; the count in the header reads the list length, which does not need the objects bound.
     PwObjectTracker {
         objects: root.active && root.expansion > 0 ? root.streams : []
     }
@@ -125,8 +123,7 @@ Item {
             }
 
             Repeater {
-                // Identity diffed rather than rebuilt: a stream appearing must
-                // not tear down the row of every other application playing.
+                // Identity diffed rather than rebuilt: a stream appearing must not tear down the row of every other application playing.
                 model: ScriptModel {
                     values: root.streams
                 }

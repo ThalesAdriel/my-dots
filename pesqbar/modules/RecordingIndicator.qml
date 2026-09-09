@@ -3,10 +3,7 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// The screen capture dot, the way macOS puts one in the menu bar: on screen
-// only while something is recording, and doing nothing but saying so. Hovering
-// it names the recording and how long it has been going; there is no action
-// behind it, so a stray click cannot end a take.
+// The screen capture dot, the way macOS puts one in the menu bar: on screen only while something is recording and doing nothing but saying so. Hovering names the recording and its length; there is no action behind it, so a stray click cannot end a take.
 BarButton {
     id: root
 

@@ -1,3 +1,5 @@
+local theme = require("hyprland.theme")
+
 local home = os.getenv("HOME")
 local gsettings = "gsettings set org.gnome.desktop.interface"
 local polkit = table.concat({
@@ -6,6 +8,15 @@ local polkit = table.concat({
 	"/usr/lib/polkit-kde-authentication-agent-1",
 	"/usr/libexec/polkit-kde-authentication-agent-1",
 }, " || ")
+
+local interface = {}
+for _, setting in ipairs({
+	"cursor-theme '" .. theme.cursor_theme .. "'",
+	"cursor-size " .. theme.cursor_size,
+	"icon-theme '" .. theme.icon_theme .. "'",
+}) do
+	interface[#interface + 1] = gsettings .. " " .. setting
+end
 
 hl.on("hyprland.start", function()
 	hl.exec_cmd("dbus-update-activation-environment --systemd --all")
@@ -21,15 +32,8 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("wl-paste --type text --watch cliphist store")
 	hl.exec_cmd("wl-paste --type image --watch cliphist store")
 
-	hl.exec_cmd(
-		gsettings
-			.. " cursor-theme 'macOS-BigSur'; "
-			.. gsettings
-			.. " cursor-size 24; "
-			.. gsettings
-			.. " icon-theme 'WhiteSur-red'"
-	)
-	hl.exec_cmd("hyprctl setcursor macOS-BigSur 24")
+	hl.exec_cmd(table.concat(interface, "; "))
+	hl.exec_cmd("hyprctl setcursor " .. theme.cursor_theme .. " " .. theme.cursor_size)
 
 	hl.timer(function()
 		hl.exec_cmd("easyeffects --gapplication-service")

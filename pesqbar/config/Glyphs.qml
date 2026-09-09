@@ -9,8 +9,7 @@ Singleton {
     readonly property string microphone: ""
     readonly property string microphoneMuted: ""
 
-    // The backlight, on the control center slider and on the notification the
-    // XF86MonBrightness keybinds send.
+    // The backlight, on the control center slider and on the XF86MonBrightness notification.
     readonly property string sun: ""
 
     readonly property string bell: ""
@@ -39,18 +38,14 @@ Singleton {
     readonly property string shuffle: ""
     readonly property string repeat: ""
 
-    // Network. One wifi glyph for every strength: the graded wifi-weak and
-    // wifi-fair only exist in some builds of the free set, and a missing one
-    // renders as a box rather than as a weaker signal. Strength is drawn as the
-    // same hairline the volume module uses instead.
+    // One wifi glyph for every strength: the graded ones are missing from some builds and render as a box, so strength is drawn as a hairline instead.
     readonly property string wifi: ""
     readonly property string networkWired: ""
     readonly property string rotate: ""
     readonly property string eye: ""
     readonly property string eyeSlash: ""
 
-    // Font Awesome Free has no bluetooth glyph in Solid; it is in Brands, which
-    // is a separate family. Drawn with Theme.brandFamily for that reason.
+    // Font Awesome Free keeps bluetooth in Brands rather than Solid, so this one draws with Theme.brandFamily.
     readonly property string bluetooth: ""
 
     // Battery, from empty to full, with the badge that goes over it.

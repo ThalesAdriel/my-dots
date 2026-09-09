@@ -10,10 +10,7 @@ import "root:/services"
 Item {
     id: root
 
-    // False until the popup carrying this has been opened. Binding a PipeWire
-    // object subscribes the shell to its parameter updates for as long as the
-    // binding holds, and a panel nobody has opened has no reason to be reading
-    // the volume of every sink on the machine.
+    // False until the popup carrying this has been opened: binding a PipeWire object subscribes the shell to its parameter updates for as long as the binding holds, and an unopened panel has no reason to read the volume of every sink.
     property bool active: true
 
     readonly property int padding: 14
@@ -53,9 +50,7 @@ Item {
         anchors.margins: root.padding
         spacing: 12
 
-        // The player sits with the sound controls rather than with the
-        // notifications: it is the same thing the sliders below it are pointed
-        // at. It hides itself when nothing is playing and the panel shrinks.
+        // The player sits with the sound controls rather than the notifications, since it is the same thing the sliders are pointed at; it hides itself when nothing is playing and the panel shrinks.
         MusicCard {
             width: content.width
         }

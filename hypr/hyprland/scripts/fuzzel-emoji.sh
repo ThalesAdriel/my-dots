@@ -1,29 +1,24 @@
-#!/bin/bash
-set -uo pipefail
+#!/bin/sh
+. "${0%/*}/lib/menu.sh"
 
-MODE="${1:-type}"
-
-line="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu)"
+line=$(menu_from_data "$0")
 emoji=${line%% *}
 [ -n "$emoji" ] || exit 0
 
-case "$MODE" in
-    type)
-        wtype "$emoji" || wl-copy "$emoji"
-        ;;
-    copy)
-        wl-copy "$emoji"
-        ;;
-    both)
-        wtype "$emoji" || true
-        wl-copy "$emoji"
-        ;;
-    *)
-        echo "Usage: $0 [type|copy|both]" >&2
-        exit 1
-        ;;
+case "${1:-type}" in
+type) wtype "$emoji" || wl-copy "$emoji" ;;
+copy) wl-copy "$emoji" ;;
+both)
+	wtype "$emoji"
+	wl-copy "$emoji"
+	;;
+*)
+	echo "usage: ${0##*/} [type|copy|both]" >&2
+	exit 1
+	;;
 esac
 exit
+
 ### DATA ###
 😀 grinning face face smile happy joy :D grin
 😃 grinning face with big eyes face happy joy haha :D :) smile funny

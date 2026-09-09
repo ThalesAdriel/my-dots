@@ -5,14 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "root:/config"
 
-// BlueZ through bluetoothctl. Same shape as the network service: one polling
-// read that prints tagged sections, and a queue for the writes. Addresses are
-// checked against the shape of a MAC before they go anywhere, and every command
-// is an argv array rather than a shell string.
-//
-// Every call is wrapped in timeout. bluetoothctl waits on the daemon, and a
-// poll that can hang is a poll that piles up processes for the rest of the
-// session when bluetoothd is not there.
+// BlueZ through bluetoothctl, the same shape as the network service: one tagged-section read, a queue for the writes, addresses checked against the shape of a MAC, argv arrays throughout, and every call wrapped in timeout so a hung daemon cannot pile up processes.
 Singleton {
     id: root
 
@@ -20,11 +13,7 @@ Singleton {
 
     property bool detailed: false
 
-    // bluetoothctl has no monitor mode worth running and eavesdropping on bluez
-    // over the system bus is refused to anything that is not root, so this one
-    // stays a poll. What it does instead is cost less per tick and tick less
-    // often: an adapter only changes state because somebody did something to it,
-    // and the panel asks for its own read the moment it opens.
+    // Stays a poll: bluetoothctl has no monitor mode worth running and eavesdropping on bluez over the system bus is root only, so it costs less per tick and ticks less often instead.
     readonly property int idleInterval: 10000
     readonly property int activeInterval: 2500
 
@@ -53,9 +42,7 @@ Singleton {
         return "Bluetooth on";
     }
 
-    // Nothing below reaches a shell, so this is not about escaping. It is that a
-    // device is free to call itself anything at all, and only the address is
-    // ever worth handing back to bluetoothctl.
+    // Not about escaping, since nothing below reaches a shell: a device is free to call itself anything, and only the address is worth handing back to bluetoothctl.
     function isAddress(address: string): bool {
         return /^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/.test(address);
     }
@@ -79,9 +66,7 @@ Singleton {
         root.scanning = true;
         scanTimer.restart();
 
-        // Runs on its own rather than through the queue: it holds the process
-        // open for its whole duration, and the panel has to stay usable while
-        // devices are still arriving.
+        // Runs on its own rather than through the queue: it holds the process open for its whole duration, and the panel has to stay usable while devices are still arriving.
         scanProcess.running = true;
     }
 
@@ -103,9 +88,7 @@ Singleton {
         root.runQueue([["timeout", "15", "bluetoothctl", "disconnect", address]]);
     }
 
-    // Pairing without an agent only gets through where the device asks nothing
-    // of the user. Anything wanting a passkey fails here and has to be paired
-    // with bluetoothctl itself.
+    // Pairing without an agent only gets through where the device asks nothing of the user; anything wanting a passkey has to be paired with bluetoothctl itself.
     function pairDevice(address: string): void {
         if (!root.isAddress(address)) {
             root.lastError = "Not a device address";
@@ -149,9 +132,7 @@ Singleton {
         actionProcess.running = true;
     }
 
-    // devices Paired and devices Connected arrived in bluez 5.65. The fallback
-    // catches an older bluetoothctl, which only knows how to list the paired
-    // ones and reports nothing about what is connected.
+    // devices Paired and devices Connected arrived in bluez 5.65; the fallback catches an older bluetoothctl that can only list the paired ones.
     readonly property string readScript: `command -v bluetoothctl >/dev/null 2>&1 || exit 127
 export LC_ALL=C
 echo "#adapter"

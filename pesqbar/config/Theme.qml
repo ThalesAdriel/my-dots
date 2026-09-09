@@ -41,9 +41,7 @@ Singleton {
     readonly property color cardTint: Qt.lighter(surfaceBase, 1.55)
     readonly property color cardBackground: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, Math.min(Settings.panelOpacity + 0.06, 1))
 
-    // The settings sheet covers the control center rather than blending into it,
-    // so it is the one surface that ignores the panel opacity: reading a wall of
-    // sliders through the wallpaper is not worth the look.
+    // The settings sheet covers the control center rather than blending into it, so it is the one surface that ignores panel opacity.
     readonly property color settingsBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
     readonly property color settingsCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
     readonly property string barLayerNamespace: {
@@ -53,11 +51,10 @@ Singleton {
     }
     readonly property string panelLayerNamespace: Settings.panelBlur ? "pesqBar-blur" : "pesqBar"
 
-    // The overview makes the settings sheet's argument and then some. A window
-    // preview is a capture of a surface that carries its own alpha, and drawing
-    // it over anything translucent lets the compositor blur the desktop up
-    // through it: a dark window comes out washed to white. Everything under a
-    // capture is opaque, and the layer it all sits on is not a blurred one.
+    // The panels welded to the bar bring their own entrance, sliding down out from under it behind their own clip, and Hyprland's layer animation over the top of that reads as a second one competing with it. They get a namespace of their own so the no_anim rule has something to name without reaching the toasts or the identify overlay, which are on the one above and do want it.
+    readonly property string popupLayerNamespace: Settings.panelBlur ? "pesqBar-blur-panel" : "pesqBar-panel"
+
+    // A window preview carries its own alpha, and drawing it over anything translucent lets the compositor blur the desktop up through it, so everything under a capture is opaque and unblurred.
     readonly property color overviewBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
     readonly property color overviewCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
     readonly property string overviewLayerNamespace: "pesqBar"
@@ -65,8 +62,7 @@ Singleton {
     readonly property int cardRadius: Settings.panelRadius
 
 
-    // Enumerating every installed font is not cheap, and there are seven lists
-    // below asking the same question. Asked once here instead of once each.
+    // Enumerating every installed font is not cheap and seven lists below ask the same question, so it is asked once here.
     readonly property var installedFamilies: Qt.fontFamilies()
 
     function resolveFamily(candidates: var): string {
@@ -82,8 +78,7 @@ Singleton {
     readonly property string iconFamily: resolveFamily(["Font Awesome 7 Free Solid", "Font Awesome 6 Free Solid", "Font Awesome 7 Free", "Font Awesome 6 Free", "Font Awesome 5 Free", "Symbols Nerd Font", "JetBrainsMono Nerd Font"])
     readonly property string nerdFamily: resolveFamily(["Symbols Nerd Font", "JetBrainsMono Nerd Font", "NotoSans Nerd Font"])
 
-    // Font Awesome Free splits Brands off into its own family, and the bluetooth
-    // glyph only exists there. Nothing else in the shell needs it.
+    // Font Awesome Free splits Brands off into its own family, and only the bluetooth glyph needs it.
     readonly property string brandFamily: resolveFamily(["Font Awesome 7 Brands Regular", "Font Awesome 7 Brands", "Font Awesome 6 Brands Regular", "Font Awesome 6 Brands", "Font Awesome 5 Brands Regular", "Font Awesome 5 Brands", "Symbols Nerd Font"])
     readonly property string glyphFamily: resolveFamily(["Noto Sans CJK JP", "Noto Sans CJK SC", "Source Han Sans", "Noto Serif CJK JP"])
 
@@ -93,9 +88,7 @@ Singleton {
     readonly property int fontWeightStrong: Font.Bold
     readonly property int iconSize: Settings.iconSize
 
-    // The breathing room around every bar icon: the padding inside a bar button
-    // and the slot each icon sits in. One slider drives both, so turning it down
-    // pulls the whole icon side of the bar together.
+    // The breathing room around every bar icon: one slider drives both the button padding and the slot each icon sits in.
     readonly property int iconPadding: Settings.iconPadding
     readonly property int iconSlot: Settings.iconSize + Settings.iconPadding + 2
 

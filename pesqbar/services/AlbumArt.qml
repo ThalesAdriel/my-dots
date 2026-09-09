@@ -4,55 +4,24 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The cover the player is pointing at, as a file on this machine.
-//
-// Every other image in the shell is held to a local path on purpose: an Image
-// fetches a remote URL as readily as it opens a file, and the string naming one
-// arrives over the session bus rather than being something the shell chose.
-// `Notifications.localImage` drops everything that is not already local for that
-// reason, and the player card was written the same way — but Spotify only ever
-// names its covers as https URLs on its own CDN, so the card had nothing local
-// left to draw and fell back to the play glyph on every track.
-//
-// The fetch happens here instead of inside the Image. curl is handed one URL
-// with a scheme this file allows, a size cap and a deadline, and writes the
-// result under the cache directory; what the card loads is always a file on
-// disk, and the shell's own loader is never pointed at a string that came off
-// the bus. What no amount of checking takes away is that the request leaves the
-// machine at all: a player naming a cover on a server it controls learns the
-// same thing any web page learns. That is a trade this module makes and the
-// notification images do not, because a player is something the user started
-// and a cover is the whole point of the card, while a notification can come
-// from any process that reaches the bus and has an icon either way.
+// The cover the player points at, as a local file: Spotify only ever names https URLs, so curl fetches it under a scheme allowlist, size cap and deadline rather than pointing an Image at a string off the bus. The request does leave the machine, a trade a user-started player earns and a notification does not.
 Singleton {
     id: root
 
-    // One file per URL, named by its digest rather than by the track, so a song
-    // that comes round again is drawn from disk and the same cover shared by a
-    // whole album is only ever fetched once. Nothing here expires: the files are
-    // tens of kilobytes and `rm -rf` on the directory is the whole cleanup.
+    // One file per URL named by its digest, so a repeated track is drawn from disk and an album's shared cover is fetched once; nothing expires, and rm -rf on the directory is the cleanup.
     readonly property string cacheDir: Quickshell.cachePath("album-art")
 
-    // The only two schemes a cover is fetched over. Everything else — a data:
-    // blob, an ftp: URL, a bare word that is not a path at all — is not a cover
-    // this shell goes looking for.
+    // The only two schemes a cover is fetched over; a data: blob or an ftp: URL is not a cover this shell goes looking for.
     readonly property var remoteSchemes: ["http", "https"]
 
-    // A cover is tens of kilobytes. Nothing calling itself one has any business
-    // being megabytes, and nothing worth drawing on a card that changes with the
-    // track is worth waiting on for longer than this.
+    // A cover is tens of kilobytes: nothing larger is one, and nothing worth waiting on longer than this.
     readonly property int maximumBytes: 4000000
     readonly property int timeoutSeconds: 15
 
-    // Every URL asked for, mapped to the file it landed in, or to "" for one
-    // that could not be fetched. The failures are kept as well as the successes:
-    // without them the binding that asked would find nothing there, ask again,
-    // and keep curl going for as long as the track was on.
+    // Every URL asked for, mapped to the file it landed in or to "" for a failure; failures are kept so the binding does not ask again and keep curl going.
     property var fetched: ({})
 
-    // What is waiting on curl and what it is on. One at a time on purpose: the
-    // normal case is several cards on several screens asking for the same cover
-    // at the same moment, not a queue of different ones.
+    // What is waiting on curl and what it is on: one at a time, since the normal case is several cards asking for the same cover at once.
     property var queue: []
     property string current: ""
 
@@ -67,9 +36,7 @@ Singleton {
         return "";
     }
 
-    // The scheme is the whole check, the same way `Notifications.safeLink` does
-    // it: a URL with no scheme is a bare path that is not one, and a scheme that
-    // is not named above is refused rather than handed to curl to interpret.
+    // The scheme is the whole check, as in Notifications.safeLink: no scheme is a bare path, and an unlisted one is refused rather than handed to curl to interpret.
     function remoteArt(source: string): string {
         const value = String(source);
         const scheme = value.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):\/\//);
@@ -83,10 +50,7 @@ Singleton {
         return root.cacheDir + "/" + Qt.md5(url);
     }
 
-    // What to hand an Image for this track, or "" while there is nothing to hand
-    // it yet. A remote cover comes back empty the first time and again as a path
-    // once curl has it: the map changing is what re-runs the binding that asked,
-    // so the card never has to poll for it.
+    // What to hand an Image for this track, or "" while there is nothing yet; the map changing re-runs the binding, so the card never polls.
     function art(source: string): string {
         if (!source)
             return "";
@@ -130,17 +94,7 @@ Singleton {
         root.fetched = next;
     }
 
-    // The URL and the file it is going to are arguments rather than anything
-    // pasted into the script, so a cover named with a quote or a space in it is
-    // a filename and never a second command, and `--` keeps a URL that starts
-    // with a dash from reaching curl as an option. Redirects are followed but
-    // only ever to the same two schemes, so a cover that answers with a 302 to
-    // a file:// URL is refused there as well as here.
-    //
-    // The transfer lands beside the file it will become and is moved into place
-    // once it is whole. A cover that failed half way would otherwise be cached
-    // as a truncated image, and the digest name means nothing would ever go back
-    // for it.
+    // URL and destination are arguments rather than pasted into the script, and -- keeps a leading dash off curl's option parser; redirects follow only to the same two schemes, and the transfer lands beside its file and moves into place so a half-fetched cover is never cached under its digest.
     readonly property string script: `set -e
 mkdir -p "$(dirname "$2")"
 if [ ! -s "$2" ]; then
@@ -152,10 +106,7 @@ fi`
     Process {
         id: fetch
 
-        // Through sh rather than straight at curl for the reason the screenshot
-        // editor is: a machine without curl on it fails with a line in the
-        // shell's log rather than silently drawing no cover for the rest of the
-        // session.
+        // Through sh rather than straight at curl, so a machine without curl fails with a line in the log rather than silently drawing no cover.
         command: root.current === "" ? [] : ["sh", "-c", root.script, "pesqbar-album-art", root.current, root.cacheFile(root.current)]
 
         onExited: (exitCode, exitStatus) => {

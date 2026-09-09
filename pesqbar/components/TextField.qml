@@ -1,9 +1,7 @@
 import QtQuick
 import "root:/config"
 
-// A single line input in the shell's own idiom. Built on TextInput rather than
-// pulling in QtQuick.Controls, which brings a style along with it and would
-// draw a field that belongs to some other interface.
+// A single line input in the shell's own idiom, built on TextInput rather than pulling in QtQuick.Controls, which brings a style along and would draw a field belonging to some other interface.
 Item {
     id: root
 
@@ -15,8 +13,7 @@ Item {
 
     signal accepted
 
-    // The inner TextInput is what actually takes the keyboard, so focus has to
-    // be handed down rather than left on the wrapper.
+    // The inner TextInput is what actually takes the keyboard, so focus has to be handed down rather than left on the wrapper.
     function focusInput(): void {
         input.forceActiveFocus();
     }
@@ -95,8 +92,7 @@ Item {
             }
         }
 
-        // Only ever a reveal, never a copy: the point of the field is that the
-        // value in it does not go anywhere the user did not send it.
+        // Only ever a reveal, never a copy: the point of the field is that the value in it does not go anywhere the user did not send it.
         Rectangle {
             id: revealButton
 

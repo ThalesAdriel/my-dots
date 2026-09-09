@@ -18,8 +18,7 @@ BarButton {
         IconText {
             anchors.centerIn: parent
 
-            // A cable beats a radio: with both up the wire is what traffic is
-            // actually going over, and that is what the bar should be saying.
+            // A cable beats a radio: with both up the wire is what traffic actually goes over, and that is what the bar should be saying.
             text: Network.wired ? Glyphs.networkWired : Glyphs.wifi
             color: {
                 if (!Network.available)
@@ -39,9 +38,7 @@ BarButton {
         }
     }
 
-    // Signal strength as the same hairline the volume module draws, rather than
-    // as a graded wifi glyph. The graded ones are not in every build of Font
-    // Awesome Free, and a missing glyph reads as a box, not as a weak signal.
+    // Signal strength as the same hairline the volume module draws rather than a graded wifi glyph: the graded ones are missing from some builds of Font Awesome Free, and a missing glyph reads as a box, not a weak signal.
     overlayContent: Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
@@ -87,8 +84,7 @@ BarButton {
         anchorItem: root
         alignRight: true
 
-        // The access point list and the saved profiles are only read while this
-        // is open, and the poll slows back down when it closes.
+        // The access point list and the saved profiles are only read while this is open, and the poll slows back down when it closes.
         onShownChanged: {
             Network.detailed = networkPopup.shown;
             if (networkPopup.shown)

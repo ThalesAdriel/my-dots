@@ -1,28 +1,16 @@
-#!/bin/bash
-set -uo pipefail
+#!/bin/sh
+. "${0%/*}/lib/menu.sh"
 
-MODE="${1:-run}"
+action=$(menu_from_data "$0" | cut -d ' ' -f1)
+[ -n "$action" ] || exit 0
 
-action="$(sed '1,/^### DATA ###$/d' "$0" | fuzzel --match-mode fzf --dmenu | cut -d ' ' -f1)"
-
-case "$MODE" in
-    run)
-        case "$action" in
-            shutdown)    systemctl poweroff ;;
-            reboot)      systemctl reboot ;;
-            soft-reboot) systemctl soft-reboot ;;
-            lock)        loginctl lock-session ;;
-            suspend)     systemctl suspend ;;
-            *)           exit 0 ;;
-        esac
-        ;;
-    echo)
-        echo "$action"
-        ;;
-    *)
-        echo "Usage: $0 [run|echo]" >&2
-        exit 1
-        ;;
+case "${1:-run}" in
+run) exec "${0%/*}/power.sh" "$action" ;;
+echo) echo "$action" ;;
+*)
+	echo "usage: ${0##*/} [run|echo]" >&2
+	exit 1
+	;;
 esac
 exit
 

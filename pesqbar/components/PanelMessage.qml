@@ -1,9 +1,7 @@
 import QtQuick
 import "root:/config"
 
-// A line of prose under a panel's controls: a note that something the module
-// needs is not installed, or the last thing that went wrong, in red. Four panels
-// had the same ten lines for it.
+// A line of prose under a panel's controls: a note that something the module needs is not installed, or the last thing that went wrong, in red. Four panels had the same ten lines for it.
 Text {
     property bool warning: false
 

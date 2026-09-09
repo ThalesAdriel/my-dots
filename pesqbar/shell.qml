@@ -12,14 +12,11 @@ ShellRoot {
     NotificationPopups {
     }
 
-    // Covers the whole output when it is up, so it hangs off the root rather
-    // than off the bar. Opened over IPC from a Hyprland keybind.
+    // Covers the whole output, so it hangs off the root rather than the bar; opened over IPC from a Hyprland keybind.
     Overview {
     }
 
-    // Only ever on screen for the three seconds after Identify is pressed, but
-    // one per output, so it has to hang off the root next to the bar rather
-    // than inside it.
+    // Three seconds on screen after Identify is pressed, but one per output, so it sits beside the bar rather than inside it.
     Variants {
         model: Quickshell.screens
 

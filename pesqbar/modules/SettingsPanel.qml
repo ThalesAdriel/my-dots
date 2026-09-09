@@ -14,9 +14,7 @@ Item {
 
     implicitHeight: content.implicitHeight
 
-    // A titled card holding one group of settings. Everything used to run down
-    // the panel as one flat list with hairlines between the sections, which read
-    // as a wall of rows rather than as five separate things.
+    // A titled card holding one group of settings; everything used to run down the panel as one flat list with hairlines, which read as a wall of rows rather than five separate things.
     component Group: Column {
         id: group
 
@@ -26,9 +24,7 @@ Item {
         width: parent.width
         spacing: 8
 
-        // Through `data` rather than as plain children: the default property is
-        // aliased to the card's column, so anything declared loose in here would
-        // land inside the card with the settings rows.
+        // Through `data` rather than as plain children: the default property is aliased to the card's column, so anything declared loose here would land inside the card with the settings rows.
         data: [
             Text {
                 text: group.title
@@ -227,8 +223,7 @@ Item {
         property string label: ""
         property bool enabledAction: true
 
-        // Set on a row that opens something rather than doing something, so the
-        // two do not read the same at a glance.
+        // Set on a row that opens something rather than doing something, so the two do not read the same at a glance.
         property bool navigates: false
 
         signal triggered
@@ -334,10 +329,7 @@ Item {
             }
         }
 
-        // Everything here is off out of the box. Each one is a module that talks
-        // to something outside the shell, and none of them should start doing
-        // that on a machine that never asked for them: a desktop has no battery
-        // to report and no reason to be running nmcli every few seconds.
+        // Everything here is off out of the box: each one talks to something outside the shell, and a desktop has no battery to report and no reason to run nmcli every few seconds.
         Group {
             title: "Bar components"
 
@@ -507,9 +499,7 @@ Item {
         Group {
             title: "Notifications"
 
-            // A string rather than a bool in settings, so a third style later is
-            // a new value rather than a second flag to keep consistent with the
-            // first.
+            // A string rather than a bool in settings, so a third style later is a new value rather than a second flag to keep consistent with the first.
             ToggleRow {
                 label: "Attach toasts to the bar"
                 checked: Settings.notificationStyle === "integrated"
@@ -534,8 +524,7 @@ Item {
                 onAdjusted: newValue => Settings.notificationHeight = Math.round(newValue)
             }
 
-            // What a notification that named no timeout of its own gets. Critical
-            // still waits to be dismissed however this is set.
+            // What a notification that named no timeout of its own gets; critical still waits to be dismissed however this is set.
             SliderRow {
                 label: "Time on screen"
                 value: Settings.notificationSeconds

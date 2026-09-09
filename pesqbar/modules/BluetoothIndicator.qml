@@ -21,9 +21,7 @@ BarButton {
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
 
-            // Font Awesome Free keeps bluetooth in Brands rather than in Solid,
-            // so this is the one icon in the bar that is not drawn with
-            // IconText's family.
+            // Font Awesome Free keeps bluetooth in Brands rather than Solid, so this is the one bar icon not drawn with IconText's family.
             text: Glyphs.bluetooth
             font.family: Theme.brandFamily
             font.pixelSize: Theme.iconSize + 1
