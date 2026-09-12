@@ -96,6 +96,7 @@ BarButton {
         Loader {
             id: panelLoader
 
+            asynchronous: true
             active: networkPopup.rendered
 
             sourceComponent: NetworkPanel {}

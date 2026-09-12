@@ -147,6 +147,7 @@ BarButton {
         alignRight: true
 
         Loader {
+            asynchronous: true
             active: volumePopup.rendered
 
             sourceComponent: VolumePanel {

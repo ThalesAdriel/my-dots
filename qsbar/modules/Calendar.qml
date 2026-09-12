@@ -297,6 +297,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
 
+            asynchronous: true
             active: root.active && !root.yearView
 
             sourceComponent: MonthBlock {
@@ -315,6 +316,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
 
+            asynchronous: true
             active: root.active && root.yearView
 
             sourceComponent: Grid {

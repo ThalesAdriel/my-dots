@@ -17,6 +17,10 @@ PanelWindow {
     property bool shown: false
     property bool dismissing: false
     property bool rendered: false
+    property bool expanded: false
+    property bool animating: false
+
+    readonly property bool measured: contentHolder.implicitWidth > 0 && contentHolder.implicitHeight > 0
 
     // Room on either side of the panel for the fillets that weld it to the bar; the window grows outwards, so the panel itself stays where it was.
     readonly property int cornerSize: Settings.outerCorners ? Settings.outerCornerRadius : 0
@@ -28,6 +32,13 @@ PanelWindow {
         if (root.dismissing)
             return;
         root.shown = !root.shown;
+    }
+
+    function beginEntrance(): void {
+        if (root.expanded)
+            return;
+        root.animating = true;
+        root.expanded = true;
     }
 
     function reposition(): void {
@@ -71,12 +82,16 @@ PanelWindow {
     implicitWidth: contentHolder.implicitWidth + root.cornerSize * 2
     implicitHeight: contentHolder.implicitHeight
 
-    visible: root.rendered
+    visible: root.rendered && root.measured
 
     // A panel is built on its first open, so its width only settles as it comes up; each of these lands before the surface is on screen.
     onImplicitWidthChanged: root.reposition()
-    onShownChanged: root.reposition()
     onScreenChanged: root.reposition()
+    onShownChanged: {
+        root.reposition();
+        if (!root.shown)
+            root.expanded = false;
+    }
 
     data: [
         Connections {
@@ -106,7 +121,7 @@ PanelWindow {
 
         HyprlandFocusGrab {
             windows: [root]
-            active: root.shown
+            active: root.shown && root.visible
             onCleared: {
                 root.shown = false;
                 root.dismissing = true;
@@ -128,10 +143,44 @@ PanelWindow {
             restoreMode: Binding.RestoreNone
         },
 
+        FrameAnimation {
+            id: entrance
+
+            property int steadyFrames: 0
+            property real lastTravel: NaN
+
+            running: root.shown && root.visible && !root.expanded
+
+            onRunningChanged: {
+                entrance.steadyFrames = 0;
+                entrance.lastTravel = NaN;
+            }
+
+            onTriggered: {
+                if (surface.hiddenY !== entrance.lastTravel) {
+                    entrance.lastTravel = surface.hiddenY;
+                    entrance.steadyFrames = 0;
+                    return;
+                }
+
+                if (++entrance.steadyFrames >= 1)
+                    root.beginEntrance();
+            }
+        },
+
+        Timer {
+            interval: 250
+            running: entrance.running
+            onTriggered: root.beginEntrance()
+        },
+
         Timer {
             interval: Theme.durationBase + 60
             running: !root.shown && root.rendered
-            onTriggered: root.rendered = false
+            onTriggered: {
+                root.rendered = false;
+                root.animating = false;
+            }
         },
 
         Item {
@@ -146,10 +195,12 @@ PanelWindow {
                 // Welded to the bar, the panel's top corners are pushed up out of the clip so they come out square against it.
                 readonly property int lift: root.cornerSize > 0 ? Theme.cardRadius : 0
 
+                readonly property int hiddenY: -Math.max(surface.height, contentHolder.implicitHeight + surface.lift)
+
                 x: root.cornerSize
                 width: parent.width - root.cornerSize * 2
                 height: parent.height + surface.lift
-                y: root.shown ? -surface.lift : -height
+                y: root.expanded ? -surface.lift : surface.hiddenY
 
                 color: Theme.popupBackground
                 border.color: Theme.popupBorder
@@ -157,6 +208,8 @@ PanelWindow {
                 radius: Theme.cardRadius
 
                 Behavior on y {
+                    enabled: root.animating
+
                     NumberAnimation {
                         duration: Theme.durationBase
                         easing.type: Easing.Bezier

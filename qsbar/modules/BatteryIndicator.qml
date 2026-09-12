@@ -128,6 +128,7 @@ BarButton {
         onShownChanged: PowerProfiles.detailed = batteryPopup.shown
 
         Loader {
+            asynchronous: true
             active: batteryPopup.rendered
 
             sourceComponent: BatteryPanel {

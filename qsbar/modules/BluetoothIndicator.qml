@@ -51,6 +51,7 @@ BarButton {
         onShownChanged: Bluetooth.detailed = bluetoothPopup.shown
 
         Loader {
+            asynchronous: true
             active: bluetoothPopup.rendered
 
             sourceComponent: BluetoothPanel {}
