@@ -15,7 +15,7 @@ esac
 exit
 
 ### DATA ###
-shutdown  ⏻  Power off the system
+poweroff  ⏻  Power off the system
 reboot    🗘  Reboot the system
 soft-reboot ♻  Restart user session (systemd soft-reboot)
 lock      ꗃ  Lock the screen

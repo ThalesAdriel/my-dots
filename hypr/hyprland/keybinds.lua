@@ -27,7 +27,7 @@ local function script(name, args)
 end
 
 local function launcher(command)
-	return run("pkill fuzzel || " .. command)
+	return run("pkill -x fuzzel || " .. command)
 end
 
 local function menu(name, args)
