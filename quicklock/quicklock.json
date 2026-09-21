@@ -1,0 +1,16 @@
+{
+  "wallpaper": "~/Pictures/wallpapers/w.jpg",
+  "avatar": "",
+  "pam": "login",
+  "timeFormat": "HH:mm",
+  "dateFormat": "dddd, MMMM dd",
+  "dim": 0.34,
+  "blur": 56,
+  "contrast": -0.11,
+  "vibrancy": 0.17,
+  "rounding": 0,
+  "dotRounding": -1,
+  "avatarSize": 110,
+  "avatarOffset": 130,
+  "avatarRounding": -1
+}
