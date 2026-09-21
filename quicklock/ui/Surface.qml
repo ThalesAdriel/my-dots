@@ -40,6 +40,15 @@ Item {
             anchors.topMargin: Config.statusMarginY
         }
 
+        CaffeineToggle {
+            id: caffeine
+
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.rightMargin: Config.statusMarginX - caffeine.pad
+            anchors.topMargin: Config.statusMarginY - caffeine.pad
+        }
+
         TextLabel {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

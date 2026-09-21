@@ -64,11 +64,13 @@ Singleton {
     readonly property string fontFamily: "Rubik"
     readonly property string fontFamilyClock: "Space Grotesk"
     readonly property string fontFamilySymbols: "Material Symbols Rounded"
+    readonly property string fontFamilyIcons: settings.iconFont
 
     readonly property int clockSize: 65
     readonly property int dateSize: 17
     readonly property int userSize: 20
     readonly property int statusSize: 14
+    readonly property int caffeineSize: 18
 
     readonly property string timeFormat: settings.timeFormat
     readonly property string dateFormat: settings.dateFormat
@@ -100,6 +102,9 @@ Singleton {
 
     readonly property string placeholderText: "<i>Input Password...</i>"
     readonly property string failPrefix: "Authentication failed"
+
+    readonly property string caffeineIcon: settings.caffeineIcon
+    readonly property bool caffeineDefault: settings.caffeine
 
     readonly property bool fadeOnEmpty: true
     readonly property int fadeTimeout: 2000
@@ -155,6 +160,9 @@ Singleton {
             property int rounding: 0
             property int dotRounding: -1
             property int avatarRounding: -1
+            property string iconFont: "Font Awesome 7 Free"
+            property string caffeineIcon: "\uf0f4"
+            property bool caffeine: true
         }
     }
 }

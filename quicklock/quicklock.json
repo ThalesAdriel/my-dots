@@ -12,5 +12,8 @@
   "dotRounding": -1,
   "avatarSize": 110,
   "avatarOffset": 130,
-  "avatarRounding": -1
+  "avatarRounding": -1,
+  "iconFont": "Font Awesome 7 Free",
+  "caffeineIcon": "\uf0f4",
+  "caffeine": true
 }
