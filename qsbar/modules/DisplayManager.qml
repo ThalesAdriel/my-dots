@@ -277,8 +277,12 @@ Item {
 
                         onPressed: event => {
                             Displays.selected = plate.modelData.name;
-                            plateMouse.grabX = event.x;
-                            plateMouse.grabY = event.y;
+
+                            // Held against the canvas rather than against the plate: the plate is what the drag moves, so a delta measured inside it is measured against a frame that is running away from the pointer.
+                            const grab = plateMouse.mapToItem(canvas, event.x, event.y);
+                            plateMouse.grabX = grab.x;
+                            plateMouse.grabY = grab.y;
+
                             plateMouse.startX = plate.entry.x;
                             plateMouse.startY = plate.entry.y;
                             root.dragging = true;
@@ -291,9 +295,10 @@ Item {
                             if (!plateMouse.pressed || !plate.entry)
                                 return;
 
-                            // Back out to logical pixels before snapping, so the pull is measured against the arrangement rather than against however big the canvas happens to be.
-                            const deltaX = (event.x - plateMouse.grabX) / root.canvasScale;
-                            const deltaY = (event.y - plateMouse.grabY) / root.canvasScale;
+                            // In the canvas, which stands still, and only then back out to logical pixels: the pull is measured against the arrangement rather than against however big the canvas happens to be.
+                            const point = plateMouse.mapToItem(canvas, event.x, event.y);
+                            const deltaX = (point.x - plateMouse.grabX) / root.canvasScale;
+                            const deltaY = (point.y - plateMouse.grabY) / root.canvasScale;
 
                             const name = plate.modelData.name;
                             Displays.update(name, {

@@ -13,9 +13,11 @@ Singleton {
 
     property bool detailed: false
 
-    // Stays a poll: bluetoothctl has no monitor mode worth running and eavesdropping on bluez over the system bus is root only, so it costs less per tick and ticks less often instead.
     readonly property int idleInterval: 10000
     readonly property int activeInterval: 2500
+
+    // What the poll drops to once `gdbus monitor` is carrying the state changes; it does not stop, since a monitor that died has to be noticed and restarted.
+    readonly property int watchedInterval: 60000
 
     property bool available: true
     property bool powered: false
@@ -56,7 +58,7 @@ Singleton {
     }
 
     function setPowered(on: bool): void {
-        root.runQueue([["bluetoothctl", "power", on ? "on" : "off"]]);
+        root.runQueue([["timeout", "10", "bluetoothctl", "power", on ? "on" : "off"]]);
     }
 
     function scan(): void {
@@ -68,6 +70,16 @@ Singleton {
 
         // Runs on its own rather than through the queue: it holds the process open for its whole duration, and the panel has to stay usable while devices are still arriving.
         scanProcess.running = true;
+    }
+
+    // Discovery holds the radio, and a controller that is busy advertising for new devices is the one that refuses to finish a connection to a device it already knows. The panel's own flow is scan, click, connect, so the scan is dropped before anything is asked of a device rather than left to run its twelve seconds underneath it. bluez ends the discovery session with the client that asked for it, so killing the process is the whole of it.
+    function stopScan(): void {
+        if (!root.scanning && !scanProcess.running)
+            return;
+
+        scanTimer.stop();
+        scanProcess.running = false;
+        root.scanning = false;
     }
 
     function connectDevice(address: string): void {
@@ -95,7 +107,7 @@ Singleton {
             return;
         }
 
-        root.runQueue([["timeout", "30", "bluetoothctl", "pair", address], ["bluetoothctl", "trust", address], ["timeout", "25", "bluetoothctl", "connect", address]]);
+        root.runQueue([["timeout", "30", "bluetoothctl", "pair", address], ["timeout", "10", "bluetoothctl", "trust", address], ["timeout", "25", "bluetoothctl", "connect", address]]);
     }
 
     function forgetDevice(address: string): void {
@@ -112,6 +124,8 @@ Singleton {
     function runQueue(commands: var): void {
         if (root.busy)
             return;
+
+        root.stopScan();
 
         root.busy = true;
         root.lastError = "";
@@ -220,6 +234,19 @@ exit 0`
     Process {
         id: actionProcess
 
+        // bluetoothctl puts its refusals on stdout and still exits 0 for them, so the status alone reports a connection that never happened as a success: the click did nothing, the panel said nothing, and the device stayed disconnected. The reply is what decides.
+        stdout: StdioCollector {
+            onStreamFinished: {
+                for (const line of this.text.split("\n")) {
+                    const trimmed = line.trim();
+                    if (/^Failed\b/i.test(trimmed)) {
+                        root.lastError = trimmed;
+                        return;
+                    }
+                }
+            }
+        }
+
         stderr: StdioCollector {
             onStreamFinished: {
                 const message = this.text.trim();
@@ -229,7 +256,7 @@ exit 0`
         }
 
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
+            if (exitCode !== 0 || root.lastError !== "") {
                 if (root.lastError === "")
                     root.lastError = "Command failed with status " + exitCode;
                 root.queue = [];
@@ -248,12 +275,40 @@ exit 0`
         onExited: root.refresh()
     }
 
+    // The bluez counterpart of `nmcli monitor`, and the reason this is not a ten second poll any more: one process for the session that prints a line whenever an adapter or a device changes, so the read runs off that rather than off the clock. `dbus-monitor` is the one that needs root, because it asks the bus to make it a monitor; this only subscribes to the signals org.bluez already broadcasts, which any session user may receive. gdbus lives in glib2, which bluez itself pulls in, and a machine without it simply falls back to the idle interval below.
+    Process {
+        id: monitorProcess
+
+        command: ["gdbus", "monitor", "--system", "--dest", "org.bluez"]
+
+        stdout: SplitParser {
+            // A scan turns every advertisement into a PropertiesChanged, so the events are dropped while one is running and the 2.5s tick covers the panel instead.
+            onRead: {
+                if (!root.scanning)
+                    settleTimer.restart();
+            }
+        }
+    }
+
+    // One action on a device is a run of signals, so they collapse into one read on the trailing edge rather than one read each.
     Timer {
-        interval: root.detailed ? root.activeInterval : root.idleInterval
+        id: settleTimer
+
+        interval: 250
+        onTriggered: root.refresh()
+    }
+
+    Timer {
+        // Started from the tick rather than from a binding on `running`: a monitor that cannot start exits immediately, and a binding would respawn it as fast as it fails.
+        interval: root.detailed ? root.activeInterval : monitorProcess.running ? root.watchedInterval : root.idleInterval
         running: root.enabled && root.available
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.refresh()
+        onTriggered: {
+            if (!monitorProcess.running)
+                monitorProcess.running = true;
+            root.refresh();
+        }
     }
 
     Timer {
@@ -263,8 +318,12 @@ exit 0`
     }
 
     onEnabledChanged: {
-        if (root.enabled)
+        if (root.enabled) {
             root.refresh();
+        } else {
+            monitorProcess.running = false;
+            settleTimer.stop();
+        }
     }
 
     onDetailedChanged: {

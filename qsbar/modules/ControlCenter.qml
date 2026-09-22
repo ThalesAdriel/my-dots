@@ -435,7 +435,9 @@ BarPopup {
                 ActionButton {
                     glyph: Glyphs.lock
                     tooltip: "Lock"
-                    onTriggered: Quickshell.execDetached(["hyprlock"])
+
+                    // Through logind rather than at the locker directly, the same way scripts/power.sh does it: hypridle owns lock_cmd, so this cannot drift to the wrong locker, and the session is actually marked locked rather than merely covered by a window.
+                    onTriggered: Quickshell.execDetached(["loginctl", "lock-session"])
                 }
 
                 ActionButton {

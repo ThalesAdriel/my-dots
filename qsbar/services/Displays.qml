@@ -378,6 +378,18 @@ Singleton {
     Process {
         id: applyProcess
 
+        // hyprctl answers on stdout and exits 0 whether or not the compositor took the keyword: a scale that does not divide the mode into whole logical pixels, or a mode the output does not have, comes back as an error string with a success status. Reading only stderr made every one of those look like it had worked, and the panel sat there showing a layout that was never applied.
+        stdout: StdioCollector {
+            onStreamFinished: {
+                // One reply per command in the batch, run together: anything that is not a run of ok is the compositor refusing.
+                const reply = this.text.trim();
+                if (reply === "" || /^(ok\s*)+$/i.test(reply))
+                    return;
+
+                root.lastError = reply.split("\n")[0];
+            }
+        }
+
         stderr: StdioCollector {
             onStreamFinished: {
                 const message = this.text.trim();

@@ -16,7 +16,15 @@ Item {
     }
 
     HoverHandler {
-        onPointChanged: Auth.activity()
+        onPointChanged: pointerSettle.start()
+    }
+
+    // A pointer reports at up to a thousand hertz and every report was restarting a two second fade timer. start() rather than restart(), so one that never stops moving still reports in: a tenth of a second is finer than anything reading this, and the last move of a gesture is the one that arms the fade either way.
+    Timer {
+        id: pointerSettle
+
+        interval: 100
+        onTriggered: Auth.activity()
     }
 
     Item {

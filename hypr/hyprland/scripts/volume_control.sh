@@ -2,7 +2,9 @@
 . "${0%/*}/lib/notify.sh"
 . "${0%/*}/lib/sound.sh"
 
-step=5
+audio() {
+	qs ipc -p "$HOME/.config/qsbar/shell.qml" call audio "$1" 2>/dev/null
+}
 
 sink_icon() {
 	if ! is_uint "$1" || [ "$1" -le 0 ]; then
@@ -17,52 +19,36 @@ sink_icon() {
 }
 
 notify_sink() {
-	state=$(pamixer --get-volume-human) || return
-	if [ "$state" = muted ]; then
+	[ -n "${1-}" ] || return
+
+	if [ "$1" = muted ]; then
 		notify_replacing volume -i audio-volume-muted "Volume: Muted"
 		return
 	fi
 
-	level=${state%\%}
+	level=${1%\%}
 	notify_replacing volume -h int:value:"$level" -i "$(sink_icon "$level")" "Volume: $level%"
 	play_sound_once volume
 }
 
 notify_source() {
-	if [ "$(pamixer --default-source --get-mute)" = true ]; then
+	[ -n "${1-}" ] || return
+
+	if [ "$1" = muted ]; then
 		notify_replacing microphone -i microphone-sensitivity-muted "Microphone: Muted"
 		return
 	fi
 
-	level=$(pamixer --default-source --get-volume) || return
+	level=${1%\%}
 	notify_replacing microphone -h int:value:"$level" -i audio-input-microphone "Microphone: $level%"
 }
 
 case "${1-}" in
---inc)
-	pamixer -u
-	pamixer -i "$step" && notify_sink
-	;;
---dec)
-	pamixer -u
-	pamixer -d "$step" && notify_sink
-	;;
---toggle) pamixer -t && notify_sink ;;
---mic-inc)
-	pamixer --default-source -u
-	pamixer --default-source -i "$step" && notify_source
-	;;
---mic-dec)
-	pamixer --default-source -u
-	pamixer --default-source -d "$step" && notify_source
-	;;
---toggle-mic) pamixer --default-source -t && notify_source ;;
---get-icon)
-	state=$(pamixer --get-volume-human)
-	[ "$state" = muted ] && sink_icon 0 || sink_icon "${state%\%}"
-	;;
---get-mic-icon)
-	[ "$(pamixer --default-source --get-mute)" = true ] && echo microphone-sensitivity-muted || echo audio-input-microphone
-	;;
-*) pamixer --get-volume-human ;;
+--inc) notify_sink "$(audio sinkUp)" ;;
+--dec) notify_sink "$(audio sinkDown)" ;;
+--toggle) notify_sink "$(audio sinkToggle)" ;;
+--mic-inc) notify_source "$(audio sourceUp)" ;;
+--mic-dec) notify_source "$(audio sourceDown)" ;;
+--toggle-mic) notify_source "$(audio sourceToggle)" ;;
+*) audio sinkStatus ;;
 esac

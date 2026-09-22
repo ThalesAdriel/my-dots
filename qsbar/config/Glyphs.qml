@@ -54,12 +54,10 @@ Singleton {
     readonly property string plug: ""
     readonly property string triangleExclamation: ""
 
-    // Power profiles.
     readonly property string gaugeHigh: ""
     readonly property string scaleBalanced: ""
     readonly property string leaf: ""
 
-    // The screen capture dot.
     readonly property string circle: ""
 
     readonly property var workspaceNumerals: ({

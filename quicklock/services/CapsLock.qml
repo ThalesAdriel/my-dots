@@ -37,7 +37,7 @@ Singleton {
 
     function observe(event) {
         if (root.sources.length > 0) {
-            root.refresh();
+            // Only the key that can move it, and only after the fact: the LED is still reporting the old state inside the event that toggled it, which is what the settle is for. Reading it on every key put a blocking sysfs load in the middle of typing a password to re-read a value that had not changed, and the answer the immediate read gave was the stale one anyway.
             if (event.key === Qt.Key_CapsLock)
                 settle.restart();
             return;

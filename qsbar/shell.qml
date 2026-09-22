@@ -12,6 +12,13 @@ ShellRoot {
     NotificationPopups {
     }
 
+    // One instance, not one per output: both register IPC targets, and a polkit prompt belongs on the focused screen rather than on every one of them.
+    MediaKeys {
+    }
+
+    PolkitDialog {
+    }
+
     // Covers the whole output, so it hangs off the root rather than the bar; opened over IPC from a Hyprland keybind.
     Overview {
     }

@@ -13,6 +13,12 @@ Item {
 
     property int offset: 0
 
+    // What the grid is actually built from. A wheel over the calendar steps one month per event, and a touchpad sends a burst of them inside a single frame, so a grid bound straight to `offset` rebinds twelve blocks of forty two cells once per event rather than once per gesture. Settling it costs a frame nobody sees and lands on the same month either way.
+    property int settledOffset: 0
+
+    // start() rather than restart(): a timer already counting is left to finish, so a scroll that never stops still redraws once a frame instead of staying frozen until the fingers come off.
+    onOffsetChanged: settleTimer.start()
+
     readonly property bool yearView: Settings.calendarYearView
 
     readonly property int padding: 16
@@ -34,8 +40,8 @@ Item {
 
     readonly property date anchorDate: {
         if (root.yearView)
-            return new Date(root.todayYear + root.offset, 0, 1);
-        return new Date(root.todayYear, root.todayMonth + root.offset, 1);
+            return new Date(root.todayYear + root.settledOffset, 0, 1);
+        return new Date(root.todayYear, root.todayMonth + root.settledOffset, 1);
     }
 
     readonly property int firstWeekday: Qt.locale().firstDayOfWeek
@@ -63,9 +69,11 @@ Item {
         root.offset += direction;
     }
 
-    // An offset counts months in month view and years in year view, so it has to go back to today whenever the view changes or the calendar is reopened.
+    // An offset counts months in month view and years in year view, so it has to go back to today whenever the view changes or the calendar is reopened. Both halves at once and the settle dropped: reopening on today is not a scroll, and must not show last month's grid for a frame first.
     function reset(): void {
+        settleTimer.stop();
         root.offset = 0;
+        root.settledOffset = 0;
     }
 
     function toggleView(): void {
@@ -81,6 +89,14 @@ Item {
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
+    }
+
+    // One frame at sixty hertz. A touchpad reports scroll at around 125Hz, so anything shorter than a frame lets every event through and coalesces nothing; the grid cannot show more than one month per frame anyway. It reads the offset when it fires rather than when it started, so the last event of a burst is never the one that gets dropped.
+    Timer {
+        id: settleTimer
+
+        interval: 16
+        onTriggered: root.settledOffset = root.offset
     }
 
     component MonthBlock: Item {
@@ -254,7 +270,7 @@ Item {
 
             doubleClickEnabled: true
 
-            onPrimaryClicked: root.offset = 0
+            onPrimaryClicked: root.reset()
             onSecondaryClicked: root.toggleView()
             onDoubleClicked: root.toggleView()
 

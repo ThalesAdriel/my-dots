@@ -58,19 +58,17 @@ hypridle
 hyprland-preview-share-picker-git
 hyprland-protocols
 hyprland-qt-support
-hyprlock
-hyprpolkitagent
 hyprshot
 hyprsunset
 hyprutils
 imagemagick
 jre-openjdk
 kitty
+libnotify
 nautilus
 ncdu
 neovim
 nwg-look
-pamixer
 polkit
 rsync
 satty
@@ -86,6 +84,7 @@ xdg-terminal-exec
 xdg-user-dirs
 xdg-user-dirs-gtk
 xdg-utils
+xsettingsd
 "
 
 BLUETOOTH_PKGS="
