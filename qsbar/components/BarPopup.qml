@@ -20,7 +20,25 @@ PanelWindow {
     property bool expanded: false
     property bool animating: false
 
-    readonly property bool measured: contentHolder.implicitWidth > 0 && contentHolder.implicitHeight > 0
+    // Set from the hover state of the button. A panel's first build is its most expensive frame, and the pointer arrives before the click, so the build goes there rather than onto the slide.
+    property bool warm: false
+
+    // Whether the content exists, as against `rendered`, which is whether the panel is open. Only the item tree is built early; everything worth watching stays on `rendered`.
+    property bool prepared: false
+
+    readonly property bool live: root.rendered || root.prepared
+
+    // True while the panel is moving, and the reason the surface size is held still below.
+    property bool sliding: false
+
+    // True from the frame the panel lands to the frame it is asked to close: for work worth doing while open but not on the frame the slide starts.
+    property bool settled: false
+
+    // The size the surface is committed to, which is not the size of what is in it: content settles over several frames and sometimes over a second, and a window that adopted every step of that would spend the slide waiting on a configure round trip per frame.
+    property int surfaceWidth: 0
+    property int surfaceHeight: 0
+
+    readonly property bool measured: root.surfaceWidth > 0 && root.surfaceHeight > 0
 
     // Room on either side of the panel for the fillets that weld it to the bar; the window grows outwards, so the panel itself stays where it was.
     readonly property int cornerSize: Settings.outerCorners ? Settings.outerCornerRadius : 0
@@ -38,7 +56,17 @@ PanelWindow {
         if (root.expanded)
             return;
         root.animating = true;
+        root.sliding = true;
         root.expanded = true;
+        landing.restart();
+    }
+
+    // Rounded up, so the box is never a fraction of a pixel shorter than the text in it, and refused while the panel is moving: it finishes the slide at the size it started.
+    function adoptSize(): void {
+        if (root.sliding)
+            return;
+        root.surfaceWidth = Math.ceil(contentHolder.implicitWidth);
+        root.surfaceHeight = Math.ceil(contentHolder.implicitHeight);
     }
 
     function reposition(): void {
@@ -79,8 +107,8 @@ PanelWindow {
     exclusiveZone: 0
     color: "transparent"
 
-    implicitWidth: contentHolder.implicitWidth + root.cornerSize * 2
-    implicitHeight: contentHolder.implicitHeight
+    implicitWidth: root.surfaceWidth + root.cornerSize * 2
+    implicitHeight: root.surfaceHeight
 
     visible: root.rendered && root.measured
 
@@ -89,9 +117,22 @@ PanelWindow {
     onScreenChanged: root.reposition()
     onShownChanged: {
         root.reposition();
-        if (!root.shown)
-            root.expanded = false;
+
+        if (root.shown) {
+            // Reopened before the slide out finished, so the teardown that would have thawed the size is not going to run.
+            root.sliding = false;
+            root.adoptSize();
+            return;
+        }
+
+        landing.stop();
+        root.expanded = false;
+        root.settled = false;
+        root.sliding = root.rendered;
     }
+
+    // Content sized during its own construction never emits the change the connection below listens for.
+    Component.onCompleted: root.adoptSize()
 
     data: [
         Connections {
@@ -119,6 +160,19 @@ PanelWindow {
             }
         },
 
+        // The surface follows the content while the panel is standing still, and ignores it while it is moving.
+        Connections {
+            target: contentHolder
+
+            function onImplicitWidthChanged(): void {
+                root.adoptSize();
+            }
+
+            function onImplicitHeightChanged(): void {
+                root.adoptSize();
+            }
+        },
+
         HyprlandFocusGrab {
             windows: [root]
             active: root.shown && root.visible
@@ -143,35 +197,77 @@ PanelWindow {
             restoreMode: Binding.RestoreNone
         },
 
+        // A pointer only crossing the button is not one on its way to clicking it.
+        Timer {
+            interval: 140
+            running: root.warm && !root.prepared
+            onTriggered: root.prepared = true
+        },
+
+        // And built for a moment after it leaves, so coming back does not rebuild the tree.
+        Timer {
+            interval: 5000
+            running: root.prepared && !root.warm && !root.shown
+            onTriggered: root.prepared = false
+        },
+
         FrameAnimation {
             id: entrance
 
             property int steadyFrames: 0
-            property real lastTravel: NaN
+            property real lastWidth: NaN
+            property real lastHeight: NaN
+            property real lastSurfaceWidth: NaN
+            property real lastSurfaceHeight: NaN
 
             running: root.shown && root.visible && !root.expanded
 
-            onRunningChanged: {
+            onRunningChanged: entrance.forget()
+
+            function forget(): void {
                 entrance.steadyFrames = 0;
-                entrance.lastTravel = NaN;
+                entrance.lastWidth = NaN;
+                entrance.lastHeight = NaN;
+                entrance.lastSurfaceWidth = NaN;
+                entrance.lastSurfaceHeight = NaN;
             }
 
             onTriggered: {
-                if (surface.hiddenY !== entrance.lastTravel) {
-                    entrance.lastTravel = surface.hiddenY;
+                // Nothing moves until both the content and the surface the compositor handed back have stopped changing size: sliding while either is moving costs a configure round trip per frame, and draws the box at one size while the text in it is at another.
+                if (contentHolder.implicitWidth !== entrance.lastWidth || contentHolder.implicitHeight !== entrance.lastHeight || clipper.width !== entrance.lastSurfaceWidth || clipper.height !== entrance.lastSurfaceHeight) {
+                    entrance.lastWidth = contentHolder.implicitWidth;
+                    entrance.lastHeight = contentHolder.implicitHeight;
+                    entrance.lastSurfaceWidth = clipper.width;
+                    entrance.lastSurfaceHeight = clipper.height;
                     entrance.steadyFrames = 0;
                     return;
                 }
 
-                if (++entrance.steadyFrames >= 1)
+                // A window with no size yet is one whose first configure has not arrived.
+                if (clipper.width <= 0 || clipper.height <= 0)
+                    return;
+
+                if (++entrance.steadyFrames >= 2)
                     root.beginEntrance();
             }
         },
 
+        // A quarter second to settle, past which it opens anyway rather than waiting on something that will never stop moving.
         Timer {
             interval: 250
             running: entrance.running
             onTriggered: root.beginEntrance()
+        },
+
+        Timer {
+            id: landing
+
+            interval: Theme.durationBase + 20
+            onTriggered: {
+                root.sliding = false;
+                root.settled = root.shown;
+                root.adoptSize();
+            }
         },
 
         Timer {
@@ -180,6 +276,8 @@ PanelWindow {
             onTriggered: {
                 root.rendered = false;
                 root.animating = false;
+                root.sliding = false;
+                root.adoptSize();
             }
         },
 
@@ -195,7 +293,7 @@ PanelWindow {
                 // Welded to the bar, the panel's top corners are pushed up out of the clip so they come out square against it.
                 readonly property int lift: root.cornerSize > 0 ? Theme.cardRadius : 0
 
-                readonly property int hiddenY: -Math.max(surface.height, contentHolder.implicitHeight + surface.lift)
+                readonly property int hiddenY: -Math.max(surface.height, contentHolder.implicitHeight + surface.lift, root.surfaceHeight + surface.lift)
 
                 x: root.cornerSize
                 width: parent.width - root.cornerSize * 2
@@ -206,6 +304,9 @@ PanelWindow {
                 border.color: Theme.popupBorder
                 border.width: Theme.panelBorderWidth
                 radius: Theme.cardRadius
+
+                // The box is the edge of the panel, not its backdrop: where the surface and the content inside it disagree on size, the difference is cut off rather than drawn beside the panel.
+                clip: true
 
                 Behavior on y {
                     enabled: root.animating

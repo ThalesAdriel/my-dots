@@ -124,12 +124,16 @@ BarButton {
         anchorItem: root
         alignRight: true
 
+        warm: root.containsMouse
+
         // The profile list is only re-read while the panel is up; nothing else in the shell shows it.
-        onShownChanged: PowerProfiles.detailed = batteryPopup.shown
+        readonly property bool wantsDetail: batteryPopup.prepared || batteryPopup.shown
+
+        onWantsDetailChanged: PowerProfiles.detailed = batteryPopup.wantsDetail
 
         Loader {
             asynchronous: true
-            active: batteryPopup.rendered
+            active: batteryPopup.live
 
             sourceComponent: BatteryPanel {
                 present: root.present

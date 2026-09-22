@@ -33,6 +33,8 @@ BarButton {
         anchorItem: root
         alignRight: true
 
+        warm: root.containsMouse
+
         // Opens on today rather than wherever it was left last time.
         onShownChanged: {
             if (calendarPopup.shown)
@@ -42,8 +44,8 @@ BarButton {
         Calendar {
             id: calendar
 
-            // Built on the first open rather than at startup; stepping and switching views from the bar still work while it is empty, since both only move numbers the grid reads when it is there.
-            active: calendarPopup.rendered
+            // Built when the pointer reaches the button rather than at startup; stepping and switching views from the bar still work while it is empty, since both only move numbers the grid reads when it is there. Of everything in the bar this is the build most worth keeping off the click: the grid is some eighteen hundred cells.
+            active: calendarPopup.live
         }
     }
 }

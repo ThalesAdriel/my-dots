@@ -84,20 +84,29 @@ BarButton {
         anchorItem: root
         alignRight: true
 
-        // The access point list and the saved profiles are only read while this is open, and the poll slows back down when it closes.
+        warm: root.containsMouse
+
+        // The access point list and the saved profiles are only read while this is open, and the poll slows back down when it closes. The hover counts as open for that, so the list is already back by the time the panel is rather than growing in under a slide.
+        readonly property bool wantsDetail: networkPopup.prepared || networkPopup.shown
+
+        onWantsDetailChanged: Network.detailed = networkPopup.wantsDetail
+
         onShownChanged: {
-            Network.detailed = networkPopup.shown;
-            if (networkPopup.shown)
-                Network.rescan();
-            else if (panelLoader.item)
+            if (!networkPopup.shown && panelLoader.item)
                 panelLoader.item.reset();
+        }
+
+        // A rescan is the radio, not a read, so it waits for the panel to be there and goes after the slide rather than on the frame that starts it.
+        onSettledChanged: {
+            if (networkPopup.settled)
+                Network.rescan();
         }
 
         Loader {
             id: panelLoader
 
             asynchronous: true
-            active: networkPopup.rendered
+            active: networkPopup.live
 
             sourceComponent: NetworkPanel {}
         }

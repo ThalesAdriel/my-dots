@@ -146,9 +146,12 @@ BarButton {
         anchorItem: root
         alignRight: true
 
+        // Built on the hover, but the sinks are still only subscribed to once the panel is open.
+        warm: root.containsMouse
+
         Loader {
             asynchronous: true
-            active: volumePopup.rendered
+            active: volumePopup.live
 
             sourceComponent: VolumePanel {
                 active: volumePopup.rendered

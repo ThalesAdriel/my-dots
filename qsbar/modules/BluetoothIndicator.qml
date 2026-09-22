@@ -48,13 +48,21 @@ BarButton {
         anchorItem: root
         alignRight: true
 
-        onShownChanged: Bluetooth.detailed = bluetoothPopup.shown
+        warm: root.containsMouse
+
+        // The brief read the indicator lives on lists nothing paired or nearby, so the panel used to open on a list it did not have yet and the devices grew in under a panel that was still sliding. Off the hover the list is already there; off `settled` at the latest, which is after the slide rather than during it.
+        readonly property bool wantsDetail: bluetoothPopup.prepared || bluetoothPopup.settled
+
+        onWantsDetailChanged: Bluetooth.detailed = bluetoothPopup.wantsDetail
 
         Loader {
             asynchronous: true
-            active: bluetoothPopup.rendered
+            active: bluetoothPopup.live
 
-            sourceComponent: BluetoothPanel {}
+            sourceComponent: BluetoothPanel {
+                // The list only animates its height once the panel is standing still.
+                animated: bluetoothPopup.settled
+            }
         }
     }
 

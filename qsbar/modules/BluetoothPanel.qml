@@ -9,6 +9,9 @@ import "root:/services"
 Item {
     id: root
 
+    // False until the popup carrying this has finished coming in: a height animating under a sliding panel resizes the layer surface on every frame of the slide.
+    property bool animated: false
+
     readonly property int panelPadding: 16
     readonly property int panelWidth: 340
 
@@ -85,6 +88,8 @@ Item {
             clip: true
 
             Behavior on height {
+                enabled: root.animated
+
                 NumberAnimation {
                     duration: Theme.durationBase
                     easing.type: Easing.Bezier

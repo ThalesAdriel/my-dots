@@ -23,11 +23,11 @@ BarPopup {
     readonly property int brightnessRowHeight: Brightness.available ? 28 : 0
     readonly property int brightnessRowMargin: root.brightnessRowHeight > 0 ? 10 : 0
 
+    // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath. Off `settled` rather than off the click, since the startup probe already told the panel what to draw.
+    onSettledChanged: Brightness.watching = root.settled
+
     onShownChanged: {
         UiState.controlCenterOpen = root.shown;
-
-        // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath.
-        Brightness.watching = root.shown;
 
         // Hiding the panel does not send the pointer anywhere, so nothing would clear this on its own and the tooltip would be waiting on reopen.
         root.hoveredAction = null;
