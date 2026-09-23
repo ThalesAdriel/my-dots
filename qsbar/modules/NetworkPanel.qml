@@ -375,8 +375,10 @@ Item {
             spacing: 8
             visible: root.pendingName !== ""
 
+            // Pinned to plain text: an SSID is whatever the access point broadcasts, and in AutoText a tag-shaped one renders as rich text, which fetches <img src> over the network.
             Text {
                 width: parent.width
+                textFormat: Text.PlainText
                 text: (root.pendingEnterprise ? "Sign in to " : "Password for ") + root.pendingName
                 color: Theme.textPrimary
                 font.family: Theme.sansFamily

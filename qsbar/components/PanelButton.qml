@@ -21,6 +21,19 @@ Rectangle {
     radius: Theme.radius
     opacity: root.available ? 1 : 0.4
 
+    // Reachable with Tab wherever the surface takes the keyboard: the settings window, the polkit prompt, the Wi-Fi form.
+    activeFocusOnTab: root.available
+    Keys.onSpacePressed: root.press()
+    Keys.onReturnPressed: root.press()
+    Keys.onEnterPressed: root.press()
+
+    function press(): void {
+        if (root.available)
+            root.activated();
+    }
+
+    FocusRing {}
+
     color: {
         if (!root.available)
             return Theme.fillTrack;

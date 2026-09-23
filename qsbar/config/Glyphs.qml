@@ -60,6 +60,19 @@ Singleton {
 
     readonly property string circle: ""
 
+    // The settings sidebar, one per page.
+    readonly property string palette: ""
+    readonly property string windowMaximize: ""
+    readonly property string sliders: ""
+    readonly property string desktop: ""
+    // The file browser under a path field.
+    readonly property string folder: ""
+    readonly property string folderOpen: ""
+    readonly property string arrowUp: ""
+
+    readonly property string image: ""
+    readonly property string paintbrush: ""
+
     readonly property var workspaceNumerals: ({
         "1": "一",
         "2": "二",

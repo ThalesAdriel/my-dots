@@ -13,6 +13,9 @@ Item {
 
     signal accepted
 
+    // Enter or the focus leaving, whichever comes first: what a field that saves itself listens to, so a value is not lost to clicking away without pressing Enter.
+    signal editingFinished
+
     // The inner TextInput is what actually takes the keyboard, so focus has to be handed down rather than left on the wrapper.
     function focusInput(): void {
         input.forceActiveFocus();
@@ -75,11 +78,13 @@ Item {
             selectedTextColor: Theme.textPrimary
             selectByMouse: true
             activeFocusOnPress: true
+            activeFocusOnTab: true
 
             echoMode: root.secret && !root.revealed ? TextInput.Password : TextInput.Normal
             passwordCharacter: "•"
 
             onAccepted: root.accepted()
+            onEditingFinished: root.editingFinished()
 
             Text {
                 anchors.left: parent.left

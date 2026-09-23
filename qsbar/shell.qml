@@ -23,6 +23,10 @@ ShellRoot {
     Overview {
     }
 
+    // One window for every output, opened on whichever had focus: from the gear in the control center, or over IPC from a Hyprland keybind.
+    SettingsWindow {
+    }
+
     // Three seconds on screen after Identify is pressed, but one per output, so it sits beside the bar rather than inside it.
     Variants {
         model: Quickshell.screens

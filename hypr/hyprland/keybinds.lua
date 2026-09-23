@@ -74,6 +74,7 @@ hl.bind(super("PERIOD"), menu("fuzzel-emoji.sh", "copy"))
 hl.bind(super("A"), menu("audio_output_switch.sh"))
 hl.bind(super("SHIFT + A"), run("hyprpicker --autocopy"))
 hl.bind(super("TAB"), run(qsbar .. " overview toggle"))
+hl.bind(super("I"), run(qsbar .. " settings toggle"))
 
 hl.bind(super("SHIFT + S"), shot("region"))
 hl.bind(super("SHIFT + E"), shot("region", " --postcommand " .. script_path("screenshot_edit.sh")))

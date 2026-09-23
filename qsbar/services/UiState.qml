@@ -4,10 +4,9 @@ import Quickshell
 
 Singleton {
     property bool controlCenterOpen: false
-    property bool settingsOpen: false
 
-    // The display manager, opened from a button at the bottom of settings and stacked over it, so going back lands where it was opened from.
-    property bool displaysOpen: false
+    // The settings window, in the middle of whichever output had focus when it was asked for; opened from the gear in the control center or over IPC from a Hyprland keybind.
+    property bool settingsOpen: false
 
     // The workspace overview, which covers the whole output while it is up; opened from the bar or over IPC from a Hyprland keybind.
     property bool overviewOpen: false

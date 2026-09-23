@@ -117,5 +117,18 @@ Scope {
             if (root.player && root.player.canGoPrevious)
                 root.player.previous();
         }
+
+        // Every player the bar can see, what each will accept, and which one a key goes to (marked *): what a media key that does nothing comes down to.
+        function status(): string {
+            const players = Mpris.players ? Mpris.players.values : [];
+            if (players.length === 0)
+                return "no players";
+
+            return players.map(player => {
+                const accepts = [player.canTogglePlaying ? "toggle" : "", player.canGoNext ? "next" : "", player.canGoPrevious ? "previous" : ""].filter(flag => flag !== "").join(" ");
+                const mark = player === root.player ? "*" : " ";
+                return mark + " " + player.identity + " (" + player.dbusName + ") " + (player.isPlaying ? "playing" : "not playing") + " | accepts: " + (accepts || "nothing");
+            }).join("\n");
+        }
     }
 }

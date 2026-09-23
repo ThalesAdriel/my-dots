@@ -38,7 +38,8 @@ Singleton {
     readonly property color popupBorder: Qt.rgba(1, 1, 1, 0.18)
     readonly property int panelBorderWidth: Settings.showPanelBorders ? 1 : 0
 
-    readonly property color cardTint: Qt.lighter(surfaceBase, 1.55)
+    // Lifted by laying white over the surface rather than with Qt.lighter: lighter multiplies the value, and the default surface is pure black, which multiplied by anything stays black and drew every card invisible against the panel it sits on.
+    readonly property color cardTint: Qt.tint(surfaceBase, Qt.rgba(1, 1, 1, 0.08))
     readonly property color cardBackground: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, Math.min(Settings.panelOpacity + 0.06, 1))
 
     // The settings sheet covers the control center rather than blending into it, so it is the one surface that ignores panel opacity.

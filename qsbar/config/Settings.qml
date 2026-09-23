@@ -55,6 +55,16 @@ Singleton {
     // Real surface captures in the overview; off falls back to the application icon, which costs nothing and always draws.
     property alias overviewPreviews: adapter.overviewPreviews
 
+    // How awww moves from one desktop wallpaper to the next. The wallpaper itself is not kept here: awww-daemon caches what each output shows and puts it back on its own.
+    property alias wallpaperTransition: adapter.wallpaperTransition
+    property alias wallpaperTransitionSeconds: adapter.wallpaperTransitionSeconds
+
+    // awww's --resize: "crop" fills the output, "fit" letterboxes, "no" centres the picture at its own size.
+    property alias wallpaperResize: adapter.wallpaperResize
+
+    // The folder both wallpaper grids list, for the desktop and for the lock screen. Out of restoreDefaults on purpose: it says where your pictures are, not how anything looks.
+    property alias wallpaperFolder: adapter.wallpaperFolder
+
     property alias clockShowSeconds: adapter.clockShowSeconds
     property alias clockUse12Hour: adapter.clockUse12Hour
     property alias clockShowProgress: adapter.clockShowProgress
@@ -96,6 +106,9 @@ Singleton {
         adapter.notificationHeight = 64;
         adapter.notificationSeconds = 10;
         adapter.overviewPreviews = true;
+        adapter.wallpaperTransition = "fade";
+        adapter.wallpaperTransitionSeconds = 1.2;
+        adapter.wallpaperResize = "crop";
         adapter.clockShowSeconds = true;
         adapter.clockUse12Hour = false;
         adapter.clockShowProgress = false;
@@ -157,6 +170,11 @@ Singleton {
             property int notificationSeconds: 10
 
             property bool overviewPreviews: true
+
+            property string wallpaperTransition: "fade"
+            property real wallpaperTransitionSeconds: 1.2
+            property string wallpaperResize: "crop"
+            property string wallpaperFolder: "~/Pictures/wallpapers"
 
             property bool clockShowSeconds: true
             property bool clockUse12Hour: false

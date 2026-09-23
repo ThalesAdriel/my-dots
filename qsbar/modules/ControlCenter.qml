@@ -14,11 +14,6 @@ BarPopup {
 
     alignRight: true
 
-    readonly property bool displaysVisible: root.shown && UiState.displaysOpen
-
-    // hyprctl is only asked for the monitor layout while the sheet that shows it is open.
-    onDisplaysVisibleChanged: Displays.watching = root.displaysVisible
-
     // The brightness row is left out entirely on a machine with no backlight, and the panel closes the gap rather than leaving an empty card behind.
     readonly property int brightnessRowHeight: Brightness.available ? 28 : 0
     readonly property int brightnessRowMargin: root.brightnessRowHeight > 0 ? 10 : 0
@@ -33,12 +28,8 @@ BarPopup {
         root.hoveredAction = null;
 
         // The list below already carries everything, so drop the toasts rather than showing the same notifications twice.
-        if (root.shown) {
+        if (root.shown)
             Notifications.clearPopups();
-        } else {
-            UiState.settingsOpen = false;
-            UiState.displaysOpen = false;
-        }
     }
 
     component ActionButton: Rectangle {
@@ -91,103 +82,6 @@ BarPopup {
         }
     }
 
-    // A sheet that covers the whole panel: a back arrow, a name, and whatever it is showing scrolling under them. Two of these stack, so the header and the scrolling live here once rather than in each.
-    component Sheet: Rectangle {
-        id: sheet
-
-        property string title: ""
-        property bool open: false
-        default property alias sheetContent: sheetHolder.data
-
-        // What the content is loaded against: true while the sheet is open and for as long as it is still fading out, since unloading on `open` alone would empty the sheet under the fade.
-        readonly property bool populated: sheet.open || sheet.opacity > 0.01
-
-        signal dismissed
-
-        anchors.fill: parent
-        color: Theme.settingsBackground
-        radius: Theme.cardRadius
-
-        opacity: sheet.open ? 1 : 0
-        visible: sheet.opacity > 0.01
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Theme.durationBase
-                easing.type: Easing.Bezier
-                easing.bezierCurve: Theme.easingCurve
-            }
-        }
-
-        Item {
-            id: sheetHeader
-
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: root.panelPadding
-            height: 30
-
-            Rectangle {
-                id: sheetBack
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-
-                width: 32
-                height: 28
-                radius: Theme.radius
-                color: backMouse.containsPress ? Theme.fillPressed : backMouse.containsMouse ? Theme.fillHover : Theme.fillTrack
-
-                IconText {
-                    anchors.centerIn: parent
-                    fillBarHeight: false
-                    text: Glyphs.angleLeft
-                    font.pixelSize: Theme.fontSizeSmall
-                }
-
-                MouseArea {
-                    id: backMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: sheet.dismissed()
-                }
-            }
-
-            Text {
-                anchors.left: sheetBack.right
-                anchors.leftMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                text: sheet.title
-                color: Theme.textSecondary
-                font.family: Theme.sansFamily
-                font.pixelSize: Theme.fontSize
-            }
-        }
-
-        Flickable {
-            anchors.top: sheetHeader.bottom
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: root.panelPadding
-            anchors.rightMargin: root.panelPadding
-            anchors.topMargin: 10
-            anchors.bottomMargin: root.panelPadding
-
-            clip: true
-            contentWidth: width
-            contentHeight: sheetHolder.childrenRect.height
-            boundsBehavior: Flickable.StopAtBounds
-
-            Item {
-                id: sheetHolder
-                width: parent.width
-                height: childrenRect.height
-            }
-        }
-    }
-
     // Whichever action button the pointer is over, or null.
     property var hoveredAction: null
 
@@ -195,7 +89,7 @@ BarPopup {
         id: content
 
         implicitWidth: root.panelWidth
-        implicitHeight: UiState.settingsOpen || UiState.displaysOpen ? 620 : headerRow.height + brightnessRow.height + root.brightnessRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
+        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
 
         Item {
             id: headerRow
@@ -218,7 +112,12 @@ BarPopup {
                 compact: true
                 glyph: Glyphs.gear
                 tooltip: "System settings"
-                onTriggered: UiState.settingsOpen = true
+
+                // The window opens over the middle of the screen, so the panel is put away rather than left hanging over it.
+                onTriggered: {
+                    root.shown = false;
+                    UiState.settingsOpen = true;
+                }
             }
 
             Text {
@@ -567,40 +466,6 @@ BarPopup {
                     font.family: Theme.sansFamily
                     font.pixelSize: Theme.fontSizeSmall
                 }
-            }
-        }
-
-        // Both sheets are built on first use rather than at startup: between them the two largest trees in the shell, two clicks deep, one of each per output, and not worth constructing for a session that never opens settings.
-        Sheet {
-            id: settingsSheet
-
-            title: "System settings"
-
-            // Only one sheet is on screen: opening the display manager fades this one out under it rather than leaving both to render.
-            open: UiState.settingsOpen && !UiState.displaysOpen
-            onDismissed: UiState.settingsOpen = false
-
-            Loader {
-                width: parent.width
-                active: settingsSheet.populated
-
-                sourceComponent: SettingsPanel {}
-            }
-        }
-
-        Sheet {
-            id: displaysSheet
-
-            title: "Display manager"
-
-            open: UiState.displaysOpen
-            onDismissed: UiState.displaysOpen = false
-
-            Loader {
-                width: parent.width
-                active: displaysSheet.populated
-
-                sourceComponent: DisplayManager {}
             }
         }
     }
