@@ -104,7 +104,7 @@ exit 0`
     Process {
         id: readProcess
 
-        command: ["sh", "-c", root.readScript, "pesqbar-power"]
+        command: ["sh", "-c", root.readScript, "qsbar-power"]
 
         stdout: StdioCollector {
             onStreamFinished: root.parse(this.text)

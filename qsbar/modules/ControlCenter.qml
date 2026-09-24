@@ -443,8 +443,6 @@ BarPopup {
                 height: tooltipLabel.implicitHeight + 12
 
                 color: Theme.popupBackground
-                border.color: Theme.popupBorder
-                border.width: Theme.panelBorderWidth
                 radius: Theme.radius
 
                 opacity: actionTooltip.shown ? 1 : 0

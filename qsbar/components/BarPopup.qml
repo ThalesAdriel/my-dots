@@ -34,11 +34,14 @@ PanelWindow {
     // True from the frame the panel lands to the frame it is asked to close: for work worth doing while open but not on the frame the slide starts.
     property bool settled: false
 
-    // The size the surface is committed to, which is not the size of what is in it: content settles over several frames and sometimes over a second, and a window that adopted every step of that would spend the slide waiting on a configure round trip per frame.
+    // The size the panel is committed to, which is not the size of what is in it: content settles over several frames and sometimes over a second, and a panel that adopted every step of that would change shape halfway through its slide. The width is the window's too; the height is only the panel's, drawn inside a window that stays put (see windowHeight).
     property int surfaceWidth: 0
     property int surfaceHeight: 0
 
     readonly property bool measured: root.surfaceWidth > 0 && root.surfaceHeight > 0
+
+    // The window is as tall as the screen while it is up, with the panel drawn at surfaceHeight inside it and only the panel taking input. A window that followed its content was resized on every frame a section inside it opened or closed, each one a configure round trip and a new buffer: Application volume opening ran at a third of the frame rate with frames of 100 ms, against a steady 16 ms in a window that stayed put. Nothing is drawn or blurred in the rest: the popup namespaces ignore alpha under 0.1.
+    readonly property int windowHeight: root.screen ? root.screen.height : 1080
 
     // Room on either side of the panel for the fillets that weld it to the bar; the window grows outwards, so the panel itself stays where it was.
     readonly property int cornerSize: Settings.outerCorners ? Settings.outerCornerRadius : 0
@@ -108,7 +111,11 @@ PanelWindow {
     color: "transparent"
 
     implicitWidth: root.surfaceWidth + root.cornerSize * 2
-    implicitHeight: root.surfaceHeight
+    implicitHeight: root.measured ? root.windowHeight : 0
+
+    mask: Region {
+        item: surface
+    }
 
     visible: root.rendered && root.measured
 
@@ -297,12 +304,10 @@ PanelWindow {
 
                 x: root.cornerSize
                 width: parent.width - root.cornerSize * 2
-                height: parent.height + surface.lift
+                height: root.surfaceHeight + surface.lift
                 y: root.expanded ? -surface.lift : surface.hiddenY
 
                 color: Theme.popupBackground
-                border.color: Theme.popupBorder
-                border.width: Theme.panelBorderWidth
                 radius: Theme.cardRadius
 
                 // The box is the edge of the panel, not its backdrop: where the surface and the content inside it disagree on size, the difference is cut off rather than drawn beside the panel.

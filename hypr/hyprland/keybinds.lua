@@ -77,7 +77,8 @@ hl.bind(super("TAB"), run(qsbar .. " overview toggle"))
 hl.bind(super("I"), run(qsbar .. " settings toggle"))
 
 hl.bind(super("SHIFT + S"), shot("region"))
-hl.bind(super("SHIFT + E"), shot("region", " --postcommand " .. script_path("screenshot_edit.sh")))
+-- hyprshot runs whatever follows -- on the saved file. It has no --postcommand: that only ever worked because getopt dropped the unknown flag and left the script behind as the command.
+hl.bind(super("SHIFT + E"), shot("region", " -- " .. script_path("screenshot_edit.sh")))
 hl.bind("Print", shot("output"), locked)
 hl.bind("CTRL + Print", run("mkdir -p " .. shots .. " && grim " .. shots .. "/Screenshot_" .. stamp), locked)
 
@@ -112,8 +113,9 @@ hl.bind(super("SHIFT + Left"), hl.dsp.window.move({ direction = "l" }))
 hl.bind(super("SHIFT + Right"), hl.dsp.window.move({ direction = "r" }))
 hl.bind(super("SHIFT + Up"), hl.dsp.window.move({ direction = "u" }))
 hl.bind(super("SHIFT + Down"), hl.dsp.window.move({ direction = "d" }))
-hl.bind(super("Semicolon"), run("hyprctl dispatch splitratio -0.1"), repeating)
-hl.bind(super("Apostrophe"), run("hyprctl dispatch splitratio +0.1"), repeating)
+-- A dwindle layout message under the Lua config: `hyprctl dispatch splitratio` is read as hl.dispatch(splitratio -0.1), which is not Lua.
+hl.bind(super("Semicolon"), hl.dsp.layout("splitratio -0.1"), repeating)
+hl.bind(super("Apostrophe"), hl.dsp.layout("splitratio +0.1"), repeating)
 hl.bind(super("Minus"), zoom(-0.1), repeating)
 hl.bind(super("Equal"), zoom(0.1), repeating)
 hl.bind(super("mouse:272"), hl.dsp.window.drag(), mouse)

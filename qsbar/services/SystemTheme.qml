@@ -77,8 +77,8 @@ Singleton {
         } else if (key === "icon_theme") {
             Quickshell.execDetached(["gsettings", "set", iface, "icon-theme", value]);
         } else {
-            // Hyprland draws its own pointer and exports XCURSOR_* to whatever it launches next; gsettings covers the GTK apps already running.
-            Quickshell.execDetached(["hyprctl", "setcursor", root.cursorTheme, String(root.cursorSize)]);
+            // Hyprland draws its own pointer; gsettings covers the GTK apps already running.
+            root.applyCursor();
             Quickshell.execDetached(["gsettings", "set", iface, "cursor-theme", root.cursorTheme]);
             Quickshell.execDetached(["gsettings", "set", iface, "cursor-size", String(root.cursorSize)]);
         }
@@ -86,6 +86,19 @@ Singleton {
         if (root.loaded)
             file.setText(root.serialise());
         root.writeXsettings();
+    }
+
+    // What Hyprland said to the last setcursor when it was not "ok", shown on the theme page: the call used to go out unheard, and a pointer that did not change said nothing about why.
+    property string cursorError: ""
+
+    // One call at a time, with a change that arrives during one sent again once it finishes, like the xsettingsd writer below.
+    function applyCursor(): void {
+        if (cursorApply.running) {
+            cursorApply.again = true;
+            return;
+        }
+        cursorApply.command = ["hyprctl", "setcursor", root.cursorTheme, String(root.cursorSize)];
+        cursorApply.running = true;
     }
 
     // XWayland apps read the theme from xsettingsd rather than from gsettings. Written whole each time and handed over with a HUP; execs.lua starts xsettingsd on this file at login. The path and the contents reach the shell as arguments, never as part of the script.
@@ -138,6 +151,35 @@ Singleton {
         onFileChanged: reload()
         onLoaded: root.parse(file.text())
         onLoadFailed: root.loaded = false
+    }
+
+    Process {
+        id: cursorApply
+
+        property bool again: false
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const reply = this.text.trim();
+                root.cursorError = reply === "" || reply === "ok" ? "" : reply.split("\n")[0];
+            }
+        }
+
+        // Where hyprctl says it could not reach Hyprland at all.
+        stderr: StdioCollector {
+            onStreamFinished: {
+                const message = this.text.trim();
+                if (message !== "")
+                    root.cursorError = message.split("\n")[0];
+            }
+        }
+
+        onExited: {
+            if (cursorApply.again) {
+                cursorApply.again = false;
+                Qt.callLater(root.applyCursor);
+            }
+        }
     }
 
     Process {

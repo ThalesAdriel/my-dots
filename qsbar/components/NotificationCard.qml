@@ -117,12 +117,6 @@ Rectangle {
     readonly property color summaryColor: root.low ? Theme.textSecondary : Theme.textPrimary
     readonly property color bodyColor: root.low ? Theme.textMuted : Theme.textSecondary
 
-    readonly property color frameColor: {
-        if (root.critical)
-            return Theme.urgent;
-        return root.low ? Qt.rgba(1, 1, 1, 0.07) : Theme.cardBorder;
-    }
-
     readonly property color surfaceColor: {
         if (root.critical)
             return Qt.tint(Theme.cardBackground, Qt.rgba(Theme.urgent.r, Theme.urgent.g, Theme.urgent.b, 0.14));
@@ -132,8 +126,9 @@ Rectangle {
     implicitHeight: Math.max(Math.max(textColumn.implicitHeight, root.showIcon ? 32 : 0) + root.padding * 2, Settings.notificationHeight)
 
     color: root.surfaceColor
-    border.color: root.frameColor
-    border.width: root.critical ? 1 : Theme.panelBorderWidth
+    // Only a critical notification is framed, in the urgent red.
+    border.color: Theme.urgent
+    border.width: root.critical ? 1 : 0
     radius: Theme.cardRadius
 
     // First child, so everything else sits on top of it and the card only picks up clicks that missed a button or a link.

@@ -14,7 +14,6 @@ Singleton {
     property alias outerCorners: adapter.outerCorners
     property alias outerCornerRadius: adapter.outerCornerRadius
     property alias showTopBorder: adapter.showTopBorder
-    property alias showPanelBorders: adapter.showPanelBorders
     property alias barBlur: adapter.barBlur
     property alias panelRadius: adapter.panelRadius
     property alias surfaceColor: adapter.surfaceColor
@@ -84,7 +83,6 @@ Singleton {
         adapter.outerCorners = true;
         adapter.outerCornerRadius = 12;
         adapter.showTopBorder = false;
-        adapter.showPanelBorders = false;
         adapter.barBlur = false;
         adapter.panelRadius = 0;
         adapter.surfaceColor = "#000000";
@@ -139,7 +137,6 @@ Singleton {
             property bool outerCorners: true
             property int outerCornerRadius: 12
             property bool showTopBorder: false
-            property bool showPanelBorders: false
             property bool barBlur: false
             property int panelRadius: 0
             property string surfaceColor: "#000000"

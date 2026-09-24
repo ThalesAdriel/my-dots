@@ -113,7 +113,7 @@ Singleton {
 
         // Carried on the process rather than read off root when it exits: a read already in flight when the scan was asked for is not the one that scanned.
         readProcess.rescanning = root.scanning;
-        readProcess.command = ["sh", "-c", root.readScript, "pesqbar-network", root.detailed ? "full" : "brief", root.scanning ? "rescan" : "cache"];
+        readProcess.command = ["sh", "-c", root.readScript, "qsbar-network", root.detailed ? "full" : "brief", root.scanning ? "rescan" : "cache"];
         readProcess.running = true;
     }
 

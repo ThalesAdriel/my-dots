@@ -36,7 +36,6 @@ Singleton {
     readonly property color popupTint: Qt.lighter(surfaceBase, 1.35)
     readonly property color popupBackground: Qt.rgba(popupTint.r, popupTint.g, popupTint.b, Settings.panelOpacity)
     readonly property color popupBorder: Qt.rgba(1, 1, 1, 0.18)
-    readonly property int panelBorderWidth: Settings.showPanelBorders ? 1 : 0
 
     // Lifted by laying white over the surface rather than with Qt.lighter: lighter multiplies the value, and the default surface is pure black, which multiplied by anything stays black and drew every card invisible against the panel it sits on.
     readonly property color cardTint: Qt.tint(surfaceBase, Qt.rgba(1, 1, 1, 0.08))
@@ -47,18 +46,18 @@ Singleton {
     readonly property color settingsCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
     readonly property string barLayerNamespace: {
         if (Settings.panelBlur)
-            return "pesqBar-blur-popups";
-        return Settings.barBlur ? "pesqBar-blur" : "pesqBar";
+            return "qsbar-blur-popups";
+        return Settings.barBlur ? "qsbar-blur" : "qsbar";
     }
-    readonly property string panelLayerNamespace: Settings.panelBlur ? "pesqBar-blur" : "pesqBar"
+    readonly property string panelLayerNamespace: Settings.panelBlur ? "qsbar-blur" : "qsbar"
 
     // The panels welded to the bar bring their own entrance, sliding down out from under it behind their own clip, and Hyprland's layer animation over the top of that reads as a second one competing with it. They get a namespace of their own so the no_anim rule has something to name without reaching the toasts or the identify overlay, which are on the one above and do want it.
-    readonly property string popupLayerNamespace: Settings.panelBlur ? "pesqBar-blur-panel" : "pesqBar-panel"
+    readonly property string popupLayerNamespace: Settings.panelBlur ? "qsbar-blur-panel" : "qsbar-panel"
 
     // A window preview carries its own alpha, and drawing it over anything translucent lets the compositor blur the desktop up through it, so everything under a capture is opaque and unblurred.
     readonly property color overviewBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
     readonly property color overviewCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
-    readonly property string overviewLayerNamespace: "pesqBar"
+    readonly property string overviewLayerNamespace: "qsbar"
     readonly property color cardBorder: Qt.rgba(1, 1, 1, 0.18)
     readonly property int cardRadius: Settings.panelRadius
 

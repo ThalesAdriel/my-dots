@@ -25,8 +25,6 @@ PopupWindow {
         anchors.fill: parent
 
         color: Theme.popupBackground
-        border.color: Theme.popupBorder
-        border.width: Theme.panelBorderWidth
         radius: Theme.radius
 
         opacity: root.shown ? 1 : 0

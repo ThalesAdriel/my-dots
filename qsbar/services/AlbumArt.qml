@@ -107,14 +107,14 @@ fi`
         id: fetch
 
         // Through sh rather than straight at curl, so a machine without curl fails with a line in the log rather than silently drawing no cover.
-        command: root.current === "" ? [] : ["sh", "-c", root.script, "pesqbar-album-art", root.current, root.cacheFile(root.current)]
+        command: root.current === "" ? [] : ["sh", "-c", root.script, "qsbar-album-art", root.current, root.cacheFile(root.current)]
 
         onExited: (exitCode, exitStatus) => {
             const url = root.current;
             root.current = "";
 
             if (exitCode !== 0)
-                console.warn("pesqBar: no album art from", url, "- exit", exitCode);
+                console.warn("qsbar: no album art from", url, "- exit", exitCode);
 
             root.settle(url, exitCode === 0 ? root.cacheFile(url) : "");
             root.start();

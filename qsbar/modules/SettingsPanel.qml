@@ -54,9 +54,11 @@ Item {
         return false;
     }
 
-    readonly property var barColors: ["#11121a", "#000000", "#1b1b1b", "#202020", "#2e3436", "#3d3846"]
+    // The neutrals, then two purples and two pinks, all dark enough for the bar's white text to stay readable at full opacity.
+    readonly property var barColors: ["#11121a", "#000000", "#1b1b1b", "#202020", "#2e3436", "#3d3846", "#613583", "#813d9c", "#9c1d5e", "#c2407a"]
     readonly property var surfaceColors: ["#0d0d12", "#000000", "#141414", "#1a1a22", "#1c2226", "#241f31"]
-    readonly property var accentColors: ["#3584e4", "#2ec27e", "#f5c211", "#ff7800", "#e01b24", "#986a44"]
+    // The last two are libadwaita's purple and pink accents, bright enough to read as an accent and still dark enough for the white text drawn on top of it.
+    readonly property var accentColors: ["#3584e4", "#2ec27e", "#f5c211", "#ff7800", "#e01b24", "#986a44", "#9141ac", "#d56199"]
 
     // What the picture fields list when browsing: what Qt, with qt6-imageformats, can draw.
     readonly property var imageFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.gif"]
@@ -94,8 +96,6 @@ Item {
 
                 radius: Theme.cardRadius
                 color: Theme.settingsCard
-                border.width: Theme.panelBorderWidth
-                border.color: Theme.cardBorder
 
                 Column {
                     id: groupRows
@@ -1012,14 +1012,25 @@ Item {
                     }
 
                     Image {
+                        id: picture
+
+                        // The picture itself only until its thumbnail exists, which is saved from this once it is decoded, laid out and in a window to be grabbed from. Not straight off the status: a picture the pixmap cache already holds is ready while the tile is still being built, at no size and in no window.
+                        readonly property string thumbnail: Wallpaper.thumbnail(tile.modelData)
+                        readonly property bool keepable: picture.status === Image.Ready && picture.thumbnail === "" && picture.width > 0 && picture.Window.window !== null
+
                         anchors.fill: parent
                         anchors.margins: tile.chosen ? 3 : 0
 
-                        source: Wallpaper.fileUrl(tile.modelData)
+                        source: picture.thumbnail !== "" ? picture.thumbnail : Wallpaper.fileUrl(tile.modelData)
                         sourceSize.width: 256
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         smooth: true
+
+                        onKeepableChanged: {
+                            if (picture.keepable)
+                                Wallpaper.keep(tile.modelData, picture);
+                        }
 
                         opacity: tile.chosen || tileMouse.containsMouse || (tiles.activeFocus && tiles.cursor === tile.index) ? 1 : 0.72
 
@@ -1232,12 +1243,6 @@ Item {
                     maximum: 24
                     suffix: "px"
                     onAdjusted: newValue => Settings.panelRadius = Math.round(newValue)
-                }
-
-                ToggleRow {
-                    label: "Panel and card borders"
-                    checked: Settings.showPanelBorders
-                    onToggled: Settings.showPanelBorders = !Settings.showPanelBorders
                 }
 
                 ToggleRow {
@@ -1915,6 +1920,13 @@ Item {
                             }))
                     current: SystemTheme.cursorSize
                     onPicked: value => SystemTheme.set("cursor_size", value)
+                }
+
+                PanelMessage {
+                    width: parent.width
+                    visible: SystemTheme.cursorError !== "" && !root.searching
+                    warning: true
+                    text: "Hyprland did not take the cursor: " + SystemTheme.cursorError
                 }
             }
 

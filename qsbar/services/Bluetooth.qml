@@ -53,7 +53,7 @@ Singleton {
         if (!root.enabled || readProcess.running)
             return;
 
-        readProcess.command = ["sh", "-c", root.readScript, "pesqbar-bluetooth", root.detailed ? "full" : "brief"];
+        readProcess.command = ["sh", "-c", root.readScript, "qsbar-bluetooth", root.detailed ? "full" : "brief"];
         readProcess.running = true;
     }
 

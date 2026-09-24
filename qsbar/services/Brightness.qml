@@ -87,7 +87,7 @@ exit 0`
     Process {
         id: readProcess
 
-        command: ["sh", "-c", root.probeScript, "pesqbar-brightness"]
+        command: ["sh", "-c", root.probeScript, "qsbar-brightness"]
 
         stdout: StdioCollector {
             onStreamFinished: root.parse(this.text)

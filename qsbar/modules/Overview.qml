@@ -268,7 +268,7 @@ Scope {
                             z: scope.dragging ? 1 : 0
 
                             color: Theme.overviewCard
-                            border.width: tile.targeted || tile.active ? 2 : Theme.panelBorderWidth
+                            border.width: tile.targeted || tile.active ? 2 : 0
                             border.color: tile.targeted ? Theme.accent : tile.active ? Theme.accent : Theme.cardBorder
 
                             // Never below 1: the tiles carry the previews, and a tile at 96% is one the desktop shows through, so the drop target reads as the accent border instead.
@@ -522,8 +522,6 @@ Scope {
                     radius: Theme.pill(height)
 
                     color: Theme.overviewCard
-                    border.width: Theme.panelBorderWidth
-                    border.color: Theme.cardBorder
 
                     opacity: scope.hoveredClient ? 1 : 0
                     visible: opacity > 0.01

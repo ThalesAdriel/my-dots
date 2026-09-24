@@ -163,11 +163,11 @@ Singleton {
             property int blur: 56
             property real contrast: -0.11
             property real vibrancy: 0.17
-            property int avatarSize: 110
+            property int avatarSize: 82
             property int avatarOffset: 130
             property int rounding: 0
-            property int dotRounding: -1
-            property int avatarRounding: -1
+            property int dotRounding: 0
+            property int avatarRounding: 0
             property string iconFont: "Font Awesome 7 Free"
             property string caffeineIcon: "\uf0f4"
             property bool caffeine: true

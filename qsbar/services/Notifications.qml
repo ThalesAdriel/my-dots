@@ -13,9 +13,15 @@ Singleton {
     // Toasts on screen at once; anything past this still lands in the control center, it just does not pile up down the side of the display.
     readonly property int maxPopups: 4
 
+    // What the control center keeps; older ones expire as new ones arrive. Each arrival costs a pass over the whole list (the models diff it, the arrival times are copied), so with no cap a script notifying once a minute made every notification slower than the last and held on to all of them.
+    readonly property int maxHistory: 100
+
     // What a screenshot notification calls itself: anything with one of these in its name or summary and a real file behind it gets the editor button.
     readonly property var screenshotWords: ["screenshot", "screen shot", "screencapture", "printscreen", "print screen", "captura", "grim", "hyprshot", "flameshot", "swappy", "satty", "shotman", "spectacle"]
     readonly property string screenshotEditor: "satty"
+
+    // How Quickshell hands over an icon or a picture it resolved: the name or path the sender wrote, behind this prefix.
+    readonly property string iconHandle: "image://icon/"
 
     // What a link in a notification body may be. Everything else ends up at xdg-open, which runs a .desktop file and hands any other path to whatever claims the type, so an unfiltered href turns one click into arbitrary execution — and any process on the session bus can send a body.
     readonly property var linkSchemes: ["http", "https", "mailto"]
@@ -183,9 +189,8 @@ Singleton {
             return "";
 
         const value = String(source);
-        const handle = "image://icon/";
-        if (value.startsWith(handle))
-            return value.slice(handle.length).split("?")[0];
+        if (value.startsWith(root.iconHandle))
+            return value.slice(root.iconHandle.length).split("?")[0];
 
         // A path, inline image data, or any other handle: a real picture, and nothing a glyph should be standing in for.
         if (value.startsWith("/") || value.startsWith("file://") || value.startsWith("image://"))
@@ -239,7 +244,7 @@ Singleton {
     function openLink(link: string): void {
         const safe = root.safeLink(link);
         if (safe === "") {
-            console.warn("pesqBar: refused a notification link with a scheme that is not allowed:", link);
+            console.warn("qsbar: refused a notification link with a scheme that is not allowed:", link);
             return;
         }
 
@@ -254,25 +259,37 @@ Singleton {
         return root.screenshotWords.some(word => haystack.indexOf(word) !== -1);
     }
 
-    // The file a screenshot notification points at, or "" if there is none: grimblast and hyprshot pass it as the icon and name it again in the body, others set the image-path hint, and some only hand over raw image data that never reaches disk.
+    // A picture a notification names as a file, or "". Sent as the image-path hint it comes back from Quickshell behind its icon provider (image://icon//home/...), or as a file:// URI with the spaces escaped; sent as the app icon it is the bare path. It is a path and nothing else, spaces included, which GNOME's own screenshots have in their names. Read as free text instead, image://icon//home/... gave Satty //icon//home/..., a file that is not there, and it closed at once.
+    function picturePath(source: string): string {
+        let value = source ? root.clampText(source) : "";
+        if (value.startsWith(root.iconHandle)) {
+            value = value.slice(root.iconHandle.length).split("?")[0];
+        } else if (value.startsWith("file://")) {
+            try {
+                value = decodeURIComponent(value.slice(7));
+            } catch (error) {
+                return "";
+            }
+        }
+        return /^\/[^\n]*\.(?:png|jpe?g|webp)$/i.test(value) ? value : "";
+    }
+
+    // The file a screenshot notification points at, or "" if there is none: hyprshot and grimblast pass it as the image and name it again in the body, others set the image-path hint, and some only hand over raw image data that never reaches disk.
     function screenshotPath(notification: var): string {
         if (!root.looksLikeScreenshot(notification))
             return "";
 
-        const candidates = [notification.image, notification.appIcon, notification.body];
-        for (const candidate of candidates) {
-            if (!candidate)
-                continue;
+        const candidates = [root.picturePath(notification.image), root.picturePath(notification.appIcon)];
 
-            const match = root.clampText(candidate).match(/(?:file:\/\/)?(\/[^\s"'<>]+\.(?:png|jpg|jpeg|webp))/i);
-            if (!match)
-                continue;
+        // The body is prose around the path, so it is picked out of it, up to the first space.
+        const match = notification.body ? root.clampText(notification.body).match(/(?:file:\/\/)?(\/[^\s"'<>]+\.(?:png|jpg|jpeg|webp))/i) : null;
+        if (match)
+            candidates.push(match[1]);
 
-            // The editor is handed this path and writes its result next to it, so a body that walks back up out of the directory it named would pick where that file lands; an honest screenshot tool never sends one.
-            if (match[1].indexOf("/../") !== -1)
-                continue;
-
-            return match[1];
+        for (const path of candidates) {
+            // The editor is handed this path and writes its result next to it, so one that walks back up out of the directory it named would pick where that file lands; an honest screenshot tool never sends one.
+            if (path !== "" && path.indexOf("/../") === -1)
+                return path;
         }
 
         return "";
@@ -287,7 +304,7 @@ Singleton {
         const directory = path.slice(0, path.lastIndexOf("/") + 1);
         const output = directory + "satty-" + Qt.formatDateTime(new Date(), "yyyyMMdd-hhmmss") + ".png";
 
-        console.log("pesqBar: opening", path, "in", root.screenshotEditor);
+        console.log("qsbar: opening", path, "in", root.screenshotEditor);
 
         // Through sh rather than straight at the binary: execDetached throws away everything QProcess says about a failed start, so this way "satty: not found" lands in the log. Paths go in as arguments, so spaces are fine.
         Quickshell.execDetached(["sh", "-c", 'exec "$0" --filename "$1" --output-filename "$2"', root.screenshotEditor, path, output]);
@@ -377,6 +394,13 @@ Singleton {
         onNotification: notification => {
             notification.tracked = true;
             root.markArrival(notification);
+
+            // Oldest first, and never one still up as a toast, which holds on to it until it has animated out.
+            const kept = server.trackedNotifications.values;
+            for (const old of kept.slice(0, Math.max(kept.length - root.maxHistory, 0))) {
+                if (root.popups.indexOf(old) === -1)
+                    old.expire();
+            }
 
             if (root.shouldPopup())
                 root.pushPopup(notification);

@@ -113,46 +113,19 @@ Scope {
             return null;
         }
 
-        // Out of reach of Hyprland's own layer animation, like the panels, since the card brings its own entrance and the two would play over each other.
-        WlrLayershell.namespace: Theme.popupLayerNamespace
+        // The card and nothing round it, on top of whatever is there, the way fuzzel opens: no anchors puts a layer surface in the middle of the output, and a namespace with no no_anim rule hands the entrance and the exit to Hyprland's own layersIn and layersOut, the same popin fuzzel gets. It used to cover the output with a dimmed backdrop and animate the card itself, which played a second animation inside Hyprland's.
+        WlrLayershell.namespace: Theme.panelLayerNamespace
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: scope.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
+        implicitWidth: Math.min(840, (window.screen ? window.screen.width : 1920) - 48)
+        implicitHeight: Math.min(620, (window.screen ? window.screen.height : 1080) - 96)
 
-        // Laid out below the bar rather than over it: half the settings are about the bar, and it stays in view, undimmed, while they are dragged.
         exclusiveZone: 0
         color: "transparent"
+        visible: scope.open
 
-        // Up for as long as the fade out runs, not just while the flag is set.
-        visible: scope.open || card.opacity > 0.01
-
-        Rectangle {
-            anchors.fill: parent
-            color: "#000000"
-            opacity: scope.open ? 0.35 : 0
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Theme.durationBase
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Theme.easingCurve
-                }
-            }
-        }
-
-        // Anywhere that is not the card closes it.
-        MouseArea {
-            anchors.fill: parent
-            onClicked: scope.close()
-        }
-
-        // A keybind that opens something else, or a window taking focus on its own, puts settings away too.
+        // Clicking anywhere else, a keybind that opens something else, or a window taking focus on its own, puts settings away.
         HyprlandFocusGrab {
             windows: [window]
             active: scope.open && window.visible
@@ -207,35 +180,12 @@ Scope {
                 readonly property int padding: 16
                 readonly property int sidebarWidth: 188
 
-                anchors.centerIn: parent
-                width: Math.min(840, parent.width - 48)
-                height: Math.min(620, parent.height - 48)
+                anchors.fill: parent
 
                 color: Theme.settingsBackground
                 radius: Theme.cardRadius
-                border.width: Theme.panelBorderWidth
-                border.color: Theme.popupBorder
 
-                opacity: scope.open ? 1 : 0
-                scale: scope.open ? 1 : 0.96
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.durationBase
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.easingCurve
-                    }
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: Theme.durationBase
-                        easing.type: Easing.Bezier
-                        easing.bezierCurve: Theme.easingCurve
-                    }
-                }
-
-                // Swallows clicks that land on the card but on nothing in it, which would otherwise fall through to the catcher behind and close the window. Taking the focus here is also what ends an edit in a text field when you click away from it, so the field saves.
+                // Taking the focus on a click that lands on nothing is what ends an edit in a text field when you click away from it, so the field saves.
                 MouseArea {
                     anchors.fill: parent
                     onPressed: focusSink.forceActiveFocus()

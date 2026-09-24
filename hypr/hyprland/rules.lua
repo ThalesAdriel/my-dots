@@ -45,21 +45,21 @@ hl.layer_rule({
 })
 
 hl.layer_rule({
-	name = "pesqBar-blur",
-	match = { namespace = "^pesqBar-blur(-popups|-panel)?$" },
+	name = "qsbar-blur",
+	match = { namespace = "^qsbar-blur(-popups|-panel)?$" },
 	blur = true,
 	xray = true,
 	ignore_alpha = 0.1,
 })
 
 hl.layer_rule({
-	name = "pesqBar-blur-popups",
-	match = { namespace = "^pesqBar-blur-popups$" },
+	name = "qsbar-blur-popups",
+	match = { namespace = "^qsbar-blur-popups$" },
 	blur_popups = true,
 })
 
 hl.layer_rule({
-	name = "pesqBar-panel",
-	match = { namespace = "^pesqBar(-blur)?-panel$" },
+	name = "qsbar-panel",
+	match = { namespace = "^qsbar(-blur)?-panel$" },
 	no_anim = true,
 })

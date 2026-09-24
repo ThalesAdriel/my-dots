@@ -2,10 +2,11 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import "root:/config"
 
-// The monitor layout, read out of hyprctl and written back with it. Everything below works in logical coordinates, since hyprctl reports a mode in physical pixels and a position in logical ones, and the layout lives in settings.json rather than the Hyprland config, applied with hyprctl keyword.
+// The monitor layout, read out of hyprctl and written back with it. Everything below works in logical coordinates, since hyprctl reports a mode in physical pixels and a position in logical ones. With the Lua config a change goes in through `hyprctl eval` as hl.monitor calls, since `keyword` is gone there, and a saved layout is also written to hypr/hyprland/monitors.lua, which hyprland.lua requires: every config reload puts general.lua's monitor rules back, so a layout held only at runtime lasted until the next reload, which saving a theme in settings sets off.
 Singleton {
     id: root
 
@@ -239,21 +240,51 @@ Singleton {
         return name + "," + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "," + entry.x + "x" + entry.y + "," + entry.scale;
     }
 
-    function apply(layout: var): void {
-        const steps = [];
+    // The same monitor as the Lua config writes it, in the form general.lua uses for its own rules. Safe to splice: the name has passed usableName and every number sanitiseEntry, so nothing here can close the string it sits in.
+    function luaRule(name: string, entry: var): string {
+        return "hl.monitor({ output = \"" + name + "\", mode = \"" + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "Hz\", position = \"" + entry.x + "x" + entry.y + "\", scale = \"" + entry.scale + "\" })";
+    }
+
+    function luaRules(layout: var): var {
+        const rules = [];
         for (const name of Object.keys(layout)) {
             const entry = root.usableName(name) ? root.sanitiseEntry(layout[name]) : null;
             if (entry)
-                steps.push("keyword monitor " + root.spec(name, entry));
+                rules.push(root.luaRule(name, entry));
+        }
+        return rules;
+    }
+
+    function apply(layout: var): void {
+        let command;
+        if (Hyprland.usingLua) {
+            const rules = root.luaRules(layout);
+            if (rules.length === 0)
+                return;
+
+            // One eval rather than a call each, so the monitors never sit in a half moved arrangement between two of them.
+            command = ["hyprctl", "eval", rules.join(" ")];
+        } else {
+            const steps = [];
+            for (const name of Object.keys(layout)) {
+                const entry = root.usableName(name) ? root.sanitiseEntry(layout[name]) : null;
+                if (entry)
+                    steps.push("keyword monitor " + root.spec(name, entry));
+            }
+            if (steps.length === 0)
+                return;
+            command = ["hyprctl", "--batch", steps.join(" ; ")];
         }
 
-        if (steps.length === 0)
-            return;
-
-        // One batch rather than a call each, so the monitors never sit in a half moved arrangement between two of them.
         root.lastError = "";
-        applyProcess.command = ["hyprctl", "--batch", steps.join(" ; ")];
+        applyProcess.command = command;
         applyProcess.running = true;
+    }
+
+    // An empty layout still writes the file, as a header alone, so resetting leaves nothing behind for the next reload to pick up.
+    function writeMonitors(layout: var): void {
+        const lines = ["-- Written by qsbar's display settings on every save; Reset there empties it, and general.lua's monitor rules apply again.", ""].concat(root.luaRules(layout));
+        monitorsFile.setText(lines.join("\n") + "\n");
     }
 
     function liveLayout(): var {
@@ -306,12 +337,18 @@ Singleton {
             layout[name] = Object.assign({}, root.draft[name]);
 
         Settings.displayLayout = layout;
+        if (Hyprland.usingLua)
+            root.writeMonitors(layout);
     }
 
-    // Back to what the compositor itself is showing, and nothing remembered: the next session gets whatever Hyprland works out on its own.
+    // Back to what the compositor itself is showing, and nothing remembered: the next session gets whatever Hyprland works out on its own. Under Lua that is general.lua's rules again, which a reload puts back; putting the previewed layout back first would only race it.
     function reset(): void {
-        root.cancelPreview(true);
+        root.cancelPreview(!Hyprland.usingLua);
         Settings.displayLayout = ({});
+        if (Hyprland.usingLua) {
+            root.writeMonitors({});
+            Quickshell.execDetached(["hyprctl", "reload"]);
+        }
         root.syncDraft();
     }
 
@@ -373,6 +410,15 @@ Singleton {
                 root.lastError = "hyprctl is not answering";
             }
         }
+    }
+
+    // Usually a symlink into a dotfiles checkout, like theme.lua, so written in place rather than renamed over.
+    FileView {
+        id: monitorsFile
+
+        path: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/hypr/hyprland/monitors.lua"
+        atomicWrites: false
+        printErrors: false
     }
 
     Process {

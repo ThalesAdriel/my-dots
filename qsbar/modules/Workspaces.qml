@@ -48,7 +48,7 @@ Item {
     function focusWorkspace(target: string): void {
         // Pasted into a Lua expression that Hyprland evaluates, so a target that is not a workspace id or a relative step has no business going in; nothing reaches this from outside the shell today, and the check keeps it that way.
         if (!/^(?:\d+|r[-+]\d+)$/.test(target)) {
-            console.warn("pesqBar: refused a workspace target that is not an id or a step:", target);
+            console.warn("qsbar: refused a workspace target that is not an id or a step:", target);
             return;
         }
 

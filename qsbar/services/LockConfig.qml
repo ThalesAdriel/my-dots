@@ -56,11 +56,11 @@ Singleton {
         adapter.blur = 56;
         adapter.contrast = -0.11;
         adapter.vibrancy = 0.17;
-        adapter.avatarSize = 110;
+        adapter.avatarSize = 82;
         adapter.avatarOffset = 130;
         adapter.rounding = 0;
-        adapter.dotRounding = -1;
-        adapter.avatarRounding = -1;
+        adapter.dotRounding = 0;
+        adapter.avatarRounding = 0;
         adapter.iconFont = "Font Awesome 7 Free";
         adapter.caffeineIcon = "";
         adapter.caffeine = true;
@@ -77,9 +77,17 @@ Singleton {
         }
 
         root.pendingPam = name;
-        pamCheck.command = ["test", "-f", "/etc/pam.d/" + name];
+        pamCheck.command = ["sh", "-c", root.pamScript, "qsbar-pam", name];
         pamCheck.running = true;
     }
+
+    // The other way a service can be wrong: one that never asks for the password, like system-services (auth sufficient pam_permit.so) or a display manager's -autologin, opens the lock screen for any key pressed. A service has to name pam_unix or pam_systemd_home, or pull in another stack that does, and must not let pam_permit settle it on its own. ponytail: reads the service's own auth lines, not the stacks they include.
+    readonly property string pamScript: `file="/etc/pam.d/$1"
+[ -f "$file" ] || exit 3
+auth=$(grep -E '^[[:space:]]*-?auth[[:space:]]' "$file")
+printf '%s\\n' "$auth" | grep -Eq '[[:space:]]sufficient[[:space:]]+pam_permit\\.so' && exit 4
+printf '%s\\n' "$auth" | grep -Eq 'pam_unix\\.so|pam_systemd_home\\.so|[[:space:]](include|substack)[[:space:]]' || exit 4
+exit 0`
 
     FileView {
         id: file
@@ -110,11 +118,11 @@ Singleton {
             property int blur: 56
             property real contrast: -0.11
             property real vibrancy: 0.17
-            property int avatarSize: 110
+            property int avatarSize: 82
             property int avatarOffset: 130
             property int rounding: 0
-            property int dotRounding: -1
-            property int avatarRounding: -1
+            property int dotRounding: 0
+            property int avatarRounding: 0
             property string iconFont: "Font Awesome 7 Free"
             property string caffeineIcon: ""
             property bool caffeine: true
@@ -137,6 +145,8 @@ Singleton {
         onExited: exitCode => {
             if (exitCode === 0)
                 adapter.pam = root.pendingPam;
+            else if (exitCode === 4)
+                root.pamError = "/etc/pam.d/" + root.pendingPam + " does not check your password";
             else
                 root.pamError = "/etc/pam.d/" + root.pendingPam + " does not exist";
         }

@@ -111,7 +111,7 @@ Singleton {
                 try {
                     parsed = JSON.parse(this.text);
                 } catch (error) {
-                    console.warn("pesqBar: could not read the window list from hyprctl:", error);
+                    console.warn("qsbar: could not read the window list from hyprctl:", error);
                     return;
                 }
 
@@ -155,7 +155,7 @@ Singleton {
                     if (Array.isArray(parsed))
                         root.monitors = parsed;
                 } catch (error) {
-                    console.warn("pesqBar: could not read the monitor list from hyprctl:", error);
+                    console.warn("qsbar: could not read the monitor list from hyprctl:", error);
                 }
             }
         }

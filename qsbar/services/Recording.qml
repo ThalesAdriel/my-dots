@@ -46,7 +46,7 @@ exit 0`
     Process {
         id: probe
 
-        command: ["sh", "-c", root.script, "pesqbar-recording"]
+        command: ["sh", "-c", root.script, "qsbar-recording"]
 
         stdout: StdioCollector {
             onStreamFinished: {

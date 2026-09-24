@@ -15,6 +15,35 @@ Singleton {
     // Every image directly in the folder, as absolute paths.
     property var images: []
 
+    // A small copy of each picture, saved the first time a grid decodes it. A PNG is decoded whole whatever size is asked for, and the pixmap cache holds far less than a grid's worth, so a folder of 4K PNGs cost seconds of CPU every time either grid opened. Named after the path, size and modification time, so an edited picture gets a new one; nothing expires, and rm -rf on the directory is the cleanup.
+    readonly property string thumbDir: Quickshell.cachePath("thumbnails")
+
+    // Picture path to the name its thumbnail has or will have, and the names already on disk.
+    property var thumbNames: ({})
+    property var thumbsOnDisk: ({})
+
+    // The listing of what is already in the cache, then the pictures with what their thumbnails are named after. The folder is a positional argument, but find still reads one starting with a dash as an expression, which is why scan() checks it first.
+    readonly property string scanScript: `mkdir -p "$2" && find "$2" -maxdepth 1 -name "*.jpg" -printf "t %f\\n"
+find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.gif" \\) -printf "i %T@ %s %p\\n"`
+
+    function thumbnail(path: string): string {
+        const name = root.thumbNames[path];
+        return name !== undefined && root.thumbsOnDisk[name] ? root.fileUrl(root.thumbDir + "/" + name) : "";
+    }
+
+    // A tile hands over the picture it has just decoded, and what it drew is saved as the thumbnail.
+    function keep(path: string, item: Item): void {
+        const name = root.thumbNames[path];
+        if (name === undefined)
+            return;
+
+        item.grabToImage(result => {
+            // Recorded in place rather than reassigned: a tile already showing the picture has no reason to swap to the thumbnail and load it again.
+            if (result.saveToFile(root.thumbDir + "/" + name))
+                root.thumbsOnDisk[name] = true;
+        }, Qt.size(256, Math.round(256 * item.height / item.width)));
+    }
+
     // Output name to the image it is showing, as awww reports it. An output showing a plain colour has no entry.
     property var current: ({})
 
@@ -67,7 +96,7 @@ Singleton {
             root.images = [];
             return;
         }
-        scanProcess.command = ["find", "-L", root.folder, "-maxdepth", "1", "-type", "f", "(", "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o", "-iname", "*.png", "-o", "-iname", "*.webp", "-o", "-iname", "*.gif", ")"];
+        scanProcess.command = ["sh", "-c", root.scanScript, "qsbar-wallpapers", root.folder, root.thumbDir];
         scanProcess.running = true;
     }
 
@@ -144,7 +173,29 @@ Singleton {
         id: scanProcess
 
         stdout: StdioCollector {
-            onStreamFinished: root.images = this.text.split("\n").filter(line => line !== "").sort()
+            onStreamFinished: {
+                const images = [];
+                const names = {};
+                const onDisk = {};
+                for (const line of this.text.split("\n")) {
+                    if (line.startsWith("t ")) {
+                        onDisk[line.slice(2)] = true;
+                    } else if (line.startsWith("i ")) {
+                        // "i <mtime> <size> <path>", and the path may have spaces of its own.
+                        const path = line.split(" ").slice(3).join(" ");
+                        images.push(path);
+                        names[path] = Qt.md5(line) + ".jpg";
+                    }
+                }
+
+                root.thumbNames = names;
+                root.thumbsOnDisk = onDisk;
+
+                // Every page that shows a grid scans as it opens, and a new array, even an identical one, has the Repeater build every tile again.
+                images.sort();
+                if (images.join("\n") !== root.images.join("\n"))
+                    root.images = images;
+            }
         }
     }
 
