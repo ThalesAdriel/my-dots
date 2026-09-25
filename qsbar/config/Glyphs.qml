@@ -65,10 +65,13 @@ Singleton {
     readonly property string windowMaximize: ""
     readonly property string sliders: ""
     readonly property string desktop: ""
+    readonly property string apps: ""
     // The file browser under a path field.
     readonly property string folder: ""
     readonly property string folderOpen: ""
     readonly property string arrowUp: ""
+    // The swatch that opens the colour picker.
+    readonly property string plus: ""
 
     readonly property string image: ""
     readonly property string paintbrush: ""

@@ -53,6 +53,11 @@ Scope {
             key: "theme",
             title: "System theme",
             glyph: Glyphs.paintbrush
+        },
+        {
+            key: "apps",
+            title: "Default applications",
+            glyph: Glyphs.apps
         }
     ]
 
@@ -148,7 +153,7 @@ Scope {
                     scope.close();
             }
 
-            // Ctrl+1 to Ctrl+8 and Ctrl+PgUp/PgDn change page from anywhere, Ctrl+F goes to the search. Plain arrows and typing only count while nothing inside has the keyboard, since a slider, a list or a field has its own use for them; typing then starts a search.
+            // Ctrl+1 to Ctrl+9 and Ctrl+PgUp/PgDn change page from anywhere, Ctrl+F goes to the search. Plain arrows and typing only count while nothing inside has the keyboard, since a slider, a list or a field has its own use for them; typing then starts a search.
             Keys.onPressed: event => {
                 const control = (event.modifiers & Qt.ControlModifier) !== 0;
                 if (control && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {

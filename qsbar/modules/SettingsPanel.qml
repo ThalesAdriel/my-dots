@@ -20,7 +20,7 @@ Item {
 
     // The window's list of { key, title }, for the headings over each page in the results.
     property var pages: []
-    readonly property var pageKeys: ["appearance", "wallpaper", "bar", "notifications", "general", "displays", "lock", "theme"]
+    readonly property var pageKeys: ["appearance", "wallpaper", "bar", "notifications", "general", "displays", "lock", "theme", "apps"]
 
     // A heading in the results was clicked: the window leaves the search for that page.
     signal pageRequested(string key)
@@ -54,9 +54,8 @@ Item {
         return false;
     }
 
-    // The neutrals, then two purples and two pinks, all dark enough for the bar's white text to stay readable at full opacity.
-    readonly property var barColors: ["#11121a", "#000000", "#1b1b1b", "#202020", "#2e3436", "#3d3846", "#613583", "#813d9c", "#9c1d5e", "#c2407a"]
-    readonly property var surfaceColors: ["#0d0d12", "#000000", "#141414", "#1a1a22", "#1c2226", "#241f31"]
+    // One palette for the bar and the panels, so a colour picked for one is there to pick for the other: the neutrals, then two purples and two pinks, all dark enough for the white text on top to stay readable at full opacity. Anything else is the last swatch's picker away.
+    readonly property var surfaceColors: ["#000000", "#11121a", "#141414", "#1b1b1b", "#202020", "#1c2226", "#2e3436", "#241f31", "#3d3846", "#613583", "#813d9c", "#9c1d5e", "#c2407a"]
     // The last two are libadwaita's purple and pink accents, bright enough to read as an accent and still dark enough for the white text drawn on top of it.
     readonly property var accentColors: ["#3584e4", "#2ec27e", "#f5c211", "#ff7800", "#e01b24", "#986a44", "#9141ac", "#d56199"]
 
@@ -179,12 +178,16 @@ Item {
         }
     }
 
-    component SwatchRow: Item {
+    component SwatchRow: Column {
         id: swatchRow
 
         property string label: ""
         property var options: []
         property string current: ""
+        property bool picking: false
+
+        // A colour that is none of the swatches, picked with the picker or typed into the file by hand.
+        readonly property bool custom: swatchRow.current !== "" && swatchRow.options.indexOf(swatchRow.current.toLowerCase()) === -1
 
         property bool applies: true
         readonly property bool hit: swatchRow.applies && root.shows(swatchRow, swatchRow.label)
@@ -192,55 +195,360 @@ Item {
         signal picked(string value)
 
         width: parent.width
-        height: 34
+        spacing: 4
         visible: swatchRow.hit
 
-        RowLabel {
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            text: swatchRow.label
-        }
+        Item {
+            width: parent.width
+            height: 34
 
-        // One Tab stop for the row, like a set of radio buttons, with the arrows walking the choice.
-        FocusRing {
-            target: swatches
-        }
-
-        Row {
-            id: swatches
-
-            function step(delta: int): void {
-                const index = swatchRow.options.indexOf(swatchRow.current);
-                const next = Math.min(Math.max(index < 0 ? 0 : index + delta, 0), swatchRow.options.length - 1);
-                swatchRow.picked(swatchRow.options[next]);
+            RowLabel {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: swatchRow.label
             }
 
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
+            // One Tab stop for the row, like a set of radio buttons, with the arrows walking the choice and Enter opening the picker.
+            FocusRing {
+                target: swatches
+            }
 
-            activeFocusOnTab: true
-            Keys.onLeftPressed: swatches.step(-1)
-            Keys.onRightPressed: swatches.step(1)
+            Row {
+                id: swatches
 
-            Repeater {
-                model: swatchRow.options
+                function step(delta: int): void {
+                    const index = swatchRow.options.indexOf(swatchRow.current.toLowerCase());
+                    const next = Math.min(Math.max(index < 0 ? 0 : index + delta, 0), swatchRow.options.length - 1);
+                    swatchRow.picked(swatchRow.options[next]);
+                }
 
-                delegate: Rectangle {
-                    id: swatch
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 6
 
-                    required property string modelData
+                activeFocusOnTab: true
+                Keys.onLeftPressed: swatches.step(-1)
+                Keys.onRightPressed: swatches.step(1)
+                Keys.onReturnPressed: swatchRow.picking = !swatchRow.picking
+                Keys.onEnterPressed: swatchRow.picking = !swatchRow.picking
+                Keys.onSpacePressed: swatchRow.picking = !swatchRow.picking
 
+                Repeater {
+                    model: swatchRow.options
+
+                    delegate: Rectangle {
+                        id: swatch
+
+                        required property string modelData
+
+                        readonly property bool chosen: swatchRow.current.toLowerCase() === swatch.modelData
+
+                        width: 22
+                        height: 22
+                        radius: Theme.radius
+                        color: swatch.modelData
+                        border.width: swatch.chosen ? 2 : 1
+                        border.color: swatch.chosen ? Theme.textPrimary : Theme.cardBorder
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: swatchRow.picked(swatch.modelData)
+                        }
+                    }
+                }
+
+                // Any other colour: shows it once one is in use, and opens the picker either way.
+                Rectangle {
                     width: 22
                     height: 22
                     radius: Theme.radius
-                    color: swatch.modelData
-                    border.width: swatchRow.current === swatch.modelData ? 2 : 1
-                    border.color: swatchRow.current === swatch.modelData ? Theme.textPrimary : Theme.cardBorder
+                    color: swatchRow.custom ? swatchRow.current : customMouse.containsMouse ? Theme.fillHover : Theme.fillTrack
+                    border.width: swatchRow.custom || swatchRow.picking ? 2 : 1
+                    border.color: swatchRow.custom || swatchRow.picking ? Theme.textPrimary : Theme.cardBorder
+
+                    IconText {
+                        anchors.centerIn: parent
+                        fillBarHeight: false
+                        visible: !swatchRow.custom
+                        text: swatchRow.picking ? Glyphs.xmark : Glyphs.plus
+                        color: Theme.textSecondary
+                        font.pixelSize: 10
+                    }
 
                     MouseArea {
+                        id: customMouse
+
                         anchors.fill: parent
-                        onClicked: swatchRow.picked(swatch.modelData)
+                        hoverEnabled: true
+                        onClicked: swatchRow.picking = !swatchRow.picking
+                    }
+                }
+            }
+        }
+
+        Loader {
+            width: parent.width
+            active: swatchRow.picking
+            visible: active
+
+            sourceComponent: ColorPicker {
+                value: swatchRow.current
+                onPicked: value => swatchRow.picked(value)
+            }
+        }
+    }
+
+    // Any colour at all: saturation and brightness across a square, the hue along a strip under it, and the hex code for typing or pasting one. It applies as it moves, so the bar or the panel behind the window shows the colour while it is being chosen. The arrows move whichever part has the keyboard.
+    component ColorPicker: Rectangle {
+        id: picker
+
+        property string value: ""
+
+        property real hue: 0
+        property real saturation: 0
+        property real brightness: 0
+
+        // What this last sent, so its own change coming back as `value` does not move the cursors: the hex rounds, and a dark colour read back from it would jump in hue.
+        property string sent: ""
+
+        signal picked(string value)
+
+        function load(): void {
+            const color = Qt.color(picker.value !== "" ? picker.value : "#000000");
+
+            // A grey has no hue of its own; the strip stays where it was rather than jumping to red.
+            if (color.hsvHue >= 0)
+                picker.hue = color.hsvHue;
+            picker.saturation = color.hsvSaturation;
+            picker.brightness = color.hsvValue;
+            hexField.text = color.toString();
+        }
+
+        function send(): void {
+            picker.sent = Qt.hsva(picker.hue, picker.saturation, picker.brightness, 1).toString();
+            hexField.text = picker.sent;
+            picker.picked(picker.sent);
+        }
+
+        function clamp(value: real): real {
+            return Math.min(Math.max(value, 0), 1);
+        }
+
+        onValueChanged: {
+            if (picker.value.toLowerCase() !== picker.sent)
+                picker.load();
+        }
+        Component.onCompleted: picker.load()
+
+        implicitHeight: pickerColumn.implicitHeight + 24
+        radius: Theme.radius
+        color: Theme.fillTrack
+
+        Column {
+            id: pickerColumn
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 12
+            spacing: 10
+
+            Rectangle {
+                id: field
+
+                width: parent.width
+                height: 120
+                radius: Theme.radius
+                color: Qt.hsva(picker.hue, 1, 1, 1)
+
+                activeFocusOnTab: true
+                Keys.onLeftPressed: {
+                    picker.saturation = picker.clamp(picker.saturation - 0.02);
+                    picker.send();
+                }
+                Keys.onRightPressed: {
+                    picker.saturation = picker.clamp(picker.saturation + 0.02);
+                    picker.send();
+                }
+                Keys.onUpPressed: {
+                    picker.brightness = picker.clamp(picker.brightness + 0.02);
+                    picker.send();
+                }
+                Keys.onDownPressed: {
+                    picker.brightness = picker.clamp(picker.brightness - 0.02);
+                    picker.send();
+                }
+
+                FocusRing {}
+
+                // White fading out to the right, then black fading in towards the bottom, over the pure hue: the usual saturation and brightness square.
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop {
+                            position: 0
+                            color: "#ffffffff"
+                        }
+                        GradientStop {
+                            position: 1
+                            color: "#00ffffff"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    gradient: Gradient {
+                        GradientStop {
+                            position: 0
+                            color: "#00000000"
+                        }
+                        GradientStop {
+                            position: 1
+                            color: "#ff000000"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    x: picker.saturation * field.width - width / 2
+                    y: (1 - picker.brightness) * field.height - height / 2
+                    width: 12
+                    height: 12
+                    radius: 6
+                    color: "transparent"
+                    border.width: 2
+                    border.color: picker.brightness > 0.6 && picker.saturation < 0.4 ? "#000000" : "#ffffff"
+                }
+
+                MouseArea {
+                    function take(mouse: var): void {
+                        picker.saturation = picker.clamp(mouse.x / field.width);
+                        picker.brightness = 1 - picker.clamp(mouse.y / field.height);
+                        picker.send();
+                    }
+
+                    anchors.fill: parent
+                    onPressed: mouse => take(mouse)
+                    onPositionChanged: mouse => take(mouse)
+                }
+            }
+
+            Rectangle {
+                id: strip
+
+                width: parent.width
+                height: 14
+                radius: Theme.radius
+
+                activeFocusOnTab: true
+                Keys.onLeftPressed: {
+                    picker.hue = (picker.hue + 359 / 360) % 1;
+                    picker.send();
+                }
+                Keys.onRightPressed: {
+                    picker.hue = (picker.hue + 1 / 360) % 1;
+                    picker.send();
+                }
+
+                FocusRing {}
+
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop {
+                        position: 0
+                        color: "#ff0000"
+                    }
+                    GradientStop {
+                        position: 1 / 6
+                        color: "#ffff00"
+                    }
+                    GradientStop {
+                        position: 2 / 6
+                        color: "#00ff00"
+                    }
+                    GradientStop {
+                        position: 3 / 6
+                        color: "#00ffff"
+                    }
+                    GradientStop {
+                        position: 4 / 6
+                        color: "#0000ff"
+                    }
+                    GradientStop {
+                        position: 5 / 6
+                        color: "#ff00ff"
+                    }
+                    GradientStop {
+                        position: 1
+                        color: "#ff0000"
+                    }
+                }
+
+                Rectangle {
+                    x: picker.hue * strip.width - width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 4
+                    height: strip.height + 4
+                    radius: 2
+                    color: "#ffffff"
+                    border.width: 1
+                    border.color: "#000000"
+                }
+
+                MouseArea {
+                    function take(mouse: var): void {
+                        // Short of 1, which is red again, so dragging off the right end stays on magenta.
+                        picker.hue = Math.min(picker.clamp(mouse.x / strip.width), 0.999);
+                        picker.send();
+                    }
+
+                    anchors.fill: parent
+                    onPressed: mouse => take(mouse)
+                    onPositionChanged: mouse => take(mouse)
+                }
+            }
+
+            Item {
+                width: parent.width
+                height: 30
+
+                Rectangle {
+                    id: preview
+
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 30
+                    height: 24
+                    radius: Theme.radius
+                    color: picker.value !== "" ? picker.value : "#000000"
+                    border.width: 1
+                    border.color: Theme.cardBorder
+                }
+
+                // Taken on Enter or on leaving the field, with or without the #, and only once it is six hex digits.
+                TextField {
+                    id: hexField
+
+                    anchors.left: preview.right
+                    anchors.leftMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 130
+
+                    placeholder: "#rrggbb"
+
+                    onEditingFinished: {
+                        const match = hexField.text.trim().match(/^#?([0-9a-fA-F]{6})$/);
+                        if (!match) {
+                            hexField.text = picker.value;
+                            return;
+                        }
+                        picker.sent = "#" + match[1].toLowerCase();
+                        picker.picked(picker.sent);
+                        picker.load();
                     }
                 }
             }
@@ -779,6 +1087,9 @@ Item {
         property string current: ""
         property bool open: false
 
+        // What an option reads as, where the value is not something to show: a desktop file id shows as the application's name.
+        property var labelOf: value => value
+
         property bool applies: true
         readonly property bool hit: pickerRow.applies && root.shows(pickerRow, pickerRow.label)
 
@@ -838,7 +1149,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
 
                     textFormat: Text.PlainText
-                    text: pickerRow.current !== "" ? pickerRow.current : "Not set"
+                    text: pickerRow.current !== "" ? pickerRow.labelOf(pickerRow.current) : "Not set"
                     color: pickerRow.current !== "" ? Theme.textPrimary : Theme.textMuted
                     font.family: Theme.sansFamily
                     font.pixelSize: Theme.fontSizeSmall
@@ -910,7 +1221,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
 
                     textFormat: Text.PlainText
-                    text: option.modelData
+                    text: pickerRow.labelOf(option.modelData)
                     color: option.chosen ? Theme.textPrimary : Theme.textSecondary
                     font.family: Theme.sansFamily
                     font.pixelSize: Theme.fontSizeSmall
@@ -1083,6 +1394,8 @@ Item {
             return lockPage;
         case "theme":
             return themePage;
+        case "apps":
+            return appsPage;
         default:
             return appearancePage;
         }
@@ -1314,7 +1627,7 @@ Item {
 
                 SwatchRow {
                     label: "Colour"
-                    options: root.barColors
+                    options: root.surfaceColors
                     current: Settings.barColor
                     onPicked: value => Settings.barColor = value
                 }
@@ -1934,6 +2247,49 @@ Item {
                 width: parent.width
                 visible: !root.searching
                 text: "Applied now and saved to hypr/hyprland/theme.lua for the next login, and handed to xsettingsd for X11 apps. Apps that are already open may keep the old theme until they restart."
+            }
+        }
+    }
+
+    Component {
+        id: appsPage
+
+        Column {
+            spacing: 18
+
+            // Read on every visit, since installing an application or changing a default elsewhere does not tell the shell.
+            Component.onCompleted: DefaultApps.refresh()
+
+            PanelMessage {
+                width: parent.width
+                visible: DefaultApps.lastError !== "" && !root.searching
+                warning: true
+                text: DefaultApps.lastError
+            }
+
+            Group {
+                title: "Default applications"
+
+                Repeater {
+                    model: DefaultApps.categories
+
+                    delegate: PickerRow {
+                        required property var modelData
+
+                        label: modelData.label
+                        options: DefaultApps.candidates(modelData.key)
+                        current: DefaultApps.current[modelData.key] || ""
+                        labelOf: id => DefaultApps.nameOf(id)
+                        applies: DefaultApps.available
+                        onPicked: value => DefaultApps.set(modelData.key, value)
+                    }
+                }
+            }
+
+            PanelMessage {
+                width: parent.width
+                visible: !root.searching
+                text: "What xdg-open and links clicked in other applications open with, saved to ~/.config/mimeapps.list. Only applications that say they can open that kind of file are listed."
             }
         }
     }

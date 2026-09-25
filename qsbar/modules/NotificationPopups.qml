@@ -35,7 +35,36 @@ PanelWindow {
 
     visible: Notifications.popups.length > 0
     implicitWidth: root.cardWidth + root.fillet * 2
-    implicitHeight: Math.max(surface.implicitHeight, 1)
+    implicitHeight: Math.max(root.heldHeight, 1)
+
+    // The window only grows while toasts are up, and when it does it takes room to spare, so a toast opening, closing or leaving animates inside it: a window that followed its content was resized on every frame of those, each one a configure round trip and a new buffer, and every resize cost a dropped frame. It maps at the size of the first toast, which keeps Hyprland's popin centred on it, and starts over once the last one is gone; the spare room is transparent and takes no input.
+    // ponytail: a fixed slack, so a toast growing by more than that costs a second resize.
+    property int heldHeight: 0
+    readonly property int slack: 240
+
+    function hold(): void {
+        const needed = Math.ceil(surface.implicitHeight);
+        if (needed > root.heldHeight)
+            root.heldHeight = root.heldHeight > 0 ? needed + root.slack : needed;
+    }
+
+    onVisibleChanged: {
+        if (!root.visible)
+            root.heldHeight = 0;
+        root.hold();
+    }
+
+    mask: Region {
+        item: surface
+    }
+
+    Connections {
+        target: surface
+
+        function onImplicitHeightChanged(): void {
+            root.hold();
+        }
+    }
 
     // The block itself, inset from the screen edge by the width of its own flare: square along the top where it meets the bar, rounded at the bottom where it ends.
     Item {
