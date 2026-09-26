@@ -77,6 +77,9 @@ PanelWindow {
         width: root.cardWidth
         implicitHeight: stack.implicitHeight
 
+        // Cut to its own height, as the window used to cut it: the window keeps its height until the last toast has gone, and the square corner cover below would otherwise stay drawn under the bar after the block had closed to nothing.
+        clip: true
+
         Rectangle {
             anchors.fill: parent
             visible: root.integrated
@@ -299,21 +302,32 @@ PanelWindow {
     }
 
     // The two quarter circles that flare the block back out into the bar above it, filled with the bar's own colour so the three read as one shape; same component and setting the bar uses at the screen corners.
-    OuterCorner {
+    // The flares end where the block does, so one closing to nothing takes them with it rather than leaving the two curves hanging under the bar until the window goes.
+    Item {
         anchors.right: surface.left
         anchors.top: surface.top
+        width: root.fillet
+        height: Math.min(root.fillet, surface.height)
+        clip: true
 
-        size: root.fillet
-        fillColor: Theme.barBackground
-        centreRight: true
+        OuterCorner {
+            size: root.fillet
+            fillColor: Theme.barBackground
+            centreRight: true
+        }
     }
 
-    OuterCorner {
+    Item {
         anchors.left: surface.right
         anchors.top: surface.top
+        width: root.fillet
+        height: Math.min(root.fillet, surface.height)
+        clip: true
 
-        size: root.fillet
-        fillColor: Theme.barBackground
-        centreRight: false
+        OuterCorner {
+            size: root.fillet
+            fillColor: Theme.barBackground
+            centreRight: false
+        }
     }
 }

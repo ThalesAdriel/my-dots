@@ -129,15 +129,8 @@ Rectangle {
     readonly property int verticalPadding: 10
     readonly property int iconSize: 34
 
+    // Not animated here: the toast's wrapper animates its height, and an animation on this as well made the wrapper chase one still moving, so opening a toast took twice as long.
     implicitHeight: Math.max(Math.max(textColumn.implicitHeight, root.showIcon ? root.iconSize : 0) + root.verticalPadding * 2, Settings.notificationHeight)
-
-    Behavior on implicitHeight {
-        NumberAnimation {
-            duration: Theme.durationBase
-            easing.type: Easing.Bezier
-            easing.bezierCurve: Theme.easingCurve
-        }
-    }
 
     // The bar's own surface, so the pill and the bar read as one piece of chrome; critical is the one case that gets a border, because an urgent notification that looks exactly like the bar is one nobody sees.
     color: root.flat ? "transparent" : Theme.barBackground
@@ -375,14 +368,6 @@ Rectangle {
 
             // One line on the pill, the rest behind the chevron.
             maximumLineCount: root.expanded ? 8 : 1
-
-            Behavior on height {
-                NumberAnimation {
-                    duration: Theme.durationBase
-                    easing.type: Easing.Bezier
-                    easing.bezierCurve: Theme.easingCurve
-                }
-            }
 
             onLinkActivated: link => Notifications.openLink(link)
 
