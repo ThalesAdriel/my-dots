@@ -1,12 +1,17 @@
 hl.window_rule({
 	match = { class = "^(com.heroicgameslauncher.hgl)$" },
-	float = true,
+	float = false,
 	center = true,
 })
 
 hl.window_rule({
-	match = { class = "^(steam|steamwebhelper)$" },
+	match = { class = "^(steam|steamwebhelper)$", title = "^(Steam - .*|Friends List)$" },
 	float = true,
+})
+
+hl.window_rule({
+	match = { class = "^(steam_app_.*|gamescope|.*\\.exe)$" },
+	immediate = true,
 })
 
 hl.window_rule({

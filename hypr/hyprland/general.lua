@@ -28,6 +28,8 @@ hl.config({
 		},
 	},
 
+	render = { direct_scanout = true },
+
 	dwindle = {
 		preserve_split = true,
 		smart_resizing = false,
@@ -95,6 +97,7 @@ hl.config({
 		session_lock_xray = true,
 		initial_workspace_tracking = 0,
 		focus_on_activate = true,
+		vrr = 2,
 	},
 
 	binds = {
@@ -120,7 +123,19 @@ hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 0.5, bezier = "men
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 2.7, bezier = "menu_accel" })
 
 hl.animation({ leaf = "workspaces", enabled = true, speed = 7, bezier = "menu_decel", style = "slide" })
-hl.animation({ leaf = "specialWorkspaceIn", enabled = true, speed = 2.8, bezier = "emphasizedDecel", style = "slidevert" })
-hl.animation({ leaf = "specialWorkspaceOut", enabled = true, speed = 1.2, bezier = "emphasizedAccel", style = "slidevert" })
+hl.animation({
+	leaf = "specialWorkspaceIn",
+	enabled = true,
+	speed = 2.8,
+	bezier = "emphasizedDecel",
+	style = "slidevert",
+})
+hl.animation({
+	leaf = "specialWorkspaceOut",
+	enabled = true,
+	speed = 1.2,
+	bezier = "emphasizedAccel",
+	style = "slidevert",
+})
 
 hl.animation({ leaf = "fadePopups", enabled = false })
