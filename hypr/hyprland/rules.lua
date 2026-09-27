@@ -10,11 +10,6 @@ hl.window_rule({
 })
 
 hl.window_rule({
-	match = { class = "^(steam_app_.*|gamescope|.*\\.exe)$" },
-	immediate = true,
-})
-
-hl.window_rule({
 	match = { class = "^(mpv)$" },
 	float = true,
 })

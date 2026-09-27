@@ -28,8 +28,6 @@ hl.config({
 		},
 	},
 
-	render = { direct_scanout = true },
-
 	dwindle = {
 		preserve_split = true,
 		smart_resizing = false,
@@ -97,7 +95,6 @@ hl.config({
 		session_lock_xray = true,
 		initial_workspace_tracking = 0,
 		focus_on_activate = true,
-		vrr = 2,
 	},
 
 	binds = {
