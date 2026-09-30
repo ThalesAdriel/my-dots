@@ -2,8 +2,7 @@
 set -eu
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-CONFIG_DIR="$HOME/.config"
-HYPR_SCRIPTS="$CONFIG_DIR/hypr/hyprland/scripts"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 SELF=$(basename "$0")
 
 FONTS="
@@ -15,10 +14,8 @@ gsfonts
 noto-fonts
 noto-fonts-emoji
 otf-font-awesome
-ttf-jetbrains-mono-nerd
+ttf-jetbrains-mono
 ttf-nerd-fonts-symbols
-ttf-nerd-fonts-symbols-common
-xorg-fonts-encodings
 "
 
 SHELL_PKGS="
@@ -26,10 +23,10 @@ quickshell
 networkmanager
 power-profiles-daemon
 upower
-pipewire
 pipewire-alsa
 pipewire-pulse
 wireplumber
+rtkit
 "
 
 APPS="
@@ -38,7 +35,6 @@ awww
 bazaar
 brightnessctl
 cliphist
-curl
 eza
 fastfetch
 ffmpeg
@@ -47,37 +43,26 @@ fish
 flatpak
 fuzzel
 gamemode
-git
 gnome-keyring
 gpu-screen-recorder
 grim
-gvfs
 gvfs-mtp
-hyprcursor
 hypridle
-hyprland-preview-share-picker-git
-hyprland-protocols
-hyprland-qt-support
 hyprshot
 hyprsunset
-hyprutils
 imagemagick
-jre-openjdk
 kitty
 libnotify
 nautilus
 ncdu
-neovim
 nwg-look
 polkit
-rsync
 satty
 slurp
 starship
 steam
-wine
+vis
 wl-clipboard
-xdg-desktop-portal
 xdg-desktop-portal-gtk
 xdg-desktop-portal-hyprland
 xdg-terminal-exec
@@ -129,47 +114,32 @@ check_environment() {
     have pacman || die "this installer is for Arch and pacman is not here"
 }
 
-sync_repos() {
-    echo "==> Syncing repositories"
-    sudo pacman -Syu --noconfirm
+check_dotfiles() {
+    [ -d "$SCRIPT_DIR/hypr" ] || die "no hypr/ next to $SELF; run it from inside the dotfiles folder"
+    have rsync || die "rsync is not installed"
 }
 
-install_yay() {
-    if have yay; then
-        echo "yay already installed"
-        return
+install_packages() {
+    echo "==> Installing packages"
+    sudo pacman -Syu --needed "$@"
+}
+
+app_packages() {
+    packages="$SHELL_PKGS $APPS"
+    if [ "$WANT_BLUETOOTH" = yes ]; then
+        packages="$packages $BLUETOOTH_PKGS"
     fi
-
-    echo "==> Installing yay"
-    sudo pacman -S --needed --noconfirm git base-devel
-
-    tmp=$(mktemp -d)
-    trap 'rm -rf "$tmp"' EXIT INT TERM
-
-    git clone --depth 1 https://aur.archlinux.org/yay.git "$tmp/yay"
-    (cd "$tmp/yay" && makepkg -si --noconfirm)
-
-    rm -rf "$tmp"
-    trap - EXIT INT TERM
-}
-
-backup_config() {
-    [ -d "$CONFIG_DIR" ] || {
-        echo "No .config to back up, skipping"
-        return
-    }
-
-    BACKUP_DIR="$HOME/.config_backup_$(date +%Y%m%d_%H%M%S)"
-    echo "==> Backing up .config -> $BACKUP_DIR"
-    mkdir -p "$BACKUP_DIR"
-    cp -a "$CONFIG_DIR/." "$BACKUP_DIR/"
+    echo "$packages"
 }
 
 install_config() {
-    have rsync || sudo pacman -S --needed --noconfirm rsync
+    backup="$HOME/.config_backup_$(date +%Y%m%d_%H%M%S)"
+    mkdir -m 700 "$backup"
 
     echo "==> Copying dotfiles -> $CONFIG_DIR"
     rsync -a --info=stats1 \
+        --chmod=D755,F644 \
+        --backup --backup-dir="$backup" \
         --exclude=".git/" \
         --exclude=".gitignore" \
         --exclude="README*" \
@@ -177,30 +147,18 @@ install_config() {
         --exclude="$SELF" \
         "$SCRIPT_DIR/" "$CONFIG_DIR/"
 
-    [ -d "$HYPR_SCRIPTS" ] || return 0
-
-    echo "==> Setting permissions on $HYPR_SCRIPTS"
-    find "$HYPR_SCRIPTS" -type d -exec chmod 755 {} +
-    find "$HYPR_SCRIPTS" -type f -exec chmod 755 {} +
-}
-
-install_fonts() {
-    echo "==> Installing fonts"
-    sudo pacman -S --needed --noconfirm $FONTS
-    echo "==> Updating font cache"
-    fc-cache -f
-}
-
-install_apps() {
-    install_yay
-
-    packages="$SHELL_PKGS $APPS"
-    if [ "$WANT_BLUETOOTH" = yes ]; then
-        packages="$packages $BLUETOOTH_PKGS"
+    if rmdir "$backup" 2>/dev/null; then
+        echo "  nothing was replaced, no backup kept"
+    else
+        echo "  replaced files saved in $backup"
     fi
 
-    echo "==> Installing packages"
-    yay -S --needed --removemake --noconfirm $packages
+    echo "==> Marking scripts as executable"
+    LC_ALL=C find "$SCRIPT_DIR" -name .git -prune -o -type f -exec \
+        awk -v src="$SCRIPT_DIR/" 'FNR == 1 && /^(#!|\177ELF)/ { print substr(FILENAME, length(src) + 1) } { nextfile }' {} + |
+        while IFS= read -r file; do
+            [ ! -f "$CONFIG_DIR/$file" ] || chmod 755 "$CONFIG_DIR/$file"
+        done
 }
 
 enable_unit() {
@@ -222,6 +180,8 @@ enable_services() {
     else
         echo "  bluetooth skipped"
     fi
+
+    sudo systemctl disable NetworkManager-wait-online.service || echo "  could not disable NetworkManager-wait-online.service"
 }
 
 post_fixes() {
@@ -234,35 +194,34 @@ post_fixes() {
     if have gsettings; then
         gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
     fi
+
+    sudo usermod -aG gamemode "$(id -un)"
+    echo "  added to the gamemode group, log out and back in to apply it"
 }
 
 run_fonts() {
-    sync_repos
-    install_fonts
+    install_packages $FONTS
 }
 
 run_apps() {
     ask_bluetooth
-    sync_repos
-    install_apps
+    install_packages $(app_packages)
     enable_services
     post_fixes
 }
 
 run_config() {
-    confirm "This overwrites files in $CONFIG_DIR. A backup is taken first. Continue?" || die "cancelled"
-    backup_config
+    check_dotfiles
+    confirm "This overwrites files in $CONFIG_DIR. Replaced files are backed up first. Continue?" || die "cancelled"
     install_config
 }
 
 run_full() {
+    check_dotfiles
     confirm "Full install: overwrites $CONFIG_DIR and installs every package listed. Continue?" || die "cancelled"
     ask_bluetooth
-    backup_config
+    install_packages $FONTS $(app_packages)
     install_config
-    sync_repos
-    install_fonts
-    install_apps
     enable_services
     post_fixes
 }
