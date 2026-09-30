@@ -1,4 +1,16 @@
-# My configs for stuff that i use
+# My dots and stuff that i use
+
+## Installation
+
+### Requirements
+
+- `git`, to clone this repo
+- `rsync`, which the script uses to copy the configs
+
+### Usage
+
+    ./install.sh [fonts|apps|config|full]
+
 
 OBS: Some of my configs are still messy or broken. I plan to clean and fix them later. I’m publishing this now because a few of my friends showed interest.
 
@@ -12,10 +24,6 @@ OBS: Some of my configs are still messy or broken. I plan to clean and fix them 
   ![alt text](screenshots/Screenshot_05.png "Screenshot"))
   ![alt text](screenshots/Screenshot_06.png "Screenshot"))
   ![alt text](screenshots/Screenshot_07.png "Screenshot"))
-
-
-
-
 
 </details>
 
