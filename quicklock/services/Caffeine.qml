@@ -22,7 +22,6 @@ Singleton {
 
     Component.onCompleted: {
         root.active = Config.caffeineDefault;
-        inhibitor.running = root.active;
     }
 
     Process {

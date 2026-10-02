@@ -15,8 +15,19 @@ Item {
         anchors.fill: parent
     }
 
+    // pointChanged also fires for a pointer that has not moved: Qt redelivers hover to a stationary cursor whenever the scene changes under it, and the field's own fade is such a change, so the fade woke the field it had just put to sleep and the input blinked in a loop. Only a displacement from the last position that counted is activity; the slack also swallows sensor jitter on a mouse that is not being touched.
     HoverHandler {
-        onPointChanged: pointerSettle.start()
+        id: pointer
+
+        property point lastCounted: Qt.point(NaN, NaN)
+
+        onPointChanged: {
+            const p = pointer.point.position;
+            if (isNaN(pointer.lastCounted.x) || Math.abs(p.x - pointer.lastCounted.x) + Math.abs(p.y - pointer.lastCounted.y) >= 4) {
+                pointer.lastCounted = p;
+                pointerSettle.start();
+            }
+        }
     }
 
     // A pointer reports at up to a thousand hertz and every report was restarting a two second fade timer. start() rather than restart(), so one that never stops moving still reports in: a tenth of a second is finer than anything reading this, and the last move of a gesture is the one that arms the fade either way.

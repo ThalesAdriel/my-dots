@@ -12,11 +12,6 @@ Item {
 
     clip: true
 
-    Rectangle {
-        anchors.fill: parent
-        color: Config.background
-    }
-
     Item {
         id: tile
 

@@ -14,7 +14,6 @@ fi
 export QT_QPA_PLATFORM=wayland
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export QT_ENABLE_HIGHDPI_SCALING=0
-export QML_DISABLE_DISK_CACHE=0
 export QT_LOGGING_RULES="${QT_LOGGING_RULES:-qt.qpa.*=false}"
 
 exec flock -n "$XDG_RUNTIME_DIR/quicklock.lock" "$BIN" -p "$DIR/shell.qml" "$@"
