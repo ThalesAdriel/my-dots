@@ -20,6 +20,7 @@ ttf-nerd-fonts-symbols
 
 SHELL_PKGS="
 quickshell
+greetd
 networkmanager
 power-profiles-daemon
 upower
@@ -161,6 +162,42 @@ install_config() {
         done
 }
 
+hypr_input() {
+    sed -n "s/^[[:space:]]*$1 = \"\([A-Za-z0-9_,-]*\)\",*\$/\1/p" "$CONFIG_DIR/hypr/hyprland/general.lua" 2>/dev/null | head -n 1
+}
+
+install_greeter() {
+    echo "==> Installing the login screen (quickgreet)"
+    if ! id greeter >/dev/null 2>&1 || ! have Hyprland || ! have qs; then
+        echo "  greetd, Hyprland or quickshell is not installed, skipping"
+        return
+    fi
+
+    sudo rsync -a --delete \
+        --chown=root:root \
+        --chmod=D755,F644 \
+        --exclude="test/" \
+        --exclude="README*" \
+        --exclude="$SELF" \
+        "$CONFIG_DIR/quickgreet/" /usr/share/quickgreet/
+    sudo chmod 755 /usr/share/quickgreet/quickgreet
+    sudo ln -sf /usr/share/quickgreet/quickgreet /usr/local/bin/quickgreet
+
+    sudo install -d -m 755 -o "$(id -un)" /var/lib/quickgreet
+    [ -e /var/lib/quickgreet/quickgreet.json ] || install -m 644 "$CONFIG_DIR/quickgreet/quickgreet.json" /var/lib/quickgreet/
+    sudo install -d -m 700 -o greeter -g "$(id -gn greeter)" /var/cache/quickgreet
+
+    greetd_config=/etc/greetd/config.toml
+    vt=$(sed -n 's/^vt *= *//p' "$greetd_config" 2>/dev/null | head -n 1)
+    layout=$(hypr_input kb_layout)
+    [ ! -f "$greetd_config" ] || grep -q quickgreet "$greetd_config" || sudo cp "$greetd_config" "$greetd_config.bak"
+    printf '[terminal]\nvt = %s\n\n[default_session]\ncommand = "env QUICKGREET_KB_LAYOUT=%s QUICKGREET_KB_VARIANT=%s Hyprland --config /usr/share/quickgreet/hyprland.lua"\nuser = "greeter"\n' \
+        "${vt:-1}" "${layout:-us}" "$(hypr_input kb_variant)" | sudo tee "$greetd_config" >/dev/null
+    echo "  keyboard ${layout:-us}, from hypr/hyprland/general.lua"
+
+    sudo systemctl enable greetd.service || echo "  could not enable greetd.service, disable the display manager it replaces first"
+}
+
 enable_unit() {
     if systemctl list-unit-files "$1" >/dev/null 2>&1; then
         sudo systemctl enable --now "$1" || echo "  could not enable $1"
@@ -212,18 +249,28 @@ run_apps() {
 
 run_config() {
     check_dotfiles
-    confirm "This overwrites files in $CONFIG_DIR. Replaced files are backed up first. Continue?" || die "cancelled"
+    confirm "This overwrites files in $CONFIG_DIR and installs the login screen. Replaced files are backed up first. Continue?" || die "cancelled"
     install_config
+    install_greeter
 }
 
 run_full() {
     check_dotfiles
-    confirm "Full install: overwrites $CONFIG_DIR and installs every package listed. Continue?" || die "cancelled"
+    confirm "Full install: overwrites $CONFIG_DIR, installs the login screen and every package listed. Continue?" || die "cancelled"
     ask_bluetooth
     install_packages $FONTS $(app_packages)
     install_config
+    install_greeter
     enable_services
     post_fixes
+}
+
+run_greeter() {
+    have rsync || die "rsync is not installed"
+    [ -d "$CONFIG_DIR/quickgreet" ] || die "no quickgreet/ in $CONFIG_DIR; install the config files first"
+    confirm "Login screen only: installs greetd if missing, copies $CONFIG_DIR/quickgreet to /usr/share/quickgreet and enables greetd. Continue?" || die "cancelled"
+    id greeter >/dev/null 2>&1 || install_packages greetd
+    install_greeter
 }
 
 menu() {
@@ -232,8 +279,9 @@ menu() {
     echo "2) Programs only"
     echo "3) Config files only"
     echo "4) Full install (config + fonts + programs)"
-    echo "5) Quit"
-    printf "Choose [1-5]: "
+    echo "5) Login screen only"
+    echo "6) Quit"
+    printf "Choose [1-6]: "
     read -r choice
 
     case "$choice" in
@@ -241,7 +289,8 @@ menu() {
         2) run_apps ;;
         3) run_config ;;
         4) run_full ;;
-        5) echo "Bye"; exit 0 ;;
+        5) run_greeter ;;
+        6) echo "Bye"; exit 0 ;;
         *) die "invalid choice" ;;
     esac
 }
@@ -253,8 +302,9 @@ case "${1:-}" in
     apps) run_apps ;;
     config) run_config ;;
     full) run_full ;;
+    greeter) run_greeter ;;
     "") menu ;;
-    *) die "unknown command '$1'; use fonts, apps, config or full" ;;
+    *) die "unknown command '$1'; use fonts, apps, config, full or greeter" ;;
 esac
 
 echo "DONE!"

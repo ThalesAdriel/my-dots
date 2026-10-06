@@ -1,0 +1,34 @@
+#!/bin/sh
+# Starts the greeter; outside greetd it is a preview that launches nothing.
+set -eu
+
+# Resolved through the /usr/local/bin link, to find shell.qml beside the real script.
+DIR=$(dirname -- "$(readlink -f -- "$0")")
+
+BIN=$(command -v qs 2>/dev/null || command -v quickshell 2>/dev/null || true)
+if [ -z "$BIN" ]; then
+    echo "quickgreet: quickshell not found in PATH" >&2
+    exit 127
+fi
+
+: "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
+
+# The greeter user rarely has a writable home; install.sh makes this directory.
+if [ ! -w "${HOME:-/nonexistent}" ]; then
+    export XDG_CACHE_HOME=/var/cache/quickgreet XDG_STATE_HOME=/var/cache/quickgreet
+fi
+
+export QT_QPA_PLATFORM=wayland
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+export QT_ENABLE_HIGHDPI_SCALING=0
+export QT_LOGGING_RULES="${QT_LOGGING_RULES:-qt.qpa.*=false}"
+# Quickshell's jemalloc: two arenas and a background purge, so freed memory goes back instead of piling up.
+export MALLOC_CONF="${MALLOC_CONF:-narenas:2,background_thread:true}"
+
+# NVIDIA's EGL alone when it is the only GPU: glvnd would also load Mesa and its LLVM, unused.
+egl=/usr/share/glvnd/egl_vendor.d/10_nvidia.json
+if [ -e "$egl" ] && ! ls -l /sys/class/drm/card[0-9]/device/driver /sys/class/drm/card[0-9][0-9]/device/driver 2>/dev/null | grep -qv '/nvidia$'; then
+    export __EGL_VENDOR_LIBRARY_FILENAMES="$egl"
+fi
+
+exec flock -n "$XDG_RUNTIME_DIR/quickgreet.lock" "$BIN" -p "$DIR/shell.qml" "$@"
