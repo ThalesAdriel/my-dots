@@ -5,20 +5,20 @@ import Quickshell
 import Quickshell.Io
 import "root:/config"
 
-// NetworkManager through nmcli, since Quickshell has no network service: one polling read that builds the whole picture, and a queue for the writes. Commands are argv arrays so nothing a network names itself becomes a command, and passwords go in on stdin because argv is world readable through /proc/<pid>/cmdline.
+// NetworkManager through nmcli, since Quickshell has no network service.
 Singleton {
     id: root
 
-    // Nothing runs until the module is on screen: the poll is the only cost a network indicator carries, so it is not paid while it is off.
+    // Nothing runs until the module is on screen.
     readonly property bool enabled: Settings.showNetwork
 
-    // The panel needs the access point list and the saved profiles and the bar needs neither, so this is set while the panel is open.
+    // The panel needs the access point list and the saved profiles and the bar needs neither.
     property bool detailed: false
 
     readonly property int idleInterval: 6000
     readonly property int activeInterval: 2500
 
-    // What the poll drops to once `nmcli monitor` is carrying the state changes; it does not stop, since signal strength is not a state change and a dead monitor has to be noticed.
+    // What the poll drops to once `nmcli monitor` is carrying the state changes.
     readonly property int watchedInterval: 60000
 
     property bool available: true
@@ -27,9 +27,9 @@ Singleton {
     property bool busy: false
     property string lastError: ""
 
-    // [{ device, type, state, connection }]
+    // [{ device, type, state, connection }].
     property var devices: []
-    // [{ ssid, signal, security, enterprise, active }]
+    // [{ ssid, signal, security, enterprise, active }].
     property var accessPoints: []
     property var savedNames: []
 
@@ -81,7 +81,7 @@ Singleton {
         return root.savedNames.indexOf(name) !== -1;
     }
 
-    // nmcli's terse output escapes a literal colon as \: and a backslash as \\, which matters the moment a BSSID or an SSID with a colon shows up.
+    // nmcli's terse output escapes a literal colon as \.
     function splitTerse(line: string): var {
         const fields = [];
         let current = "";
@@ -111,13 +111,13 @@ Singleton {
         if (!root.enabled || readProcess.running)
             return;
 
-        // Carried on the process rather than read off root when it exits: a read already in flight when the scan was asked for is not the one that scanned.
+        // Carried on the process rather than read off root when it exits.
         readProcess.rescanning = root.scanning;
         readProcess.command = ["sh", "-c", root.readScript, "qsbar-network", root.detailed ? "full" : "brief", root.scanning ? "rescan" : "cache"];
         readProcess.running = true;
     }
 
-    // A scan is a request, not a command: the flag stays up until a read that actually carried --rescan yes comes back, so asking mid-read is not dropped.
+    // A scan is a request, not a command.
     function rescan(): void {
         if (root.scanning || !root.available)
             return;
@@ -137,7 +137,7 @@ Singleton {
         root.runQueue([["nmcli", "device", "disconnect", root.wifiDevice.device]], "");
     }
 
-    // nmcli takes the ssid positionally, but a leading dash is the kind of thing an option parser changes its mind about, so it is refused rather than guessed at.
+    // nmcli takes the ssid positionally, but a leading dash is the kind of thing an option parser changes its mind about.
     function usableName(name: string): bool {
         if (!name || name.startsWith("-")) {
             root.lastError = "Unusable network name";
@@ -160,7 +160,7 @@ Singleton {
         root.runQueue([["nmcli", "device", "wifi", "connect", name]], "");
     }
 
-    // --ask makes nmcli its own secret agent and read what it is missing from stdin, which is the whole point: the password never becomes an argument.
+    // --ask makes nmcli its own secret agent and read what it is missing from stdin.
     function connectPersonal(name: string, password: string): void {
         if (!root.usableName(name))
             return;
@@ -168,7 +168,7 @@ Singleton {
         root.runQueue([["nmcli", "--ask", "device", "wifi", "connect", name]], password);
     }
 
-    // WPA Enterprise, which is what eduroam is: the profile is written without the password, then brought up with --ask so it arrives on stdin, and password-flags 0 has NetworkManager store it root-owned and 0600 so it is only typed once.
+    // WPA Enterprise, which is what eduroam is.
     function connectEnterprise(name: string, identity: string, anonymous: string, password: string, eap: string, phase2: string, caCertificate: string): void {
         if (!root.usableName(name))
             return;
@@ -186,7 +186,7 @@ Singleton {
         const known = root.isSaved(name);
         const properties = ["wifi-sec.key-mgmt", "wpa-eap", "802-1x.eap", eap, "802-1x.phase2-auth", phase2, "802-1x.identity", identity, "802-1x.password-flags", "0"];
 
-        // Optional, and only worth sending when there is something to send; on an existing profile they go in empty as well, since that is what clears one that used to be set.
+        // Optional, and only worth sending when there is something to send.
         for (const optional of [["802-1x.anonymous-identity", anonymous], ["802-1x.ca-cert", caCertificate]]) {
             if (optional[1] || known)
                 properties.push(optional[0], optional[1] ? optional[1] : "");
@@ -204,7 +204,7 @@ Singleton {
         root.runQueue([["nmcli", "connection", "delete", "id", name]], "");
     }
 
-    // Commands run one after the other and stop at the first failure; the secret is held for the length of the queue and only given to a step that asked for one.
+    // Commands run one after the other and stop at the first failure.
     property var queue: []
     property string queueSecret: ""
 
@@ -307,7 +307,7 @@ exit 0`
         root.devices = devices;
         root.savedNames = saved;
 
-        // A brief read only ever carries the active access point, so it folds into the list the panel is showing rather than replacing it.
+        // A brief read only ever carries the active access point.
         root.accessPoints = root.detailed ? points : root.mergeActive(points);
     }
 
@@ -364,7 +364,7 @@ exit 0`
             }
         }
 
-        // The secret goes in the moment the pipe exists and the pipe is closed straight after, so a prompt for anything else ends in EOF rather than leaving nmcli waiting.
+        // The secret goes in the moment the pipe exists and the pipe is closed straight after.
         onStarted: {
             if (!actionProcess.wantsSecret)
                 return;
@@ -385,7 +385,7 @@ exit 0`
         }
     }
 
-    // `nmcli monitor` is one process for the session that prints a line whenever a device, connection or radio changes state, so the read runs off that rather than the clock: in steady state, the difference between four processes every six seconds and none.
+    // `nmcli monitor` is one process for the session that prints a line whenever a device, connection or radio changes state.
     Process {
         id: monitorProcess
 
@@ -396,7 +396,7 @@ exit 0`
         }
     }
 
-    // nmcli monitor reports one user action as a run of lines, so they collapse into one read on the trailing edge rather than one read each.
+    // nmcli monitor reports one user action as a run of lines.
     Timer {
         id: settleTimer
 
@@ -405,7 +405,7 @@ exit 0`
     }
 
     Timer {
-        // Started from the tick rather than from a binding on `running`: a monitor that cannot start exits immediately, and a binding would respawn it as fast as it fails.
+        // Started from the tick rather than from a binding on `running`.
         interval: root.detailed ? root.activeInterval : monitorProcess.running ? root.watchedInterval : root.idleInterval
         running: root.enabled && root.available
         repeat: true

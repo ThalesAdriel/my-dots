@@ -7,13 +7,13 @@ import Quickshell.Services.Polkit
 import "root:/config"
 import "root:/components"
 
-// The polkit authentication agent, inside the shell rather than beside it. hyprpolkitagent was installed and never started, and the chain hyprland.start reached for instead was not installed at all, so anything that asked for authorisation got no prompt and simply failed.
+// The polkit authentication agent, inside the shell rather than beside it. hyprpolkitagent was installed and never started.
 Scope {
     id: scope
 
     readonly property var flow: agent.flow
 
-    // A flow that has completed is one whose window should already be going away; isActive alone leaves the card up for a frame holding a dead flow.
+    // A flow that has completed is one whose window should already be going away.
     readonly property bool active: agent.isActive && scope.flow !== null && !scope.flow.isCompleted
 
     function submit(): void {
@@ -26,11 +26,11 @@ Scope {
             scope.flow.cancelAuthenticationRequest();
     }
 
-    // ponytail: whatever polkit preselected in flow.selectedIdentity is who authenticates. On a machine where the action admits more than one identity, add a picker over flow.identities above the field.
+    // ponytail: whatever polkit preselected in flow.selectedIdentity is who authenticates.
     PolkitAgent {
         id: agent
 
-        // A new request reuses the same window, so the field has to be emptied here rather than on the way out: the previous password must not be sitting there waiting to be submitted to something else.
+        // A new request reuses the same window.
         onAuthenticationRequestStarted: field.clear()
     }
 
@@ -50,7 +50,7 @@ Scope {
         WlrLayershell.namespace: Theme.panelLayerNamespace
         WlrLayershell.layer: WlrLayer.Overlay
 
-        // Exclusive while it is up: a password prompt that the window underneath can keep typing into is not a password prompt.
+        // Exclusive while it is up.
         WlrLayershell.keyboardFocus: scope.active ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
         anchors {
@@ -69,7 +69,7 @@ Scope {
             opacity: 0.45
         }
 
-        // Swallows everything that misses the card: clicking the desktop must not reach the desktop while this is waiting.
+        // Swallows everything that misses the card.
         MouseArea {
             anchors.fill: parent
         }
@@ -78,7 +78,7 @@ Scope {
             anchors.fill: parent
             focus: true
 
-            // The field holds the focus, and Escape is the one key it does not take, so it arrives here on the way up.
+            // The field holds the focus, and Escape is the one key it does not take.
             Keys.onEscapePressed: scope.cancel()
 
             Card {
@@ -119,7 +119,7 @@ Scope {
                         }
                     }
 
-                    // Whatever the action declared about itself. It is the caller's string, so it is drawn as text and never as markup.
+                    // Whatever the action declared about itself.
                     Text {
                         width: parent.width
                         visible: text !== ""
@@ -136,7 +136,7 @@ Scope {
 
                         width: parent.width
 
-                        // pam decides what it is asking for and whether the answer may be shown; this is not always a password.
+                        // pam decides what it is asking for and whether the answer may be shown.
                         label: scope.flow && scope.flow.inputPrompt !== "" ? scope.flow.inputPrompt : "Password"
                         secret: !(scope.flow && scope.flow.responseVisible)
                         visible: scope.flow !== null && scope.flow.isResponseRequired

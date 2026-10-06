@@ -1,6 +1,6 @@
 import QtQuick
 
-// Scrolls a Flickable straight from the wheel, with no momentum. A Flickable left to the wheel itself keeps gliding for a moment, and a click while it glides only stops it, so picking something just after scrolling took two clicks, or landed on whatever had slid under the pointer. At either end the wheel goes through to whatever scrolls around it. Put it under the Flickable, which is left non-interactive.
+// Scrolls a Flickable straight from the wheel, with no momentum.
 MouseArea {
     id: root
 

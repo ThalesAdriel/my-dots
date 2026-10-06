@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// quicklock's own config file, edited from here. quicklock watches the file, so a change lands on the lock screen without restarting anything; the properties and their defaults mirror quicklock/config/Config.qml and have to move with it.
+// quicklock's own config file, edited from here. quicklock watches the file.
 Singleton {
     id: root
 
@@ -29,13 +29,13 @@ Singleton {
     property alias caffeineIcon: adapter.caffeineIcon
     property alias caffeine: adapter.caffeine
 
-    // The file is there but did not parse. Nothing is written back while this is set: saving would replace a file somebody is halfway through editing by hand with the defaults.
+    // The file is there but did not parse.
     property bool broken: false
 
     property string pamError: ""
     property string pendingPam: ""
 
-    // The same rules quicklock applies when it reads the file: ~/ is home, a file:// prefix is dropped, and anything left that is not absolute is ignored.
+    // The same rules quicklock applies when it reads the file.
     function expand(value: string): string {
         if (!value)
             return "";
@@ -44,7 +44,7 @@ Singleton {
         return full.startsWith("/") ? full : "";
     }
 
-    // Back to quicklock's own defaults, the ones in the adapter below. An empty wallpaper and avatar are not blanks: quicklock falls back to ~/Pictures/wallpapers/w.jpg and ~/.face on its own.
+    // Back to quicklock's own defaults, the ones in the adapter below.
     function restoreDefaults(): void {
         root.pamError = "";
         adapter.wallpaper = "";
@@ -66,7 +66,7 @@ Singleton {
         adapter.caffeine = true;
     }
 
-    // A wrong service name here is a lock screen nothing can unlock: PAM falls back to "other", which refuses everyone, and the way out is another TTY. So a name only reaches the file once /etc/pam.d has a file by that name.
+    // A wrong service name here is a lock screen nothing can unlock.
     function setPam(name: string): void {
         root.pamError = "";
         if (name === adapter.pam)
@@ -81,7 +81,7 @@ Singleton {
         pamCheck.running = true;
     }
 
-    // The other way a service can be wrong: one that never asks for the password, like system-services (auth sufficient pam_permit.so) or a display manager's -autologin, opens the lock screen for any key pressed. A service has to name pam_unix or pam_systemd_home, or pull in another stack that does, and must not let pam_permit settle it on its own. ponytail: reads the service's own auth lines, not the stacks they include.
+    // The other way a service can be wrong.
     readonly property string pamScript: `file="/etc/pam.d/$1"
 [ -f "$file" ] || exit 3
 auth=$(grep -E '^[[:space:]]*-?auth[[:space:]]' "$file")
@@ -96,7 +96,7 @@ exit 0`
         watchChanges: true
         printErrors: false
 
-        // Usually a symlink into a dotfiles checkout, and an atomic write renames a fresh file over the link rather than writing through it.
+        // Usually a symlink into a dotfiles checkout.
         atomicWrites: false
 
         onFileChanged: reload()

@@ -4,24 +4,24 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// The cover the player points at, as a local file: Spotify only ever names https URLs, so curl fetches it under a scheme allowlist, size cap and deadline rather than pointing an Image at a string off the bus. The request does leave the machine, a trade a user-started player earns and a notification does not.
+// The cover the player points at, as a local file.
 Singleton {
     id: root
 
-    // One file per URL named by its digest, so a repeated track is drawn from disk and an album's shared cover is fetched once; nothing expires, and rm -rf on the directory is the cleanup.
+    // One file per URL named by its digest.
     readonly property string cacheDir: Quickshell.cachePath("album-art")
 
-    // The only two schemes a cover is fetched over; a data: blob or an ftp: URL is not a cover this shell goes looking for.
+    // The only two schemes a cover is fetched over.
     readonly property var remoteSchemes: ["http", "https"]
 
     // A cover is tens of kilobytes: nothing larger is one, and nothing worth waiting on longer than this.
     readonly property int maximumBytes: 4000000
     readonly property int timeoutSeconds: 15
 
-    // Every URL asked for, mapped to the file it landed in or to "" for a failure; failures are kept so the binding does not ask again and keep curl going.
+    // Every URL asked for, mapped to the file it landed in or to "" for a failure.
     property var fetched: ({})
 
-    // What is waiting on curl and what it is on: one at a time, since the normal case is several cards asking for the same cover at once.
+    // What is waiting on curl and what it is on.
     property var queue: []
     property string current: ""
 
@@ -36,7 +36,7 @@ Singleton {
         return "";
     }
 
-    // The scheme is the whole check, as in Notifications.safeLink: no scheme is a bare path, and an unlisted one is refused rather than handed to curl to interpret.
+    // The scheme is the whole check, as in Notifications.safeLink.
     function remoteArt(source: string): string {
         const value = String(source);
         const scheme = value.match(/^([a-zA-Z][a-zA-Z0-9+.-]*):\/\//);
@@ -50,7 +50,7 @@ Singleton {
         return root.cacheDir + "/" + Qt.md5(url);
     }
 
-    // What to hand an Image for this track, or "" while there is nothing yet; the map changing re-runs the binding, so the card never polls.
+    // What to hand an Image for this track, or "" while there is nothing yet.
     function art(source: string): string {
         if (!source)
             return "";
@@ -94,7 +94,7 @@ Singleton {
         root.fetched = next;
     }
 
-    // URL and destination are arguments rather than pasted into the script, and -- keeps a leading dash off curl's option parser; redirects follow only to the same two schemes, and the transfer lands beside its file and moves into place so a half-fetched cover is never cached under its digest.
+    // URL and destination are arguments rather than pasted into the script.
     readonly property string script: `set -e
 mkdir -p "$(dirname "$2")"
 if [ ! -s "$2" ]; then
@@ -106,7 +106,7 @@ fi`
     Process {
         id: fetch
 
-        // Through sh rather than straight at curl, so a machine without curl fails with a line in the log rather than silently drawing no cover.
+        // Through sh rather than straight at curl.
         command: root.current === "" ? [] : ["sh", "-c", root.script, "qsbar-album-art", root.current, root.cacheFile(root.current)]
 
         onExited: (exitCode, exitStatus) => {

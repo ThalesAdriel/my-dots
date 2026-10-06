@@ -1,7 +1,7 @@
 import QtQuick
 import "root:/config"
 
-// The small flat button every panel is built out of: a word, or a single glyph where there is no room for one. The network, bluetooth and display panels each carried their own copy, already drifted apart by a couple of pixels of padding.
+// The small flat button every panel is built out of.
 Rectangle {
     id: root
 
@@ -21,7 +21,7 @@ Rectangle {
     radius: Theme.radius
     opacity: root.available ? 1 : 0.4
 
-    // Reachable with Tab wherever the surface takes the keyboard: the settings window, the polkit prompt, the Wi-Fi form.
+    // Reachable with Tab wherever the surface takes the keyboard.
     activeFocusOnTab: root.available
     Keys.onSpacePressed: root.press()
     Keys.onReturnPressed: root.press()

@@ -18,7 +18,7 @@ BarPopup {
             column.expandedIndex = -1;
     }
 
-    // Opening a DBusMenu is a conversation with the application that owns it and stays open as long as the opener holds it, so binding the handle straight through meant asking every tray application for its whole menu at startup and holding all of them open for menus nobody had clicked.
+    // Opening a DBusMenu is a conversation with the application that owns it and stays open as long as the opener holds it.
     QsMenuOpener {
         id: opener
         menu: root.rendered ? root.menuHandle : null
@@ -56,7 +56,7 @@ BarPopup {
                     implicitWidth: Math.max(rowLabel.implicitWidth + 46, subColumn.implicitWidth)
                     height: entryRow.height + (entryItem.expanded ? subColumn.height : 0)
 
-                    // Same again one level down: a submenu is opened when it is expanded, not when its parent is, and hasChildren comes off the entry itself so the arrow still knows to be there.
+                    // Same again one level down.
                     QsMenuOpener {
                         id: subOpener
                         menu: entryItem.expanded && entryItem.modelData.hasChildren ? entryItem.modelData : null

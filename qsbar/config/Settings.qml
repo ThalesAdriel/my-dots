@@ -13,7 +13,6 @@ Singleton {
     property alias barHeight: adapter.barHeight
     property alias outerCorners: adapter.outerCorners
     property alias outerCornerRadius: adapter.outerCornerRadius
-    property alias showTopBorder: adapter.showTopBorder
     property alias barBlur: adapter.barBlur
     property alias panelRadius: adapter.panelRadius
     property alias surfaceColor: adapter.surfaceColor
@@ -35,34 +34,49 @@ Singleton {
     property alias showBattery: adapter.showBattery
     property alias showRecording: adapter.showRecording
 
-    // The saved monitor arrangement, keyed by connector. Out of restoreDefaults on purpose: it describes the hardware rather than a look, and has its own Reset.
+    // The saved monitor arrangement, keyed by connector.
     property alias displayLayout: adapter.displayLayout
 
-    // Where the brightness slider was left on a machine with no backlight to read back from, since hyprsunset never reports the gamma it applies. Out of restoreDefaults so a reset cannot black out the screen.
+    // Where the brightness slider was left on a machine with no backlight to read back from.
     property alias gammaBrightness: adapter.gammaBrightness
 
-    // Where a toast is drawn: "integrated" hangs it off the bar, "floating" is the detached card. Only the presentation changes.
+    // Where a toast is drawn: "integrated" hangs it off the bar, "floating" is the detached card.
     property alias notificationStyle: adapter.notificationStyle
 
-    // How wide a toast is drawn, and how long one that named no timeout of its own stays; an app can still name its own.
+    // How wide a toast is drawn, and how long one that named no timeout of its own stays.
     property alias notificationWidth: adapter.notificationWidth
 
-    // A floor rather than a fixed height: a toast never comes out shorter, and still grows for a body that needs the room.
+    // A floor rather than a fixed height.
     property alias notificationHeight: adapter.notificationHeight
     property alias notificationSeconds: adapter.notificationSeconds
 
-    // Real surface captures in the overview; off falls back to the application icon, which costs nothing and always draws.
+    // Real surface captures in the overview.
     property alias overviewPreviews: adapter.overviewPreviews
 
-    // How awww moves from one desktop wallpaper to the next. The wallpaper itself is not kept here: awww-daemon caches what each output shows and puts it back on its own.
+    // How awww moves from one desktop wallpaper to the next.
     property alias wallpaperTransition: adapter.wallpaperTransition
     property alias wallpaperTransitionSeconds: adapter.wallpaperTransitionSeconds
 
-    // awww's --resize: "crop" fills the output, "fit" letterboxes, "no" centres the picture at its own size.
+    // awww's --resize.
     property alias wallpaperResize: adapter.wallpaperResize
 
-    // The folder both wallpaper grids list, for the desktop and for the lock screen. Out of restoreDefaults on purpose: it says where your pictures are, not how anything looks.
+    // The folder both wallpaper grids list, for the desktop and for the lock screen.
     property alias wallpaperFolder: adapter.wallpaperFolder
+
+    // The bar's keep awake button, one state for every screen's bar and kept across restarts.
+    property alias keepAwake: adapter.keepAwake
+
+    // Minutes idle before hypridle locks, turns the screens off and suspends, 0 for never.
+    property alias idleLockMinutes: adapter.idleLockMinutes
+    property alias idleScreenOffMinutes: adapter.idleScreenOffMinutes
+    property alias idleSuspendMinutes: adapter.idleSuspendMinutes
+
+    // Hyprland's misc:vrr and render:direct_scanout, which HyprSync writes into hypr/hyprland/gaming.lua.
+    property alias vrr: adapter.vrr
+    property alias directScanout: adapter.directScanout
+
+    // Set once settings.json has been read, or found missing and written.
+    property bool loaded: false
 
     property alias clockShowSeconds: adapter.clockShowSeconds
     property alias clockUse12Hour: adapter.clockUse12Hour
@@ -82,7 +96,6 @@ Singleton {
         adapter.barHeight = 25;
         adapter.outerCorners = true;
         adapter.outerCornerRadius = 12;
-        adapter.showTopBorder = false;
         adapter.barBlur = false;
         adapter.panelRadius = 0;
         adapter.surfaceColor = "#000000";
@@ -121,11 +134,16 @@ Singleton {
 
         onFileChanged: reload()
 
-        // Debounced rather than written on the spot: a drag hands over a value per mouse move, and writing there serialised the whole file sixty times a second.
+        // Debounced rather than written on the spot.
         onAdapterUpdated: writeTimer.restart()
 
-        // Only to put the file there the first time. A blind startup timer raced the asynchronous load and wrote defaults over settings that had not arrived yet.
-        onLoadFailed: writeAdapter()
+        // Only to put the file there the first time.
+        onLoadFailed: {
+            writeAdapter();
+            root.loaded = true;
+        }
+
+        onLoaded: root.loaded = true
 
         JsonAdapter {
             id: adapter
@@ -136,7 +154,6 @@ Singleton {
             property int barHeight: 25
             property bool outerCorners: true
             property int outerCornerRadius: 12
-            property bool showTopBorder: false
             property bool barBlur: false
             property int panelRadius: 0
             property string surfaceColor: "#000000"
@@ -172,6 +189,13 @@ Singleton {
             property real wallpaperTransitionSeconds: 1.2
             property string wallpaperResize: "crop"
             property string wallpaperFolder: "~/Pictures/wallpapers"
+
+            property bool keepAwake: true
+            property int idleLockMinutes: 5
+            property int idleScreenOffMinutes: 10
+            property int idleSuspendMinutes: 15
+            property int vrr: 2
+            property int directScanout: 0
 
             property bool clockShowSeconds: true
             property bool clockUse12Hour: false

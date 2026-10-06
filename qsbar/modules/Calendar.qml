@@ -8,15 +8,15 @@ import "root:/components"
 Item {
     id: root
 
-    // Set by whatever holds the calendar, and false until its popup has been opened once: the year view is twelve blocks of forty two day cells, around eighteen hundred items per screen, so nothing below the header exists until this goes true.
+    // Set by whatever holds the calendar, and false until its popup has been opened once.
     property bool active: true
 
     property int offset: 0
 
-    // What the grid is actually built from. A wheel over the calendar steps one month per event, and a touchpad sends a burst of them inside a single frame, so a grid bound straight to `offset` rebinds twelve blocks of forty two cells once per event rather than once per gesture. Settling it costs a frame nobody sees and lands on the same month either way.
+    // What the grid is actually built from.
     property int settledOffset: 0
 
-    // start() rather than restart(): a timer already counting is left to finish, so a scroll that never stops still redraws once a frame instead of staying frozen until the fingers come off.
+    // start() rather than restart().
     onOffsetChanged: settleTimer.start()
 
     readonly property bool yearView: Settings.calendarYearView
@@ -33,7 +33,7 @@ Item {
     readonly property real bodyWidth: root.yearView ? root.yearBodyWidth : root.monthBodyWidth
     readonly property real bodyHeight: root.yearView ? root.yearBodyHeight : root.monthBodyHeight
 
-    // Pulled out as plain numbers so the whole calendar does not rebuild on every clock tick: these only change when the day actually changes.
+    // Pulled out as plain numbers so the whole calendar does not rebuild on every clock tick.
     readonly property int todayYear: clock.date.getFullYear()
     readonly property int todayMonth: clock.date.getMonth()
     readonly property int todayDay: clock.date.getDate()
@@ -69,7 +69,7 @@ Item {
         root.offset += direction;
     }
 
-    // An offset counts months in month view and years in year view, so it has to go back to today whenever the view changes or the calendar is reopened. Both halves at once and the settle dropped: reopening on today is not a scroll, and must not show last month's grid for a frame first.
+    // An offset counts months in month view and years in year view.
     function reset(): void {
         settleTimer.stop();
         root.offset = 0;
@@ -84,14 +84,14 @@ Item {
     implicitWidth: root.bodyWidth + root.padding * 2
     implicitHeight: header.height + root.bodyHeight + root.padding * 3
 
-    // Nothing here animates: stepping a month redraws the grid on the spot and switching views swaps one layout for the other, so a fast scroll lands on the month it stopped at rather than chasing a cross fade.
+    // Nothing here animates.
 
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
     }
 
-    // One frame at sixty hertz. A touchpad reports scroll at around 125Hz, so anything shorter than a frame lets every event through and coalesces nothing; the grid cannot show more than one month per frame anyway. It reads the offset when it fires rather than when it started, so the last event of a burst is never the one that gets dropped.
+    // One frame at sixty hertz.
     Timer {
         id: settleTimer
 
@@ -306,7 +306,7 @@ Item {
         height: root.bodyHeight
         clip: true
 
-        // One layout at a time, and neither until the calendar is on screen; the body has a fixed size taken from plain numbers, so an empty loader does not collapse the panel.
+        // One layout at a time, and neither until the calendar is on screen.
         Loader {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
@@ -352,7 +352,7 @@ Item {
         }
     }
 
-    // Sits over the whole calendar for the wheel and for the right click that switches views; left clicks are not accepted, so they fall through to the header buttons underneath.
+    // Sits over the whole calendar for the wheel and for the right click that switches views.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton

@@ -5,19 +5,19 @@ import Quickshell.Services.Notifications
 import "root:/config"
 import "root:/services"
 
-// The toast as part of the bar rather than a card of its own: same surface colour, hanging off the bottom edge, rounded like a pill, with a chevron that opens the rest of the body and the app's actions. Everything the notification supplies is read through the Notifications singleton, so the clamping and markup escaping apply here too.
+// The toast as part of the bar rather than a card of its own.
 Rectangle {
     id: root
 
     required property var notification
     property bool showActions: true
 
-    // Inside a shared surface the pill paints no background of its own: the block owns it, so several toasts read as one piece of the bar rather than a stack of cards.
+    // Inside a shared surface the pill paints no background of its own.
     property bool flat: false
 
     signal closeRequested
 
-    // A closed notification is destroyed as soon as its handlers return and this card can outlive that by an animation, so nothing reads the object except through here.
+    // A closed notification is destroyed as soon as its handlers return and this card can outlive that by an animation.
     readonly property bool valid: root.notification !== null && root.notification !== undefined
 
     property bool expanded: false
@@ -50,7 +50,7 @@ Rectangle {
     property bool imageBroken: false
     property bool iconFailed: false
 
-    // A glyph for the icon this notification named, or "" for a name the shell has none for, and it wins over both of the others: an `audio-volume-high` off the volume keybind resolves to a placeholder square on a machine with no icon theme, which is a valid image as far as the loader is concerned, so the only place to turn it away is before it is asked for. Kept the same as `NotificationCard`.
+    // A glyph for the icon this notification named, or "" for a name the shell has none for.
     readonly property string glyph: root.valid ? Notifications.iconGlyph(root.notification) : ""
 
     readonly property string imageSource: root.valid && root.glyph === "" ? Notifications.imageSource(root.notification) : ""
@@ -72,7 +72,7 @@ Rectangle {
             root.expanded = false;
     }
 
-    // invoke() closes the notification unless it is resident, and closing an already closed one is an error rather than a no-op, so nothing else happens here.
+    // invoke() closes the notification unless it is resident.
     function invokeAction(action: var): void {
         if (action)
             action.invoke();
@@ -129,10 +129,10 @@ Rectangle {
     readonly property int verticalPadding: 10
     readonly property int iconSize: 34
 
-    // Not animated here: the toast's wrapper animates its height, and an animation on this as well made the wrapper chase one still moving, so opening a toast took twice as long.
+    // Not animated here.
     implicitHeight: Math.max(Math.max(textColumn.implicitHeight, root.showIcon ? root.iconSize : 0) + root.verticalPadding * 2, Settings.notificationHeight)
 
-    // The bar's own surface, so the pill and the bar read as one piece of chrome; critical is the one case that gets a border, because an urgent notification that looks exactly like the bar is one nobody sees.
+    // The bar's own surface, so the pill and the bar read as one piece of chrome.
     color: root.flat ? "transparent" : Theme.barBackground
     radius: root.flat ? 0 : Theme.cardRadius
     border.color: Theme.urgent
@@ -196,7 +196,7 @@ Rectangle {
                 sourceSize.width: root.iconSize
                 sourceSize.height: root.iconSize
 
-                // Notifications point at images that are already gone often enough to be worth handling: drop to the app icon, then to no icon at all rather than to a broken one.
+                // Notifications point at images that are already gone often enough to be worth handling.
                 onStatusChanged: {
                     if (iconImage.status !== Image.Error)
                         return;
@@ -254,7 +254,7 @@ Rectangle {
         height: 26
         radius: Theme.pill(26)
 
-        // Always holds its place even when there is nothing to expand: hiding it would widen the text, which changes whether the body is truncated, which is what decides there is something to expand — a loop.
+        // Always holds its place even when there is nothing to expand.
         opacity: root.expandable ? 1 : 0
         enabled: root.expandable
         color: chevronMouse.containsPress ? Theme.fillPressed : chevronMouse.containsMouse ? Theme.fillHover : "transparent"
@@ -300,7 +300,7 @@ Rectangle {
 
         spacing: 1
 
-        // Summary and age on one line, the way a phone's notification area writes it; the age is measured from arrival and ticks on its own.
+        // Summary and age on one line, the way a phone's notification area writes it.
         Item {
             width: textColumn.width
             height: summaryText.implicitHeight
@@ -331,7 +331,7 @@ Rectangle {
                 font.weight: Theme.fontWeightStrong
                 elide: Text.ElideRight
 
-                // Never wider than what is left after the age, so a long summary elides rather than pushing "now" off the pill.
+                // Never wider than what is left after the age.
                 width: Math.min(summaryText.implicitWidth, Math.max(parent.width - ageText.implicitWidth - 14 - (root.critical ? 12 : 0), 0))
             }
 

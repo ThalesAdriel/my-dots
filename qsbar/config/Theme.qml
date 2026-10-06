@@ -18,7 +18,6 @@ Singleton {
 
     readonly property color barBaseColor: Settings.barColor
     readonly property color barBackground: Qt.rgba(barBaseColor.r, barBaseColor.g, barBaseColor.b, Settings.barOpacity)
-    readonly property color barBorder: Qt.rgba(1, 1, 1, 0.2)
 
     readonly property color textPrimary: "#ffffff"
     readonly property color textSecondary: Qt.rgba(1, 1, 1, 0.55)
@@ -37,11 +36,11 @@ Singleton {
     readonly property color popupBackground: Qt.rgba(popupTint.r, popupTint.g, popupTint.b, Settings.panelOpacity)
     readonly property color popupBorder: Qt.rgba(1, 1, 1, 0.18)
 
-    // Lifted by laying white over the surface rather than with Qt.lighter: lighter multiplies the value, and the default surface is pure black, which multiplied by anything stays black and drew every card invisible against the panel it sits on.
+    // Lifted by laying white over the surface rather than with Qt.lighter.
     readonly property color cardTint: Qt.tint(surfaceBase, Qt.rgba(1, 1, 1, 0.08))
     readonly property color cardBackground: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, Math.min(Settings.panelOpacity + 0.06, 1))
 
-    // The settings sheet covers the control center rather than blending into it, so it is the one surface that ignores panel opacity.
+    // The settings sheet covers the control center rather than blending into it.
     readonly property color settingsBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
     readonly property color settingsCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
     readonly property string barLayerNamespace: {
@@ -51,10 +50,10 @@ Singleton {
     }
     readonly property string panelLayerNamespace: Settings.panelBlur ? "qsbar-blur" : "qsbar"
 
-    // The panels welded to the bar bring their own entrance, sliding down out from under it behind their own clip, and Hyprland's layer animation over the top of that reads as a second one competing with it. They get a namespace of their own so the no_anim rule has something to name without reaching the toasts or the identify overlay, which are on the one above and do want it.
+    // The panels welded to the bar bring their own entrance, sliding down out from under it behind their own clip.
     readonly property string popupLayerNamespace: Settings.panelBlur ? "qsbar-blur-panel" : "qsbar-panel"
 
-    // A window preview carries its own alpha, and drawing it over anything translucent lets the compositor blur the desktop up through it, so everything under a capture is opaque and unblurred.
+    // A window preview carries its own alpha.
     readonly property color overviewBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
     readonly property color overviewCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
     readonly property string overviewLayerNamespace: "qsbar"
@@ -62,7 +61,7 @@ Singleton {
     readonly property int cardRadius: Settings.panelRadius
 
 
-    // Enumerating every installed font is not cheap and seven lists below ask the same question, so it is asked once here.
+    // Enumerating every installed font is not cheap and seven lists below ask the same question.
     readonly property var installedFamilies: Qt.fontFamilies()
 
     function resolveFamily(candidates: var): string {
@@ -88,7 +87,7 @@ Singleton {
     readonly property int fontWeightStrong: Font.Bold
     readonly property int iconSize: Settings.iconSize
 
-    // The breathing room around every bar icon: one slider drives both the button padding and the slot each icon sits in.
+    // The breathing room around every bar icon.
     readonly property int iconPadding: Settings.iconPadding
     readonly property int iconSlot: Settings.iconSize + Settings.iconPadding + 2
 

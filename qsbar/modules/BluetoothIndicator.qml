@@ -21,7 +21,7 @@ BarButton {
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
 
-            // Font Awesome Free keeps bluetooth in Brands rather than Solid, so this is the one bar icon not drawn with IconText's family.
+            // Font Awesome Free keeps bluetooth in Brands rather than Solid.
             text: Glyphs.bluetooth
             font.family: Theme.brandFamily
             font.pixelSize: Theme.iconSize + 1
@@ -50,7 +50,7 @@ BarButton {
 
         warm: root.containsMouse
 
-        // The brief read the indicator lives on lists nothing paired or nearby, so the panel used to open on a list it did not have yet and the devices grew in under a panel that was still sliding. Off the hover the list is already there; off `settled` at the latest, which is after the slide rather than during it.
+        // The brief read the indicator lives on lists nothing paired or nearby.
         readonly property bool wantsDetail: bluetoothPopup.prepared || bluetoothPopup.settled
 
         onWantsDetailChanged: Bluetooth.detailed = bluetoothPopup.wantsDetail

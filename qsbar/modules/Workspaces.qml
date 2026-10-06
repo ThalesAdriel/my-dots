@@ -11,7 +11,7 @@ Item {
     readonly property int itemWidth: Theme.glyphSize + 7
     readonly property int itemSpacing: Settings.workspaceSpacing
 
-    // State first, and keyed by id: everything the row draws is looked up out of here, which is a binding re-evaluating rather than a delegate being built.
+    // State first, and keyed by id.
     readonly property var workspaceState: {
         const table = {};
         for (const id of root.persistentIds)
@@ -35,7 +35,7 @@ Item {
         return table;
     }
 
-    // The model, and only the model: a fresh array handed to a Repeater rebuilds every delegate, and Hyprland sends an event for every focus change and window open or close, so this is only replaced when the set of workspaces really moved.
+    // The model, and only the model.
     property var workspaceIds: root.persistentIds
 
     onWorkspaceStateChanged: {
@@ -46,7 +46,7 @@ Item {
     }
 
     function focusWorkspace(target: string): void {
-        // Pasted into a Lua expression that Hyprland evaluates, so a target that is not a workspace id or a relative step has no business going in; nothing reaches this from outside the shell today, and the check keeps it that way.
+        // Pasted into a Lua expression that Hyprland evaluates.
         if (!/^(?:\d+|r[-+]\d+)$/.test(target)) {
             console.warn("qsbar: refused a workspace target that is not an id or a step:", target);
             return;

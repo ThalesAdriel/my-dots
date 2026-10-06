@@ -12,7 +12,7 @@ BarButton {
 
     onPrimaryClicked: calendarPopup.toggle()
 
-    // Through the calendar rather than straight at the setting: an offset counts months in one view and years in the other, so it has to be reset with it.
+    // Through the calendar rather than straight at the setting.
     onSecondaryClicked: calendar.toggleView()
     onScrolled: steps => calendar.step(steps > 0 ? -1 : 1)
 
@@ -44,7 +44,7 @@ BarButton {
         Calendar {
             id: calendar
 
-            // Built when the pointer reaches the button rather than at startup; stepping and switching views from the bar still work while it is empty, since both only move numbers the grid reads when it is there. Of everything in the bar this is the build most worth keeping off the click: the grid is some eighteen hundred cells.
+            // Built when the pointer reaches the button rather than at startup.
             active: calendarPopup.live
         }
     }

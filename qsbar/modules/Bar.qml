@@ -10,15 +10,15 @@ PanelWindow {
 
     WlrLayershell.namespace: Theme.barLayerNamespace
 
-    // The bar takes no keyboard unless something in a panel is waiting to be typed into, which today is only the enterprise Wi-Fi form; left on OnDemand permanently, every click on the bar would pull focus off the window in front of it.
+    // The bar takes no keyboard unless something in a panel is waiting to be typed into.
     WlrLayershell.keyboardFocus: UiState.keyboardCapture ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
-    // A layer surface is handed its namespace at creation and the protocol cannot rename one, so flipping a blur switch has to throw the window away and ask for it again; toasts and the identify overlay pick the new name up on their own, but the bar is up from login to logout.
+    // A layer surface is handed its namespace at creation and the protocol cannot rename one.
     visible: !namespaceReload.running
 
     required property var modelData
 
-    // The fillets hang below the bar, so the window is taller than the bar while still only reserving the bar's own height from the compositor.
+    // The fillets hang below the bar.
     readonly property int cornerSize: Settings.outerCorners ? Settings.outerCornerRadius : 0
 
     screen: modelData
@@ -33,7 +33,7 @@ PanelWindow {
     exclusiveZone: Theme.barHeight
     color: "transparent"
 
-    // Only the bar itself takes input. The fillets sit over the desktop.
+    // Only the bar itself takes input.
     mask: Region {
         item: barArea
     }
@@ -69,15 +69,6 @@ PanelWindow {
             height: parent.height + Settings.barRadius
             radius: Settings.barRadius
             color: Theme.barBackground
-        }
-
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 1
-            visible: Settings.showTopBorder
-            color: Theme.barBorder
         }
 
         Row {
@@ -133,7 +124,7 @@ PanelWindow {
             NotificationBell {
             }
 
-            // The remaining optional modules, off until switched on in bar settings, through a Loader rather than a visible binding: nothing is compiled or polled while a module is off, and a Quickshell missing UPower costs the battery module alone.
+            // The remaining optional modules, off until switched on in bar settings, through a Loader rather than a visible binding.
             Loader {
                 active: Settings.showNetwork
                 visible: active

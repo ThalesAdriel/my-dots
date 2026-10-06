@@ -5,26 +5,26 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 
-// The window geometry Quickshell.Hyprland does not carry, out of hyprctl -j, and read only while the overview is looking: keeping a panel nobody has open warm would cost more than it is worth.
+// The window geometry Quickshell.Hyprland does not carry, out of hyprctl -j.
 Singleton {
     id: root
 
     property bool watching: false
 
-    // [{ address, at: [x, y], size: [w, h], workspace: { id }, class, title, monitor, floating, fullscreen }]
+    // [{ address, at.
     property var clients: []
     property var clientByAddress: ({})
     property var clientsByWorkspace: ({})
 
-    // [{ id, name, x, y, width, height, scale, reserved: [l, t, r, b], transform }]
+    // [{ id, name, x, y, width, height, scale, reserved: [l, t, r, b], transform }].
     property var monitors: []
 
-    // Addresses come back from hyprctl and go straight into a dispatch string, so they are checked for the shape of one first; nothing untrusted reaches this today, and the check keeps it that way.
+    // Addresses come back from hyprctl and go straight into a dispatch string.
     function isAddress(address: string): bool {
         return /^0x[0-9A-Fa-f]+$/.test(address);
     }
 
-    // Hyprland reads its config in Lua now, where the classic "workspace 3" string is not what it answers to; Quickshell reports which one is in use.
+    // Hyprland reads its config in Lua now, where the classic "workspace 3" string is not what it answers to.
     function dispatch(lua: string, classic: string): void {
         Hyprland.dispatch(Hyprland.usingLua ? lua : classic);
     }
@@ -47,7 +47,7 @@ Singleton {
         root.dispatch(`hl.dsp.window.close('address:${address}')`, "closewindow address:" + address);
     }
 
-    // follow = false makes it a move rather than a move and a jump: the window goes, the view stays, which is what dragging a preview onto another workspace means.
+    // follow = false makes it a move rather than a move and a jump.
     function moveWindowToWorkspace(address: string, id: int): void {
         if (!root.isAddress(address))
             return;
@@ -83,7 +83,7 @@ Singleton {
             root.refresh();
     }
 
-    // Hyprland fires a burst of events for one action (openwindow, then activewindow, then workspace), so they collapse into one read on the trailing edge rather than three hyprctl runs.
+    // Hyprland fires a burst of events for one action (openwindow, then activewindow, then workspace).
     Connections {
         target: Hyprland
 

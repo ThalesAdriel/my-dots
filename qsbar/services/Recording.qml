@@ -5,13 +5,13 @@ import Quickshell
 import Quickshell.Io
 import "root:/config"
 
-// Whether the screen is being recorded, the way macOS reports it. gpu-screen-recorder is one process either way, so the flags separate a recording from a replay buffer: -r is left running all day without writing, and lighting the indicator for that would light it permanently.
+// Whether the screen is being recorded, the way macOS reports it. gpu-screen-recorder is one process either way.
 Singleton {
     id: root
 
     readonly property bool enabled: Settings.showRecording
 
-    // The probe walks every process in /proc and reads each cmdline, which is not worth doing twenty four times a minute on the chance a recorder turns up, so it scans slowly until something is recording and only then ticks to keep the elapsed time moving.
+    // The probe walks every process in /proc and reads each cmdline.
     readonly property int idleInterval: 10000
     readonly property int activeInterval: 2500
     readonly property int interval: root.active ? root.activeInterval : root.idleInterval
@@ -29,7 +29,7 @@ Singleton {
         return hours > 0 ? hours + ":" + padded(minutes) + ":" + padded(seconds) : minutes + ":" + padded(seconds);
     }
 
-    // pgrep -x matches /proc/<pid>/comm, truncated to 15 characters, and gpu-screen-recorder is 19 long, so it could never match; -f casts wider than it should and argv[0] decides, which also throws out this script. grep -z reads NUL separated arguments as records, so -x matches an argument that is exactly -r.
+    // pgrep -x matches /proc/<pid>/comm, truncated to 15 characters, and gpu-screen-recorder is 19 long.
     readonly property string script: `command -v pgrep >/dev/null 2>&1 || exit 127
 for pid in $(pgrep -f gpu-screen-recorder 2>/dev/null); do
     first=$(tr '\\000' '\\n' < "/proc/$pid/cmdline" 2>/dev/null | head -n 1)
@@ -65,7 +65,7 @@ exit 0`
         }
     }
 
-    // Runs on the tick rather than counting locally, so the elapsed time is the recorder's own and survives the shell being restarted mid recording.
+    // Runs on the tick rather than counting locally.
     Timer {
         interval: root.interval
         running: root.enabled

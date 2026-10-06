@@ -2,11 +2,11 @@ pragma Singleton
 
 import Quickshell
 
-// What to call a PipeWire node on screen: the sound panel and the per app list both need it and both had their own copy.
+// What to call a PipeWire node on screen.
 Singleton {
     id: root
 
-    // In order of how much the node meant it: an application's own properties first, the node's own names as the fallback.
+    // In order of how much the node meant it.
     readonly property var nameKeys: ["application.name", "media.name", "application.process.binary", "node.description", "node.name"]
 
     function describe(node: var): string {

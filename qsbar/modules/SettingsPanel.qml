@@ -7,13 +7,13 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// One page of the settings window, picked by `page`, or with a `query` every page at once filtered down to the rows that match. Only what is on screen is built: the display canvas and the wallpaper grid are the two heaviest trees in the shell, and neither is worth constructing while some other page is showing.
+// One page of the settings window, picked by `page`, or with a `query` every page at once filtered down to the rows that match.
 Item {
     id: root
 
     property string page: "appearance"
 
-    // The search field's text. While it holds anything, every page but Displays is built, stacked under its own heading, with only the matching rows left showing, so a setting can be changed right there in the results.
+    // The search field's text.
     property string query: ""
     readonly property bool searching: root.query.trim() !== ""
     readonly property string needle: root.query.trim().toLowerCase()
@@ -33,7 +33,7 @@ Item {
         return key;
     }
 
-    // Whether a row stays up for the current query: it matches on its own label, or on the title of the group or page it sits in, so "blur" finds both blur toggles and "lock screen" finds the whole page. Walked up through `searchTitle` rather than handed down, since the rows are declared long before they know where they will sit.
+    // Whether a row stays up for the current query.
     function shows(item: Item, label: string): bool {
         if (!root.searching)
             return true;
@@ -45,7 +45,7 @@ Item {
         return text.toLowerCase().indexOf(root.needle) !== -1;
     }
 
-    // Whether anything among these children is a row that matched. Read off each row's own `hit` rather than off what is visible: a hidden group hides its rows too, and counting visible children would keep a group hidden for good once it had been.
+    // Whether anything among these children is a row that matched.
     function anyHit(children: var): bool {
         for (let index = 0; index < children.length; index++) {
             if (children[index].hit === true)
@@ -54,7 +54,7 @@ Item {
         return false;
     }
 
-    // One palette for the bar and the panels, so a colour picked for one is there to pick for the other: the neutrals, then two purples and two pinks, all dark enough for the white text on top to stay readable at full opacity. Anything else is the last swatch's picker away.
+    // One palette for the bar and the panels, so a colour picked for one is there to pick for the other.
     readonly property var surfaceColors: ["#000000", "#11121a", "#141414", "#1b1b1b", "#202020", "#1c2226", "#2e3436", "#241f31", "#3d3846", "#613583", "#813d9c", "#9c1d5e", "#c2407a"]
     // The last two are libadwaita's purple and pink accents, bright enough to read as an accent and still dark enough for the white text drawn on top of it.
     readonly property var accentColors: ["#3584e4", "#2ec27e", "#f5c211", "#ff7800", "#e01b24", "#986a44", "#9141ac", "#d56199"]
@@ -64,7 +64,7 @@ Item {
 
     implicitHeight: pageStack.implicitHeight
 
-    // A titled card holding one group of settings; everything used to run down the panel as one flat list with hairlines, which read as a wall of rows rather than five separate things.
+    // A titled card holding one group of settings.
     component Group: Column {
         id: group
 
@@ -78,7 +78,7 @@ Item {
         spacing: 8
         visible: !root.searching || group.hit
 
-        // Through `data` rather than as plain children: the default property is aliased to the card's column, so anything declared loose here would land inside the card with the settings rows.
+        // Through `data` rather than as plain children.
         data: [
             Text {
                 text: group.title
@@ -127,10 +127,10 @@ Item {
         property int decimals: 0
         property string suffix: ""
 
-        // What the number on the right reads; overridden where one end of the range means something other than its number.
+        // What the number on the right reads.
         property string valueText: sliderRow.value.toFixed(sliderRow.decimals) + sliderRow.suffix
 
-        // Set false where the row only means something some of the time, rather than overriding `visible`, which would take it out of the search.
+        // Set false where the row only means something some of the time, rather than overriding `visible`.
         property bool applies: true
         readonly property bool hit: sliderRow.applies && root.shows(sliderRow, sliderRow.label)
 
@@ -158,7 +158,7 @@ Item {
         LevelSlider {
             id: slider
 
-            // A twentieth of the range a press, and never less than one whole step where the setting is a whole number: a fraction would round straight back to where it started.
+            // A twentieth of the range a press.
             readonly property real keyStep: Math.max((sliderRow.maximum - sliderRow.minimum) / 20, sliderRow.decimals === 0 ? 1 : 0)
 
             anchors.left: parent.left
@@ -298,7 +298,7 @@ Item {
         }
     }
 
-    // Any colour at all: saturation and brightness across a square, the hue along a strip under it, and the hex code for typing or pasting one. It applies as it moves, so the bar or the panel behind the window shows the colour while it is being chosen. The arrows move whichever part has the keyboard.
+    // Any colour at all.
     component ColorPicker: Rectangle {
         id: picker
 
@@ -308,7 +308,7 @@ Item {
         property real saturation: 0
         property real brightness: 0
 
-        // What this last sent, so its own change coming back as `value` does not move the cursors: the hex rounds, and a dark colour read back from it would jump in hue.
+        // What this last sent, so its own change coming back as `value` does not move the cursors.
         property string sent: ""
 
         signal picked(string value)
@@ -381,7 +381,7 @@ Item {
 
                 FocusRing {}
 
-                // White fading out to the right, then black fading in towards the bottom, over the pure hue: the usual saturation and brightness square.
+                // White fading out to the right, then black fading in towards the bottom, over the pure hue.
                 Rectangle {
                     anchors.fill: parent
                     radius: parent.radius
@@ -413,7 +413,7 @@ Item {
                     }
                 }
 
-                // Filled with the colour itself inside a white ring and a dark one, so it reads on any part of the square, and drawn over the edge rather than cut off by it.
+                // Filled with the colour itself inside a white ring and a dark one.
                 Rectangle {
                     x: picker.saturation * field.width - width / 2
                     y: (1 - picker.brightness) * field.height - height / 2
@@ -435,7 +435,7 @@ Item {
                     }
                 }
 
-                // preventStealing: a drag in the square that went a little up or down used to start scrolling the settings page instead. A little wider than the square, so the very edges can be reached without leaving it.
+                // preventStealing.
                 MouseArea {
                     function take(mouse: var): void {
                         picker.saturation = picker.clamp((mouse.x - 9) / field.width);
@@ -702,7 +702,7 @@ Item {
         }
     }
 
-    // A handful of named values side by side, the chosen one lit: the same pills the display scale is picked with. `options` is [{ value, label }].
+    // A handful of named values side by side, the chosen one lit.
     component ChoiceRow: Item {
         id: choiceRow
 
@@ -801,7 +801,73 @@ Item {
         }
     }
 
-    // A line of text that saves itself when Enter is pressed or the focus leaves it, and then goes back to showing the setting, so a value the handler turned down does not sit there looking saved. With `browse` set to "file" or "folder", a button beside it opens a browser under the row, for picking a path rather than typing one out.
+    // A number nudged a step at a time with − and +, where the exact figure matters more than a slider can show it.
+    component StepperRow: Item {
+        id: stepperRow
+
+        property string label: ""
+        property real value: 0
+        property real minimum: 0
+        property real maximum: 1
+        property real step: 1
+        property int decimals: 0
+
+        property bool applies: true
+        readonly property bool hit: stepperRow.applies && root.shows(stepperRow, stepperRow.label)
+
+        signal adjusted(real newValue)
+
+        // Rounded to the shown decimals, so a hundred steps of 0.01 land on a number rather than on 0.9999999.
+        function nudge(direction: int): void {
+            const next = Math.min(Math.max(stepperRow.value + direction * stepperRow.step, stepperRow.minimum), stepperRow.maximum);
+            stepperRow.adjusted(Number(next.toFixed(stepperRow.decimals)));
+        }
+
+        width: parent.width
+        height: 34
+        visible: stepperRow.hit
+
+        RowLabel {
+            anchors.left: parent.left
+            anchors.right: stepper.left
+            anchors.rightMargin: 12
+            anchors.verticalCenter: parent.verticalCenter
+            text: stepperRow.label
+        }
+
+        Row {
+            id: stepper
+
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 4
+
+            Text {
+                width: 54
+                height: 26
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
+                text: stepperRow.value.toFixed(stepperRow.decimals)
+                color: Theme.textPrimary
+                font.family: Theme.monoFamily
+                font.pixelSize: Theme.fontSizeSmall
+            }
+
+            PanelButton {
+                label: "−"
+                implicitWidth: 26
+                onActivated: stepperRow.nudge(-1)
+            }
+
+            PanelButton {
+                label: "+"
+                implicitWidth: 26
+                onActivated: stepperRow.nudge(1)
+            }
+        }
+    }
+
+    // A line of text that saves itself when Enter is pressed or the focus leaves it.
     component FieldRow: Column {
         id: fieldRow
 
@@ -865,7 +931,7 @@ Item {
             }
         }
 
-        // Built when opened and let go when closed: a folder listing is watched on disk for as long as it exists.
+        // Built when opened and let go when closed.
         Loader {
             width: parent.width
             active: fieldRow.browsing
@@ -883,25 +949,25 @@ Item {
         }
     }
 
-    // A folder's contents, walked by clicking, under a FieldRow. Drawn in the shell rather than handed to the portal's file chooser: that is an ordinary window, which opens underneath the overlay settings sits on and takes the focus it holds, closing settings on its way in.
+    // A folder's contents, walked by clicking, under a FieldRow.
     component FileBrowser: Rectangle {
         id: browser
 
-        // Picking a folder rather than a file: only folders are listed, and the button in the header takes the one on show.
+        // Picking a folder rather than a file.
         property bool folders: false
         property var nameFilters: []
 
-        // The field's value. A folder field opens on it, a file field on the folder the file is in, and anything that is not a path opens at home.
+        // The field's value.
         property string start: ""
 
         readonly property string home: Quickshell.env("HOME") || "/"
 
-        // The folder on show, kept here and handed to the model rather than read back out of it: the model's own folder does not notify a binding when it moves, so a path derived from it stayed empty.
+        // The folder on show, kept here and handed to the model rather than read back out of it.
         property string current: ""
 
         signal chosen(string path)
 
-        // Home written as ~, the way the fields are filled in by hand; quicklock and the wallpaper service both read it back.
+        // Home written as ~, the way the fields are filled in by hand.
         function tilde(path: string): string {
             return path === browser.home || path.startsWith(browser.home + "/") ? "~" + path.slice(browser.home.length) : path;
         }
@@ -1008,7 +1074,7 @@ Item {
             interactive: false
             model: folderModel
 
-            // The arrows move through the list on their own, ListView does that; Enter takes what they landed on and Backspace goes up a level.
+            // The arrows move through the list on their own, ListView does that.
             function take(item: var): void {
                 if (!item)
                     return;
@@ -1103,7 +1169,7 @@ Item {
         }
     }
 
-    // A name picked out of a list too long for pills. The list opens inline under the row, like the display mode list: a popup anchored inside this window would be a second surface for a list the page can scroll.
+    // A name picked out of a list too long for pills.
     component PickerRow: Column {
         id: pickerRow
 
@@ -1112,7 +1178,7 @@ Item {
         property string current: ""
         property bool open: false
 
-        // What an option reads as, where the value is not something to show: a desktop file id shows as the application's name.
+        // What an option reads as, where the value is not something to show.
         property var labelOf: value => value
 
         property bool applies: true
@@ -1203,7 +1269,7 @@ Item {
             }
         }
 
-        // Scrolled by the wheel alone, and the scroller under the list rather than over it, so the rows keep their hover and their clicks.
+        // Scrolled by the wheel alone, and the scroller under the list rather than over it.
         Item {
             width: parent.width
             height: pickerList.height
@@ -1292,22 +1358,42 @@ Item {
         }
     }
 
-    // The pictures in the wallpaper folder as tiles, the ones in use ringed. The desktop and the lock screen both pick from it and differ only in what a click does and what counts as in use.
+    // The pictures in the wallpaper folder as tiles, the ones in use ringed.
     component WallpaperGrid: Column {
         id: grid
 
         property var selected: []
+
+        // Folded to one row until asked.
+        property bool expanded: false
 
         signal picked(string path)
 
         readonly property int across: 4
         readonly property real tileWidth: Math.floor((grid.width - tiles.spacing * (grid.across - 1)) / grid.across)
 
+        // Folded, what is chosen comes first.
+        readonly property var shown: {
+            const images = Wallpaper.images;
+            if (grid.expanded)
+                return images;
+            const chosen = images.filter(path => grid.selected.indexOf(path) !== -1);
+            const rest = images.filter(path => grid.selected.indexOf(path) === -1);
+            return chosen.concat(rest).slice(0, grid.across);
+        }
+
         width: parent.width
         spacing: 6
 
-        // Pictures are not settings a search can name, and building a grid of thumbnails to hide it again is the most expensive thing on either page.
+        // Pictures are not settings a search can name.
         visible: !root.searching
+
+        // Above the grid rather than under it.
+        ButtonRow {
+            applies: Wallpaper.images.length > grid.across
+            label: grid.expanded ? "Show fewer" : "Show all " + Wallpaper.images.length + " pictures"
+            onTriggered: grid.expanded = !grid.expanded
+        }
 
         Flow {
             id: tiles
@@ -1316,30 +1402,30 @@ Item {
             property int cursor: 0
 
             function move(delta: int): void {
-                tiles.cursor = Math.min(Math.max(tiles.cursor + delta, 0), Wallpaper.images.length - 1);
+                tiles.cursor = Math.min(Math.max(tiles.cursor + delta, 0), grid.shown.length - 1);
             }
 
             width: parent.width
             spacing: 8
-            visible: Wallpaper.images.length > 0
+            visible: grid.shown.length > 0
 
-            activeFocusOnTab: Wallpaper.images.length > 0
+            activeFocusOnTab: grid.shown.length > 0
             onActiveFocusChanged: {
                 if (!tiles.activeFocus)
                     return;
-                const at = Wallpaper.images.findIndex(path => grid.selected.indexOf(path) !== -1);
+                const at = grid.shown.findIndex(path => grid.selected.indexOf(path) !== -1);
                 tiles.cursor = Math.max(at, 0);
             }
             Keys.onLeftPressed: tiles.move(-1)
             Keys.onRightPressed: tiles.move(1)
             Keys.onUpPressed: tiles.move(-grid.across)
             Keys.onDownPressed: tiles.move(grid.across)
-            Keys.onReturnPressed: grid.picked(Wallpaper.images[tiles.cursor])
-            Keys.onEnterPressed: grid.picked(Wallpaper.images[tiles.cursor])
-            Keys.onSpacePressed: grid.picked(Wallpaper.images[tiles.cursor])
+            Keys.onReturnPressed: grid.picked(grid.shown[tiles.cursor])
+            Keys.onEnterPressed: grid.picked(grid.shown[tiles.cursor])
+            Keys.onSpacePressed: grid.picked(grid.shown[tiles.cursor])
 
             Repeater {
-                model: root.searching ? [] : Wallpaper.images
+                model: root.searching ? [] : grid.shown
 
                 delegate: Rectangle {
                     id: tile
@@ -1361,7 +1447,7 @@ Item {
                     Image {
                         id: picture
 
-                        // The picture itself only until its thumbnail exists, which is saved from this once it is decoded, laid out and in a window to be grabbed from. Not straight off the status: a picture the pixmap cache already holds is ready while the tile is still being built, at no size and in no window.
+                        // The picture itself only until its thumbnail exists.
                         readonly property string thumbnail: Wallpaper.thumbnail(tile.modelData)
                         readonly property bool keepable: picture.status === Image.Ready && picture.thumbnail === "" && picture.width > 0 && picture.Window.window !== null
 
@@ -1388,7 +1474,7 @@ Item {
                         }
                     }
 
-                    // Over the image rather than under it, so the ring is drawn whole instead of hidden behind the picture it frames.
+                    // Over the image rather than under it.
                     Rectangle {
                         anchors.fill: parent
                         color: "transparent"
@@ -1439,7 +1525,7 @@ Item {
         }
     }
 
-    // One block per page. Outside a search only the current one is built; during one, every page but Displays, whose canvas has nothing a search could name and polls hyprctl while it exists.
+    // One block per page.
     Column {
         id: pageStack
 
@@ -1466,7 +1552,7 @@ Item {
                 required property string modelData
 
                 readonly property string searchTitle: root.titleOf(block.modelData)
-                readonly property bool built: root.searching ? block.modelData !== "displays" : block.modelData === root.page
+                readonly property bool built: root.searching || block.modelData === root.page
                 readonly property bool hit: root.searching && blockLoader.item !== null && root.anyHit(blockLoader.item.children)
 
                 width: pageStack.width
@@ -1698,12 +1784,6 @@ Item {
                 }
 
                 ToggleRow {
-                    label: "Top border"
-                    checked: Settings.showTopBorder
-                    onToggled: Settings.showTopBorder = !Settings.showTopBorder
-                }
-
-                ToggleRow {
                     label: "Background blur"
                     checked: Settings.barBlur
                     onToggled: Settings.barBlur = !Settings.barBlur
@@ -1729,7 +1809,7 @@ Item {
                 }
             }
 
-            // Everything here is off out of the box: each one talks to something outside the shell, and a desktop has no battery to report and no reason to run nmcli every few seconds.
+            // Everything here is off out of the box.
             Group {
                 title: "Bar components"
 
@@ -1756,6 +1836,13 @@ Item {
                     checked: Settings.showRecording
                     onToggled: Settings.showRecording = !Settings.showRecording
                 }
+
+                // The cup in the bar: while it is on, hypridle's timeouts under Displays never run.
+                ToggleRow {
+                    label: "Keep awake"
+                    checked: Settings.keepAwake
+                    onToggled: Settings.keepAwake = !Settings.keepAwake
+                }
             }
         }
     }
@@ -1769,7 +1856,7 @@ Item {
             Group {
                 title: "Notifications"
 
-                // A string rather than a bool in settings, so a third style later is a third pill rather than a second flag to keep consistent with the first.
+                // A string rather than a bool in settings.
                 ChoiceRow {
                     label: "Toast style"
                     options: [
@@ -1804,7 +1891,7 @@ Item {
                     onAdjusted: newValue => Settings.notificationHeight = Math.round(newValue)
                 }
 
-                // What a notification that named no timeout of its own gets; critical still waits to be dismissed however this is set.
+                // What a notification that named no timeout of its own gets.
                 SliderRow {
                     label: "Time on screen"
                     value: Settings.notificationSeconds
@@ -1863,13 +1950,106 @@ Item {
         }
     }
 
-    // hyprctl is only asked for the monitor layout while the page that shows it is built.
+    // hyprctl is only asked for the monitor layout while the page that shows it is open.
     Component {
         id: displaysPage
 
-        DisplayManager {
-            Component.onCompleted: Displays.watching = true
-            Component.onDestruction: Displays.watching = false
+        Column {
+            spacing: 18
+
+            Loader {
+                width: parent.width
+                active: !root.searching
+                visible: active
+
+                sourceComponent: DisplayManager {
+                    Component.onCompleted: Displays.watching = true
+                    Component.onDestruction: Displays.watching = false
+                }
+            }
+
+            // hypridle's timeouts, which only run while keep awake, the cup in the bar, is off.
+            Group {
+                title: "Idle"
+
+                SliderRow {
+                    label: "Lock after"
+                    value: Settings.idleLockMinutes
+                    minimum: 0
+                    maximum: 60
+                    valueText: Settings.idleLockMinutes === 0 ? "never" : Settings.idleLockMinutes + " min"
+                    onAdjusted: newValue => Settings.idleLockMinutes = Math.round(newValue)
+                }
+
+                SliderRow {
+                    label: "Turn screens off after"
+                    value: Settings.idleScreenOffMinutes
+                    minimum: 0
+                    maximum: 60
+                    valueText: Settings.idleScreenOffMinutes === 0 ? "never" : Settings.idleScreenOffMinutes + " min"
+                    onAdjusted: newValue => Settings.idleScreenOffMinutes = Math.round(newValue)
+                }
+
+                SliderRow {
+                    label: "Suspend after"
+                    value: Settings.idleSuspendMinutes
+                    minimum: 0
+                    maximum: 120
+                    valueText: Settings.idleSuspendMinutes === 0 ? "never" : Settings.idleSuspendMinutes + " min"
+                    onAdjusted: newValue => Settings.idleSuspendMinutes = Math.round(newValue)
+                }
+            }
+
+            Group {
+                title: "Games"
+
+                ChoiceRow {
+                    label: "Variable refresh rate"
+                    options: [
+                        {
+                            value: 0,
+                            label: "Off"
+                        },
+                        {
+                            value: 2,
+                            label: "Fullscreen"
+                        },
+                        {
+                            value: 1,
+                            label: "Always"
+                        }
+                    ]
+                    current: Settings.vrr
+                    onPicked: value => Settings.vrr = value
+                }
+
+                // Games is Hyprland's 2, only for a window that says it is a game.
+                ChoiceRow {
+                    label: "Direct scanout"
+                    options: [
+                        {
+                            value: 0,
+                            label: "Off"
+                        },
+                        {
+                            value: 2,
+                            label: "Games"
+                        },
+                        {
+                            value: 1,
+                            label: "Fullscreen"
+                        }
+                    ]
+                    current: Settings.directScanout
+                    onPicked: value => Settings.directScanout = value
+                }
+
+                PanelMessage {
+                    width: parent.width
+                    visible: Settings.directScanout !== 0 && !root.searching
+                    text: "A game that only shows a black screen wants direct scanout off."
+                }
+            }
         }
     }
 
@@ -1879,7 +2059,7 @@ Item {
         Column {
             id: wallpaperColumn
 
-            // Which output a click sets, or all of them; not saved, since it is about the next click rather than a setting.
+            // Which output a click sets, or all of them.
             property string target: ""
 
             spacing: 18
@@ -1926,7 +2106,7 @@ Item {
                     onPicked: path => Wallpaper.apply(path, wallpaperColumn.target)
                 }
 
-                // Only shows once awww draws again, so a change redraws what is on screen rather than waiting for the next pick.
+                // Only shows once awww draws again.
                 ChoiceRow {
                     label: "Scaling"
                     options: [
@@ -2018,7 +2198,7 @@ Item {
                     onPicked: path => LockConfig.wallpaper = path
                 }
 
-                // What the first output is showing; with different pictures on each, the first is as good a pick as any.
+                // What the first output is showing.
                 ButtonRow {
                     readonly property string desktop: {
                         const first = Wallpaper.outputs.length > 0 ? Wallpaper.current[Wallpaper.outputs[0]] : undefined;
@@ -2080,7 +2260,7 @@ Item {
                 }
             }
 
-            // quicklock reads a negative radius as fully round, so the far right of each of these sliders is that rather than a number.
+            // quicklock reads a negative radius as fully round.
             Group {
                 title: "Password field"
 
@@ -2220,7 +2400,7 @@ Item {
         }
     }
 
-    // quickgreet, the greetd greeter: written to /var/lib/quickgreet through GreetConfig, and tried out from the first group without logging out.
+    // quickgreet, the greetd greeter.
     Component {
         id: greeterPage
 
@@ -2293,7 +2473,7 @@ Item {
                     onPicked: path => GreetConfig.setPicture("wallpaper", path)
                 }
 
-                // What the first output is showing; with different pictures on each, the first is as good a pick as any.
+                // What the first output is showing.
                 ButtonRow {
                     readonly property string desktop: {
                         const first = Wallpaper.outputs.length > 0 ? Wallpaper.current[Wallpaper.outputs[0]] : undefined;
@@ -2468,6 +2648,149 @@ Item {
                     options: SystemTheme.iconThemes
                     current: SystemTheme.iconTheme
                     onPicked: value => SystemTheme.set("icon_theme", value)
+                }
+
+                ChoiceRow {
+                    label: "Style"
+                    options: [
+                        {
+                            value: "prefer-dark",
+                            label: "Dark"
+                        },
+                        {
+                            value: "prefer-light",
+                            label: "Light"
+                        }
+                    ]
+                    current: SystemTheme.colorScheme
+                    onPicked: value => SystemTheme.set("color_scheme", value)
+                }
+
+                ChoiceRow {
+                    label: "Title bar buttons"
+                    options: [
+                        {
+                            value: "close",
+                            label: "Close"
+                        },
+                        {
+                            value: "all",
+                            label: "All"
+                        },
+                        {
+                            value: "none",
+                            label: "None"
+                        }
+                    ]
+                    current: SystemTheme.titleButtons
+                    onPicked: value => SystemTheme.set("title_buttons", value)
+                }
+
+                // libadwaita takes nine named accents rather than a colour.
+                ToggleRow {
+                    label: "Accent from the bar"
+                    checked: SystemTheme.accentFromBar
+                    onToggled: SystemTheme.set("accent_from_bar", SystemTheme.accentFromBar ? 0 : 1)
+                }
+
+                ToggleRow {
+                    label: "Theme Flatpak apps too"
+                    checked: SystemTheme.flatpakTheme
+                    onToggled: SystemTheme.set("flatpak_theme", SystemTheme.flatpakTheme ? 0 : 1)
+                }
+
+                PanelMessage {
+                    width: parent.width
+                    visible: SystemTheme.flatpakTheme && !root.searching
+                    text: "Only a theme in ~/.themes or ~/.local/share/themes reaches Flatpak apps, and some GTK4 apps look wrong with a theme forced on them."
+                }
+            }
+
+            Group {
+                title: "Fonts"
+
+                PickerRow {
+                    label: "Interface font"
+                    options: SystemTheme.fontFamilies
+                    current: SystemTheme.familyOf(SystemTheme.fontName)
+                    onPicked: value => SystemTheme.set("font_name", value + " " + SystemTheme.sizeOf(SystemTheme.fontName, 11))
+                }
+
+                StepperRow {
+                    label: "Interface font size"
+                    value: SystemTheme.sizeOf(SystemTheme.fontName, 11)
+                    minimum: 6
+                    maximum: 32
+                    onAdjusted: newValue => SystemTheme.set("font_name", SystemTheme.familyOf(SystemTheme.fontName) + " " + newValue)
+                }
+
+                PickerRow {
+                    label: "Monospace font"
+                    options: SystemTheme.monoFamilies
+                    current: SystemTheme.familyOf(SystemTheme.monospaceFontName)
+                    onPicked: value => SystemTheme.set("monospace_font_name", value + " " + SystemTheme.sizeOf(SystemTheme.monospaceFontName, 10))
+                }
+
+                StepperRow {
+                    label: "Monospace font size"
+                    value: SystemTheme.sizeOf(SystemTheme.monospaceFontName, 10)
+                    minimum: 6
+                    maximum: 32
+                    onAdjusted: newValue => SystemTheme.set("monospace_font_name", SystemTheme.familyOf(SystemTheme.monospaceFontName) + " " + newValue)
+                }
+
+                ChoiceRow {
+                    label: "Antialiasing"
+                    options: [
+                        {
+                            value: "none",
+                            label: "None"
+                        },
+                        {
+                            value: "grayscale",
+                            label: "Grayscale"
+                        },
+                        {
+                            value: "rgba",
+                            label: "Subpixel"
+                        }
+                    ]
+                    current: SystemTheme.fontAntialiasing
+                    onPicked: value => SystemTheme.set("font_antialiasing", value)
+                }
+
+                ChoiceRow {
+                    label: "Hinting"
+                    options: [
+                        {
+                            value: "none",
+                            label: "None"
+                        },
+                        {
+                            value: "slight",
+                            label: "Slight"
+                        },
+                        {
+                            value: "medium",
+                            label: "Medium"
+                        },
+                        {
+                            value: "full",
+                            label: "Full"
+                        }
+                    ]
+                    current: SystemTheme.fontHinting
+                    onPicked: value => SystemTheme.set("font_hinting", value)
+                }
+
+                StepperRow {
+                    label: "Text scaling factor"
+                    value: SystemTheme.textScale
+                    minimum: 0.5
+                    maximum: 3
+                    step: 0.01
+                    decimals: 2
+                    onAdjusted: newValue => SystemTheme.set("text_scaling_factor", newValue)
                 }
             }
 

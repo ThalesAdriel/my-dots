@@ -6,20 +6,20 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import "root:/config"
 
-// The monitor layout, read out of hyprctl and written back with it. Everything below works in logical coordinates, since hyprctl reports a mode in physical pixels and a position in logical ones. With the Lua config a change goes in through `hyprctl eval` as hl.monitor calls, since `keyword` is gone there, and a saved layout is also written to hypr/hyprland/monitors.lua, which hyprland.lua requires: every config reload puts general.lua's monitor rules back, so a layout held only at runtime lasted until the next reload, which saving a theme in settings sets off.
+// The monitor layout, read out of hyprctl and written back with it.
 Singleton {
     id: root
 
-    // Polled while the settings sheet is open; the rest of the time the layout is only read when something changes it.
+    // Polled while the settings sheet is open.
     property bool watching: false
 
     property bool available: true
     property string lastError: ""
 
-    // [{ name, description, x, y, width, height, refresh, scale, modes: [{ width, height, refresh, label }] }]
+    // [{ name, description, x, y, width, height, refresh, scale, modes.
     property var monitors: []
 
-    // What the panel is editing: name -> { x, y, width, height, refresh, scale }, held apart from `monitors` so an edit survives the next poll.
+    // What the panel is editing.
     property var draft: ({})
     property string selected: ""
 
@@ -30,7 +30,7 @@ Singleton {
     // What was on screen before a preview started, so it can be put back.
     property var previousLayout: ({})
 
-    // A saved layout is put back once, when the monitors are first read; doing it on every read would fight anyone changing a monitor by hand.
+    // A saved layout is put back once, when the monitors are first read.
     property bool restored: false
 
     readonly property int previewTimeout: 12
@@ -78,12 +78,12 @@ Singleton {
         return -1;
     }
 
-    // Hyprland's own names, so not about escaping a stranger's input: the spec is joined into one batch string with ; and , as separators, and a name must be unable to reach either.
+    // Hyprland's own names, so not about escaping a stranger's input.
     function usableName(name: string): bool {
         return /^[A-Za-z0-9_.:-]+$/.test(name);
     }
 
-    // The same argument for the numbers, and a stronger one: a saved layout is read back out of settings.json, which anything can edit, and every value is interpolated into that batch string.
+    // The same argument for the numbers, and a stronger one.
     function sanitiseEntry(entry: var): var {
         if (!entry)
             return null;
@@ -116,7 +116,7 @@ Singleton {
         return mode.width + " × " + mode.height + "  @  " + mode.refresh.toFixed(2) + " Hz";
     }
 
-    // "1920x1080@164.96Hz"
+    // "1920x1080@164.96Hz".
     function parseMode(text: string): var {
         const match = String(text).match(/^(\d+)x(\d+)@([\d.]+)Hz$/);
         if (!match)
@@ -155,7 +155,7 @@ Singleton {
             if (!item || !root.usableName(item.name))
                 continue;
 
-            // A disabled output reports 0x0 at 0 Hz: nothing to place and nothing here turns one back on, so it is left out rather than drawn as a stub.
+            // A disabled output reports 0x0 at 0 Hz.
             if (item.disabled === true || !(item.width > 0) || !(item.height > 0))
                 continue;
 
@@ -200,7 +200,7 @@ Singleton {
         if (root.selected === "" || root.indexOf(root.selected) === -1)
             root.selected = list.length > 0 ? list[0].name : "";
 
-        // An edit in progress owns the draft; a poll must not pull it back to what the compositor is still showing.
+        // An edit in progress owns the draft.
         if (!root.dirty || Object.keys(root.draft).length === 0)
             root.syncDraft();
 
@@ -240,7 +240,7 @@ Singleton {
         return name + "," + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "," + entry.x + "x" + entry.y + "," + entry.scale;
     }
 
-    // The same monitor as the Lua config writes it, in the form general.lua uses for its own rules. Safe to splice: the name has passed usableName and every number sanitiseEntry, so nothing here can close the string it sits in.
+    // The same monitor as the Lua config writes it, in the form general.lua uses for its own rules.
     function luaRule(name: string, entry: var): string {
         return "hl.monitor({ output = \"" + name + "\", mode = \"" + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "Hz\", position = \"" + entry.x + "x" + entry.y + "\", scale = \"" + entry.scale + "\" })";
     }
@@ -262,7 +262,7 @@ Singleton {
             if (rules.length === 0)
                 return;
 
-            // One eval rather than a call each, so the monitors never sit in a half moved arrangement between two of them.
+            // One eval rather than a call each.
             command = ["hyprctl", "eval", rules.join(" ")];
         } else {
             const steps = [];
@@ -281,7 +281,7 @@ Singleton {
         applyProcess.running = true;
     }
 
-    // An empty layout still writes the file, as a header alone, so resetting leaves nothing behind for the next reload to pick up.
+    // An empty layout still writes the file, as a header alone.
     function writeMonitors(layout: var): void {
         const lines = ["-- Written by qsbar's display settings on every save; Reset there empties it, and general.lua's monitor rules apply again.", ""].concat(root.luaRules(layout));
         monitorsFile.setText(lines.join("\n") + "\n");
@@ -302,7 +302,7 @@ Singleton {
         return layout;
     }
 
-    // Applies the draft for a while and puts the old arrangement back on its own: a layout that leaves a screen dark cannot be undone from a panel nobody can see.
+    // Applies the draft for a while and puts the old arrangement back on its own.
     function preview(): void {
         if (root.previewing)
             return;
@@ -327,7 +327,7 @@ Singleton {
     }
 
     function save(): void {
-        // The layout is on screen already, so the restore below has nothing to put back and should not run when the setting lands.
+        // The layout is on screen already.
         root.restored = true;
         root.cancelPreview(false);
         root.apply(root.draft);
@@ -341,7 +341,7 @@ Singleton {
             root.writeMonitors(layout);
     }
 
-    // Back to what the compositor itself is showing, and nothing remembered: the next session gets whatever Hyprland works out on its own. Under Lua that is general.lua's rules again, which a reload puts back; putting the previewed layout back first would only race it.
+    // Back to what the compositor itself is showing, and nothing remembered.
     function reset(): void {
         root.cancelPreview(!Hyprland.usingLua);
         Settings.displayLayout = ({});
@@ -361,14 +361,14 @@ Singleton {
         if (root.restored || root.monitors.length === 0)
             return;
 
-        // Not marked done until there is something to be done: settings.json is read asynchronously, and an unconditional flag would drop the saved layout on every boot.
+        // Not marked done until there is something to be done.
         const saved = Settings.displayLayout;
         if (!saved || Object.keys(saved).length === 0)
             return;
 
         root.restored = true;
 
-        // Only the monitors that are actually plugged in, and only if the arrangement is not already the one that was saved.
+        // Only the monitors that are actually plugged in.
         const layout = {};
         let differs = false;
 
@@ -386,7 +386,7 @@ Singleton {
             root.apply(layout);
     }
 
-    // settings.json can finish loading after the monitors have been read, which is when a saved layout arrives too late for the read that would apply it.
+    // settings.json can finish loading after the monitors have been read.
     Connections {
         target: Settings
 
@@ -412,7 +412,7 @@ Singleton {
         }
     }
 
-    // Usually a symlink into a dotfiles checkout, like theme.lua, so written in place rather than renamed over.
+    // Usually a symlink into a dotfiles checkout, like theme.lua.
     FileView {
         id: monitorsFile
 
@@ -424,10 +424,10 @@ Singleton {
     Process {
         id: applyProcess
 
-        // hyprctl answers on stdout and exits 0 whether or not the compositor took the keyword: a scale that does not divide the mode into whole logical pixels, or a mode the output does not have, comes back as an error string with a success status. Reading only stderr made every one of those look like it had worked, and the panel sat there showing a layout that was never applied.
+        // hyprctl answers on stdout and exits 0 whether or not the compositor took the keyword.
         stdout: StdioCollector {
             onStreamFinished: {
-                // One reply per command in the batch, run together: anything that is not a run of ok is the compositor refusing.
+                // One reply per command in the batch, run together.
                 const reply = this.text.trim();
                 if (reply === "" || /^(ok\s*)+$/i.test(reply))
                     return;

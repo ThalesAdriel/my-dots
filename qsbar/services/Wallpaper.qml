@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "root:/config"
 
-// The desktop wallpaper, through awww, and the folder of pictures both wallpaper grids pick from. awww-daemon is started from execs.lua and keeps what each output shows across restarts itself, so nothing here has to put a wallpaper back at login.
+// The desktop wallpaper, through awww.
 Singleton {
     id: root
 
@@ -15,14 +15,14 @@ Singleton {
     // Every image directly in the folder, as absolute paths.
     property var images: []
 
-    // A small copy of each picture, saved the first time a grid decodes it. A PNG is decoded whole whatever size is asked for, and the pixmap cache holds far less than a grid's worth, so a folder of 4K PNGs cost seconds of CPU every time either grid opened. Named after the path, size and modification time, so an edited picture gets a new one; nothing expires, and rm -rf on the directory is the cleanup.
+    // A small copy of each picture, saved the first time a grid decodes it.
     readonly property string thumbDir: Quickshell.cachePath("thumbnails")
 
     // Picture path to the name its thumbnail has or will have, and the names already on disk.
     property var thumbNames: ({})
     property var thumbsOnDisk: ({})
 
-    // The listing of what is already in the cache, then the pictures with what their thumbnails are named after. The folder is a positional argument, but find still reads one starting with a dash as an expression, which is why scan() checks it first.
+    // The listing of what is already in the cache, then the pictures with what their thumbnails are named after.
     readonly property string scanScript: `mkdir -p "$2" && find "$2" -maxdepth 1 -name "*.jpg" -printf "t %f\\n"
 find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" -o -iname "*.gif" \\) -printf "i %T@ %s %p\\n"`
 
@@ -38,13 +38,13 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
             return;
 
         item.grabToImage(result => {
-            // Recorded in place rather than reassigned: a tile already showing the picture has no reason to swap to the thumbnail and load it again.
+            // Recorded in place rather than reassigned.
             if (result.saveToFile(root.thumbDir + "/" + name))
                 root.thumbsOnDisk[name] = true;
         }, Qt.size(256, Math.round(256 * item.height / item.width)));
     }
 
-    // Output name to the image it is showing, as awww reports it. An output showing a plain colour has no entry.
+    // Output name to the image it is showing, as awww reports it.
     property var current: ({})
 
     // Every output awww is drawing on, whether or not it has an image yet.
@@ -84,12 +84,12 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
         }
     ]
 
-    // Each segment escaped on its own, so a # or ? in a file name reaches the image loader as part of the name rather than as the start of a fragment or a query.
+    // Each segment escaped on its own.
     function fileUrl(path: string): string {
         return "file://" + path.split("/").map(encodeURIComponent).join("/");
     }
 
-    // Only an absolute folder reaches find: anything else is where find reads its expression, and a folder field reading "-delete" would empty the working directory, which is home. The command is built here, after the check, rather than bound to the folder: a Process restarts itself when a bound command changes, which ran find on the new folder before this function had a chance to look at it.
+    // Only an absolute folder reaches find.
     function scan(): void {
         scanProcess.running = false;
         if (!root.folder.startsWith("/")) {
@@ -105,7 +105,7 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
             queryProcess.running = true;
     }
 
-    // "DP-1: 1920x1080, scale: 1, currently displaying: image: /path/to/w.jpg", one line per output; newer builds put a namespace and a colon in front, which the leading \s lets the name skip past.
+    // "DP-1: 1920x1080, scale: 1, currently displaying: image: /path/to/w.jpg", one line per output.
     function parse(text: string): void {
         const shown = {};
         const names = [];
@@ -125,7 +125,7 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
         root.available = true;
     }
 
-    // awww calls waiting their turn: one Process runs one command, and a second apply() while the first was still running used to be dropped.
+    // awww calls waiting their turn.
     property var queue: []
 
     // An empty output means every one of them; several can be named with commas.
@@ -135,7 +135,7 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
         if (output !== "")
             command.push("--outputs", output);
 
-        // Drawn as chosen straight away rather than after the transition and a query: the tile should answer the click, not the daemon.
+        // Drawn as chosen straight away rather than after the transition and a query.
         const next = Object.assign({}, root.current);
         for (const name of (output !== "" ? output.split(",") : root.outputs))
             next[name] = path;
@@ -146,7 +146,7 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
         root.pump();
     }
 
-    // Everything on screen drawn again, for a setting like the scaling that only shows once awww redraws. One call per distinct picture, with every output showing it named together.
+    // Everything on screen drawn again, for a setting like the scaling that only shows once awww redraws.
     function reapply(): void {
         const byPath = {};
         for (const name of root.outputs) {
@@ -191,7 +191,7 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
                 root.thumbNames = names;
                 root.thumbsOnDisk = onDisk;
 
-                // Every page that shows a grid scans as it opens, and a new array, even an identical one, has the Repeater build every tile again.
+                // Every page that shows a grid scans as it opens.
                 images.sort();
                 if (images.join("\n") !== root.images.join("\n"))
                     root.images = images;
@@ -228,7 +228,7 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
             }
         }
 
-        // The next in line, or once the line is empty a read back of what awww actually took, so a path it refused does not stay drawn as chosen. Deferred, since the process is still winding down while this runs.
+        // The next in line, or once the line is empty a read back of what awww actually took.
         onExited: Qt.callLater(() => root.queue.length > 0 ? root.pump() : root.refresh())
     }
 }

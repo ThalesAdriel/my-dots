@@ -34,7 +34,7 @@ Card {
         return player !== null && player.loopState !== MprisLoopState.None;
     }
 
-    // Never the URL the player named: `AlbumArt` keeps a local file and hands the path back, so the Image is only ever pointed at this machine and a cover on a CDN, the only kind Spotify has, still reaches the card.
+    // Never the URL the player named.
     readonly property string artSource: root.player !== null ? AlbumArt.art(root.player.trackArtUrl) : ""
 
     implicitHeight: 100

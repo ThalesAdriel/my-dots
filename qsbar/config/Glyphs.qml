@@ -38,14 +38,14 @@ Singleton {
     readonly property string shuffle: ""
     readonly property string repeat: ""
 
-    // One wifi glyph for every strength: the graded ones are missing from some builds and render as a box, so strength is drawn as a hairline instead.
+    // One wifi glyph for every strength.
     readonly property string wifi: ""
     readonly property string networkWired: ""
     readonly property string rotate: ""
     readonly property string eye: ""
     readonly property string eyeSlash: ""
 
-    // Font Awesome Free keeps bluetooth in Brands rather than Solid, so this one draws with Theme.brandFamily.
+    // Font Awesome Free keeps bluetooth in Brands rather than Solid.
     readonly property string bluetooth: ""
 
     // Battery, from empty to full, with the badge that goes over it.

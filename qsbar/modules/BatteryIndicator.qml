@@ -10,7 +10,7 @@ BarButton {
 
     readonly property var device: UPower.displayDevice
 
-    // The percentage is the second half of the test rather than trusting the laptop flag alone: a desktop's display device is ready and reports 0, so a machine with no battery still comes out empty handed while a real battery is not lost.
+    // The percentage is the second half of the test rather than trusting the laptop flag alone.
     readonly property bool present: !!root.device && root.device.ready === true && (root.device.isLaptopBattery === true || root.device.percentage > 0)
     readonly property real level: root.present ? root.device.percentage : 0
     readonly property int percent: Math.round(root.level * 100)
@@ -20,10 +20,10 @@ BarButton {
     readonly property bool full: root.state === UPowerDeviceState.FullyCharged
     readonly property bool low: root.present && !root.charging && !root.full && root.level <= 0.15
 
-    // Five glyphs across the range, so each covers a quarter with the ends taking half a step: 0% is empty, 100% is full, and nothing in between overstates what is left.
+    // Five glyphs across the range, so each covers a quarter with the ends taking half a step.
     readonly property string levelGlyph: Glyphs.batteryLevels[Math.min(Math.max(Math.round(root.level * 4), 0), 4)]
 
-    // The badge over the battery, the way the reference sheet draws them: a bolt while charging, a plug once done, a cross when there is no battery to report on.
+    // The badge over the battery, the way the reference sheet draws them.
     readonly property string badge: {
         if (!root.present)
             return Glyphs.xmark;
@@ -98,7 +98,7 @@ BarButton {
             }
         }
 
-        // Sits inside the battery body rather than centred on the glyph: the terminal nub is on the right, so the middle of the outline is a little left of the middle of the character.
+        // Sits inside the battery body rather than centred on the glyph.
         IconText {
             anchors.centerIn: parent
             anchors.horizontalCenterOffset: -1

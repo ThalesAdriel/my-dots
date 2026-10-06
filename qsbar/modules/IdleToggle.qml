@@ -6,9 +6,10 @@ import "root:/components"
 BarButton {
     id: root
 
-    property bool inhibiting: true
+    // Shared through settings.
+    readonly property bool inhibiting: Settings.keepAwake
 
-    onPrimaryClicked: root.inhibiting = !root.inhibiting
+    onPrimaryClicked: Settings.keepAwake = !Settings.keepAwake
 
     overlayContent: Loader {
         id: inhibitorLoader

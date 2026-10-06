@@ -18,7 +18,7 @@ BarButton {
         IconText {
             anchors.centerIn: parent
 
-            // A cable beats a radio: with both up the wire is what traffic actually goes over, and that is what the bar should be saying.
+            // A cable beats a radio.
             text: Network.wired ? Glyphs.networkWired : Glyphs.wifi
             color: {
                 if (!Network.available)
@@ -38,7 +38,7 @@ BarButton {
         }
     }
 
-    // Signal strength as the same hairline the volume module draws rather than a graded wifi glyph: the graded ones are missing from some builds of Font Awesome Free, and a missing glyph reads as a box, not a weak signal.
+    // Signal strength as the same hairline the volume module draws rather than a graded wifi glyph.
     overlayContent: Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
@@ -86,7 +86,7 @@ BarButton {
 
         warm: root.containsMouse
 
-        // The access point list and the saved profiles are only read while this is open, and the poll slows back down when it closes. The hover counts as open for that, so the list is already back by the time the panel is rather than growing in under a slide.
+        // The access point list and the saved profiles are only read while this is open.
         readonly property bool wantsDetail: networkPopup.prepared || networkPopup.shown
 
         onWantsDetailChanged: Network.detailed = networkPopup.wantsDetail
@@ -96,7 +96,7 @@ BarButton {
                 panelLoader.item.reset();
         }
 
-        // A rescan is the radio, not a read, so it waits for the panel to be there and goes after the slide rather than on the frame that starts it.
+        // A rescan is the radio, not a read.
         onSettledChanged: {
             if (networkPopup.settled)
                 Network.rescan();

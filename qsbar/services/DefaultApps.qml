@@ -4,11 +4,11 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Which application opens what: links, mail, folders, text, pictures, video, music and PDFs. The defaults live in ~/.config/mimeapps.list and are read and written through gio, the same way GNOME's own settings write them, so xdg-open, portals and every GTK app agree with what is picked here. gio only lists the applications for a type once one is the default, so the candidates come from the desktop files themselves.
+// Which application opens what: links, mail, folders, text, pictures, video, music and PDFs.
 Singleton {
     id: root
 
-    // The first type is the one a category is shown by; picking an application makes it the default for every type in the list it says it can open.
+    // The first type is the one a category is shown by.
     readonly property var categories: [
         {
             key: "browser",
@@ -61,13 +61,13 @@ Singleton {
     property bool available: true
     property string lastError: ""
 
-    // Every desktop file on the data dirs, first one of an id wins as the spec says, printed as id, name and types. A file in a subfolder gets the folder in its id, joined with a dash. Hidden and NoDisplay ones are left out: the first means deleted, the second a helper nobody picks by name.
+    // Every desktop file on the data dirs, first one of an id wins as the spec says, printed as id, name, types and whether it is hidden.
     readonly property string scanScript: `command -v gio >/dev/null 2>&1 || exit 127
 IFS=:
-for dir in "\${XDG_DATA_HOME:-$HOME/.local/share}" \${XDG_DATA_DIRS:-/usr/local/share:/usr/share}; do
+for dir in "\${XDG_DATA_HOME:-$HOME/.local/share}" \${XDG_DATA_DIRS:-/usr/local/share:/usr/share} "$HOME/.local/share/flatpak/exports/share" /var/lib/flatpak/exports/share; do
     [ -d "$dir/applications" ] || continue
     (cd "$dir/applications" && find -L . -name '*.desktop' -type f -exec awk '
-        function emit() { if (types != "" && kind == "Application" && !hidden) printf "a\\t%s\\t%s\\t%s\\n", id, name, types }
+        function emit() { if (kind == "Application") printf "a\\t%s\\t%s\\t%s\\t%d\\n", id, name, types, hidden }
         FNR == 1 { if (id != "") emit(); id = substr(FILENAME, 3); gsub("/", "-", id); section = ""; name = ""; types = ""; kind = ""; hidden = 0 }
         /^\\[/ { section = $0; next }
         section != "[Desktop Entry]" { next }
@@ -107,6 +107,18 @@ done`
         scanProcess.running = true;
     }
 
+    // Only the defaults, without reading every desktop file again.
+    function query(): void {
+        if (queryProcess.running)
+            return;
+
+        const pairs = [];
+        for (const category of root.categories)
+            pairs.push(category.key, category.types[0]);
+        queryProcess.command = ["sh", "-c", root.queryScript, "qsbar-default-apps"].concat(pairs);
+        queryProcess.running = true;
+    }
+
     function set(key: string, id: string): void {
         const category = root.categories.find(entry => entry.key === key);
         const app = root.apps[id];
@@ -129,9 +141,13 @@ done`
         stdout: StdioCollector {
             onStreamFinished: {
                 const apps = {};
+                const seen = {};
                 for (const line of this.text.split("\n")) {
                     const fields = line.split("\t");
-                    if (fields[0] !== "a" || fields.length < 4 || apps[fields[1]] !== undefined)
+                    if (fields[0] !== "a" || fields.length < 5 || seen[fields[1]])
+                        continue;
+                    seen[fields[1]] = true;
+                    if (fields[4] !== "0" || fields[3] === "")
                         continue;
                     apps[fields[1]] = {
                         name: fields[2],
@@ -148,12 +164,7 @@ done`
                 root.lastError = "gio is not installed (it comes with glib2), so the defaults cannot be read or changed.";
                 return;
             }
-
-            const pairs = [];
-            for (const category of root.categories)
-                pairs.push(category.key, category.types[0]);
-            queryProcess.command = ["sh", "-c", root.queryScript, "qsbar-default-apps"].concat(pairs);
-            queryProcess.running = true;
+            root.query();
         }
     }
 
@@ -184,6 +195,6 @@ done`
             }
         }
 
-        onExited: root.refresh()
+        onExited: root.query()
     }
 }

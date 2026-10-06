@@ -5,7 +5,7 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// Everything the battery knows about itself is handed in rather than read here, so Quickshell.Services.UPower stays confined to the one file that can be loaded without it.
+// Everything the battery knows about itself is handed in rather than read here.
 Item {
     id: root
 

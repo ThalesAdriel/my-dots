@@ -12,7 +12,7 @@ Item {
     readonly property int panelPadding: 16
     readonly property int panelWidth: 380
 
-    // The access point the form below is filling in for, "" when there is no form: enterprise networks get the full form, everything else one password field, and a saved or open network neither.
+    // The access point the form below is filling in for, "" when there is no form.
     property string pendingName: ""
     property bool pendingEnterprise: false
     property bool advancedOpen: false
@@ -23,7 +23,7 @@ Item {
     property string eap: "peap"
     property string phase2: "mschapv2"
 
-    // Typing into a popup needs the bar's layer surface focusable, and it only is while a form is up; the rest of the time the bar takes no keyboard, so clicking it does not pull focus off whatever was in front.
+    // Typing into a popup needs the bar's layer surface focusable, and it only is while a form is up.
     onPendingNameChanged: UiState.keyboardCapture = root.pendingName !== ""
 
     function reset(): void {
@@ -72,7 +72,7 @@ Item {
         else
             Network.connectPersonal(root.pendingName, passwordField.text);
 
-        // The password is gone from here the moment it has been handed over, and it was never written anywhere else.
+        // The password is gone from here the moment it has been handed over.
         root.reset();
     }
 
@@ -367,7 +367,7 @@ Item {
             }
         }
 
-        // The form: one password field for a personal network, the whole 802.1X set for an enterprise one, which is what eduroam is.
+        // The form: one password field for a personal network, the whole 802.1X set for an enterprise one.
         Column {
             id: form
 
@@ -375,7 +375,7 @@ Item {
             spacing: 8
             visible: root.pendingName !== ""
 
-            // Pinned to plain text: an SSID is whatever the access point broadcasts, and in AutoText a tag-shaped one renders as rich text, which fetches <img src> over the network.
+            // Pinned to plain text.
             Text {
                 width: parent.width
                 textFormat: Text.PlainText

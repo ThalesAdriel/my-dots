@@ -71,7 +71,7 @@ Item {
         }
     }
 
-    // preventStealing: a drag that wandered a little up or down was taken over by the settings page scrolling under it.
+    // preventStealing.
     MouseArea {
         id: dragArea
 

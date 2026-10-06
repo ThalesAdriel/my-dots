@@ -9,7 +9,7 @@ import "root:/services"
 Item {
     id: root
 
-    // False until the popup carrying this has finished coming in: a height animating under a sliding panel resizes the layer surface on every frame of the slide.
+    // False until the popup carrying this has finished coming in.
     property bool animated: false
 
     readonly property int panelPadding: 16
@@ -155,7 +155,7 @@ Item {
                         font.pixelSize: Theme.fontSizeSmall
                     }
 
-                    // Left click is the one thing the row does; right click on a paired device removes it, the same gesture the network list uses to forget a saved network.
+                    // Left click is the one thing the row does.
                     MouseArea {
                         id: deviceMouse
 

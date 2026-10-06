@@ -7,21 +7,21 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// One surface for both toast styles, since only the placement and the card change: the timers, the lock that keeps a closed notification alive long enough to animate out, and the bookkeeping live here once. Integrated is the bar carrying on downwards — same colour, no gap, flared into it by the same quarter circle the bar uses at the screen corners.
+// One surface for both toast styles, since only the placement and the card change.
 PanelWindow {
     id: root
 
     readonly property bool integrated: Settings.notificationStyle === "integrated"
 
-    // Blur follows whichever surface the toast belongs to, so an integrated block is blurred with the bar and a floating card with the panels.
+    // Blur follows whichever surface the toast belongs to.
     WlrLayershell.namespace: root.integrated ? Theme.barLayerNamespace : Theme.panelLayerNamespace
 
     readonly property int cardWidth: Settings.notificationWidth
 
-    // The flare that joins the block to the bar, and the inset from the screen edge that leaves room for the one on the right; same setting the bar's own corners follow, so switching outer corners off squares both off together.
+    // The flare that joins the block to the bar.
     readonly property int fillet: root.integrated && Settings.outerCorners ? Settings.outerCornerRadius : 0
 
-    // Same corner as the bell and the control centre it belongs to: the bar already reserves its own height, so a top anchored layer starts right below it, integrated touching that edge and floating standing off it.
+    // Same corner as the bell and the control centre it belongs to.
     anchors {
         top: true
         right: true
@@ -37,7 +37,7 @@ PanelWindow {
     implicitWidth: root.cardWidth + root.fillet * 2
     implicitHeight: Math.max(root.heldHeight, 1)
 
-    // The window only grows while toasts are up, and when it does it takes room to spare, so a toast opening, closing or leaving animates inside it: a window that followed its content was resized on every frame of those, each one a configure round trip and a new buffer, and every resize cost a dropped frame. It maps at the size of the first toast, which keeps Hyprland's popin centred on it, and starts over once the last one is gone; the spare room is transparent and takes no input.
+    // The window only grows while toasts are up, and when it does it takes room to spare.
     // ponytail: a fixed slack, so a toast growing by more than that costs a second resize.
     property int heldHeight: 0
     readonly property int slack: 240
@@ -66,7 +66,7 @@ PanelWindow {
         }
     }
 
-    // The block itself, inset from the screen edge by the width of its own flare: square along the top where it meets the bar, rounded at the bottom where it ends.
+    // The block itself, inset from the screen edge by the width of its own flare.
     Item {
         id: surface
 
@@ -77,7 +77,7 @@ PanelWindow {
         width: root.cardWidth
         implicitHeight: stack.implicitHeight
 
-        // Cut to its own height, as the window used to cut it: the window keeps its height until the last toast has gone, and the square corner cover below would otherwise stay drawn under the bar after the block had closed to nothing.
+        // Cut to its own height, as the window used to cut it.
         clip: true
 
         Rectangle {
@@ -87,7 +87,7 @@ PanelWindow {
             radius: Theme.cardRadius
         }
 
-        // Covers the two top corners the radius above rounded off: they sit against the bar, and a rounded corner there is the gap this whole style exists to not have.
+        // Covers the two top corners the radius above rounded off.
         Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
@@ -106,7 +106,7 @@ PanelWindow {
             spacing: root.integrated ? 0 : 8
 
             Repeater {
-                // A plain javascript array as a model rebuilds every delegate on each change, which would restart the timer and replay the slide in of every toast already on screen each time another arrives.
+                // A plain javascript array as a model rebuilds every delegate on each change.
                 model: ScriptModel {
                     values: Notifications.popups
                 }
@@ -124,7 +124,7 @@ PanelWindow {
                     property bool dismissOnFinish: false
                     property bool dropped: false
 
-                    // Where the card comes in from: the floating card slides in off the right edge it is anchored to, the integrated one drops out from under the bar it hangs from.
+                    // Where the card comes in from.
                     readonly property real slideX: root.integrated ? 0 : wrapper.width
                     readonly property real slideY: root.integrated ? -14 : 0
 
@@ -152,12 +152,12 @@ PanelWindow {
                         id: hover
                     }
 
-                    // Holds the notification alive for as long as this toast exists; without it the object is gone the instant it is closed and the card animating out reads a destroyed object.
+                    // Holds the notification alive for as long as this toast exists.
                     RetainableLock {
                         object: wrapper.modelData
                         locked: true
 
-                        // The app withdrew it: slide the toast out rather than let it blink away, and do not close it again on the way.
+                        // The app withdrew it.
                         onDropped: {
                             wrapper.dropped = true;
                             wrapper.finish(false);
@@ -186,7 +186,7 @@ PanelWindow {
                         }
                     }
 
-                    // Both cards take the same properties and raise the same signal, so the style is a choice of component and nothing else.
+                    // Both cards take the same properties and raise the same signal.
                     Loader {
                         id: card
 
@@ -219,7 +219,7 @@ PanelWindow {
                         }
                     }
 
-                    // One surface means nothing separates two stacked toasts, so a hairline does; never above the first one, which meets the bar instead.
+                    // One surface means nothing separates two stacked toasts, so a hairline does.
                     Rectangle {
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -301,8 +301,8 @@ PanelWindow {
         }
     }
 
-    // The two quarter circles that flare the block back out into the bar above it, filled with the bar's own colour so the three read as one shape; same component and setting the bar uses at the screen corners.
-    // The flares end where the block does, so one closing to nothing takes them with it rather than leaving the two curves hanging under the bar until the window goes.
+    // The two quarter circles that flare the block back out into the bar above it, filled with the bar's own colour so the three read as one shape.
+    // The flares end where the block does.
     Item {
         anchors.right: surface.left
         anchors.top: surface.top

@@ -9,7 +9,7 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// Settings as a window of its own in the middle of the screen: the pages down the left, the one picked on the right. It used to be a sheet sliding over the control center, which left a 368 pixel column for everything including the display canvas, and no room at all for the lock screen or the desktop theme.
+// Settings as a window of its own in the middle of the screen.
 Scope {
     id: scope
 
@@ -69,20 +69,20 @@ Scope {
     // Kept across closing and opening again, so the window comes back on the page it was left on.
     property string page: "appearance"
 
-    // Follows UiState, but only once the output is known: set straight off the flag, the window would come up on the old output and then jump.
+    // Follows UiState, but only once the output is known.
     property bool open: false
 
-    // The output it was opened on, fixed at that moment: following the focused monitor live would carry the window across screens as the pointer crossed over.
+    // The output it was opened on, fixed at that moment.
     property string openedOn: ""
 
-    // What the search field at the top of the sidebar holds; the page shows results across every page while it is not empty.
+    // What the search field at the top of the sidebar holds.
     property alias query: search.text
 
     function close(): void {
         UiState.settingsOpen = false;
     }
 
-    // Any way of picking a page leaves the search, since the results are not a page of their own to stay on.
+    // Any way of picking a page leaves the search.
     function showPage(key: string): void {
         focusSink.forceActiveFocus();
         scope.query = "";
@@ -123,7 +123,7 @@ Scope {
             return null;
         }
 
-        // The card and nothing round it, on top of whatever is there, the way fuzzel opens: no anchors puts a layer surface in the middle of the output, and a namespace with no no_anim rule hands the entrance and the exit to Hyprland's own layersIn and layersOut, the same popin fuzzel gets. It used to cover the output with a dimmed backdrop and animate the card itself, which played a second animation inside Hyprland's.
+        // The card and nothing round it, on top of whatever is there, the way fuzzel opens.
         WlrLayershell.namespace: Theme.panelLayerNamespace
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: scope.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
@@ -148,7 +148,7 @@ Scope {
             anchors.fill: parent
             focus: true
 
-            // Escape backs out one layer at a time: out of whatever control has the keyboard (a text field saves on the way), then out of the search, then out of settings. A text field does not take Escape, so it arrives here on the way up.
+            // Escape backs out one layer at a time.
             Keys.onEscapePressed: {
                 if (!focusSink.activeFocus)
                     focusSink.forceActiveFocus();
@@ -158,7 +158,7 @@ Scope {
                     scope.close();
             }
 
-            // Ctrl+1 to Ctrl+9 and Ctrl+PgUp/PgDn change page from anywhere, Ctrl+F goes to the search. Plain arrows and typing only count while nothing inside has the keyboard, since a slider, a list or a field has its own use for them; typing then starts a search.
+            // Ctrl+1 to Ctrl+9 and Ctrl+PgUp/PgDn change page from anywhere, Ctrl+F goes to the search.
             Keys.onPressed: event => {
                 const control = (event.modifiers & Qt.ControlModifier) !== 0;
                 if (control && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
@@ -195,7 +195,7 @@ Scope {
                 color: Theme.settingsBackground
                 radius: Theme.cardRadius
 
-                // Taking the focus on a click that lands on nothing is what ends an edit in a text field when you click away from it, so the field saves.
+                // Taking the focus on a click that lands on nothing is what ends an edit in a text field when you click away from it.
                 MouseArea {
                     anchors.fill: parent
                     onPressed: focusSink.forceActiveFocus()
@@ -282,7 +282,7 @@ Scope {
                         anchors.topMargin: 12
                         height: pageList.implicitHeight
 
-                        // One highlight that slides between rows rather than one per row that blinks on and off, so the eye follows it to the page it landed on. Dimmed while the results are up, since they are not that page.
+                        // One highlight that slides between rows rather than one per row that blinks on and off.
                         Rectangle {
                             width: parent.width
                             height: sidebar.rowHeight
@@ -357,7 +357,7 @@ Scope {
                                         elide: Text.ElideRight
                                     }
 
-                                    // showPage takes the focus first, which ends an edit on the page being left, so it saves rather than being torn down with its text unsubmitted.
+                                    // showPage takes the focus first.
                                     MouseArea {
                                         id: entryMouse
 
@@ -401,7 +401,7 @@ Scope {
                     anchors.bottomMargin: card.padding
                     anchors.leftMargin: card.padding
 
-                    // The scroll bar sits in the right margin, so the cards keep the same gap to the edge as the sidebar has on the left.
+                    // The scroll bar sits in the right margin.
                     anchors.rightMargin: card.padding
 
                     clip: true
@@ -409,10 +409,10 @@ Scope {
                     contentHeight: pageLoader.item ? pageLoader.item.implicitHeight : 0
                     boundsBehavior: Flickable.StopAtBounds
 
-                    // The wheel is the scroller's: left to the Flickable, the page kept gliding after the wheel stopped and the next click only stopped it.
+                    // The wheel is the scroller's.
                     interactive: false
 
-                    // Whatever Tab lands on is scrolled into view, with a little air, so the keyboard never ends up on a control below the fold.
+                    // Whatever Tab lands on is scrolled into view, with a little air.
                     readonly property Item focusedItem: Window.activeFocusItem
 
                     onFocusedItemChanged: pageArea.reveal(pageArea.focusedItem)
@@ -441,7 +441,7 @@ Scope {
 
                         width: pageArea.width
 
-                        // Nothing on a page is built until the window is first opened, and it is all let go again once the window is gone.
+                        // Nothing on a page is built until the window is first opened.
                         active: window.visible
 
                         sourceComponent: SettingsPanel {
@@ -453,7 +453,7 @@ Scope {
                     }
                 }
 
-                // Only the shell's own look: the lock screen and the desktop theme live in files of their own and are left alone. Declared after the page so Tab reaches it after the page's own controls rather than before them.
+                // Only the shell's own look.
                 PanelButton {
                     anchors.left: sidebar.left
                     anchors.right: sidebar.right
@@ -463,7 +463,7 @@ Scope {
                     onActivated: Settings.restoreDefaults()
                 }
 
-                // A thin thumb rather than a scroll bar: it only has to say how much more is below, and a track would be a second border down the side of the cards.
+                // A thin thumb rather than a scroll bar.
                 Rectangle {
                     anchors.right: parent.right
                     anchors.rightMargin: 6
@@ -487,7 +487,7 @@ Scope {
         }
     }
 
-    // Each page arrives from a few pixels down while it fades in, and the scroll goes back to the top, so a new page never opens halfway down.
+    // Each page arrives from a few pixels down while it fades in, and the scroll goes back to the top.
     onPageChanged: {
         pageArea.contentY = 0;
         pageEntrance.restart();

@@ -5,13 +5,13 @@ import Quickshell
 import Quickshell.Io
 import "root:/config"
 
-// power-profiles-daemon through powerprofilesctl, read on demand rather than on a timer: a profile only changes because something asked it to, and only the battery panel shows it.
+// power-profiles-daemon through powerprofilesctl, read on demand rather than on a timer.
 Singleton {
     id: root
 
     readonly property bool enabled: Settings.showBattery
 
-    // Set while the battery panel is open, which is the one time an outside change is worth catching quickly.
+    // Set while the battery panel is open.
     property bool detailed: false
 
     property bool available: true
@@ -33,7 +33,7 @@ Singleton {
         "power-saver": Glyphs.leaf
     })
 
-    // Sorted the way the panel lists them, and only the ones this machine offers: a desktop without a performance profile should not be shown a button that fails.
+    // Sorted the way the panel lists them, and only the ones this machine offers.
     readonly property var sortedProfiles: root.profiles.slice().sort((left, right) => {
         const leftIndex = root.order.indexOf(left);
         const rightIndex = root.order.indexOf(right);
@@ -91,7 +91,7 @@ exit 0`
                 continue;
             }
 
-            // "* balanced:" for the active one, "  performance:" for the rest; everything below a heading is indented further and has no trailing colon, so the anchor tells them apart.
+            // "* balanced:" for the active one, "  performance:" for the rest.
             const match = line.match(/^(\*?)\s*([a-z][a-z0-9-]*):\s*$/);
             if (match)
                 names.push(match[2]);

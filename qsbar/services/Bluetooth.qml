@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "root:/config"
 
-// BlueZ through bluetoothctl, the same shape as the network service: one tagged-section read, a queue for the writes, addresses checked against the shape of a MAC, argv arrays throughout, and every call wrapped in timeout so a hung daemon cannot pile up processes.
+// BlueZ through bluetoothctl, the same shape as the network service.
 Singleton {
     id: root
 
@@ -16,7 +16,7 @@ Singleton {
     readonly property int idleInterval: 10000
     readonly property int activeInterval: 2500
 
-    // What the poll drops to once `gdbus monitor` is carrying the state changes; it does not stop, since a monitor that died has to be noticed and restarted.
+    // What the poll drops to once `gdbus monitor` is carrying the state changes.
     readonly property int watchedInterval: 60000
 
     property bool available: true
@@ -25,7 +25,7 @@ Singleton {
     property bool busy: false
     property string lastError: ""
 
-    // [{ address, name, paired, connected }]
+    // [{ address, name, paired, connected }].
     property var devices: []
 
     readonly property var connectedDevices: root.devices.filter(device => device.connected)
@@ -44,7 +44,7 @@ Singleton {
         return "Bluetooth on";
     }
 
-    // Not about escaping, since nothing below reaches a shell: a device is free to call itself anything, and only the address is worth handing back to bluetoothctl.
+    // Not about escaping, since nothing below reaches a shell.
     function isAddress(address: string): bool {
         return /^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/.test(address);
     }
@@ -68,11 +68,11 @@ Singleton {
         root.scanning = true;
         scanTimer.restart();
 
-        // Runs on its own rather than through the queue: it holds the process open for its whole duration, and the panel has to stay usable while devices are still arriving.
+        // Runs on its own rather than through the queue.
         scanProcess.running = true;
     }
 
-    // Discovery holds the radio, and a controller that is busy advertising for new devices is the one that refuses to finish a connection to a device it already knows. The panel's own flow is scan, click, connect, so the scan is dropped before anything is asked of a device rather than left to run its twelve seconds underneath it. bluez ends the discovery session with the client that asked for it, so killing the process is the whole of it.
+    // Discovery holds the radio, and a controller that is busy advertising for new devices is the one that refuses to finish a connection to a device it already knows.
     function stopScan(): void {
         if (!root.scanning && !scanProcess.running)
             return;
@@ -100,7 +100,7 @@ Singleton {
         root.runQueue([["timeout", "15", "bluetoothctl", "disconnect", address]]);
     }
 
-    // Pairing without an agent only gets through where the device asks nothing of the user; anything wanting a passkey has to be paired with bluetoothctl itself.
+    // Pairing without an agent only gets through where the device asks nothing of the user.
     function pairDevice(address: string): void {
         if (!root.isAddress(address)) {
             root.lastError = "Not a device address";
@@ -146,7 +146,7 @@ Singleton {
         actionProcess.running = true;
     }
 
-    // devices Paired and devices Connected arrived in bluez 5.65; the fallback catches an older bluetoothctl that can only list the paired ones.
+    // devices Paired and devices Connected arrived in bluez 5.65.
     readonly property string readScript: `command -v bluetoothctl >/dev/null 2>&1 || exit 127
 export LC_ALL=C
 echo "#adapter"
@@ -201,7 +201,7 @@ exit 0`
                 continue;
             }
 
-            // Device AA:BB:CC:DD:EE:FF Some name with spaces
+            // Device AA:BB:CC:DD:EE:FF Some name with spaces.
             const match = line.match(/^Device\s+([0-9A-Fa-f:]{17})\s*(.*)$/);
             if (!match || !root.isAddress(match[1]))
                 continue;
@@ -234,7 +234,7 @@ exit 0`
     Process {
         id: actionProcess
 
-        // bluetoothctl puts its refusals on stdout and still exits 0 for them, so the status alone reports a connection that never happened as a success: the click did nothing, the panel said nothing, and the device stayed disconnected. The reply is what decides.
+        // bluetoothctl puts its refusals on stdout and still exits 0 for them.
         stdout: StdioCollector {
             onStreamFinished: {
                 for (const line of this.text.split("\n")) {
@@ -275,14 +275,14 @@ exit 0`
         onExited: root.refresh()
     }
 
-    // The bluez counterpart of `nmcli monitor`, and the reason this is not a ten second poll any more: one process for the session that prints a line whenever an adapter or a device changes, so the read runs off that rather than off the clock. `dbus-monitor` is the one that needs root, because it asks the bus to make it a monitor; this only subscribes to the signals org.bluez already broadcasts, which any session user may receive. gdbus lives in glib2, which bluez itself pulls in, and a machine without it simply falls back to the idle interval below.
+    // The bluez counterpart of `nmcli monitor`, and the reason this is not a ten second poll any more.
     Process {
         id: monitorProcess
 
         command: ["gdbus", "monitor", "--system", "--dest", "org.bluez"]
 
         stdout: SplitParser {
-            // A scan turns every advertisement into a PropertiesChanged, so the events are dropped while one is running and the 2.5s tick covers the panel instead.
+            // A scan turns every advertisement into a PropertiesChanged.
             onRead: {
                 if (!root.scanning)
                     settleTimer.restart();
@@ -290,7 +290,7 @@ exit 0`
         }
     }
 
-    // One action on a device is a run of signals, so they collapse into one read on the trailing edge rather than one read each.
+    // One action on a device is a run of signals.
     Timer {
         id: settleTimer
 
@@ -299,7 +299,7 @@ exit 0`
     }
 
     Timer {
-        // Started from the tick rather than from a binding on `running`: a monitor that cannot start exits immediately, and a binding would respawn it as fast as it fails.
+        // Started from the tick rather than from a binding on `running`.
         interval: root.detailed ? root.activeInterval : monitorProcess.running ? root.watchedInterval : root.idleInterval
         running: root.enabled && root.available
         repeat: true

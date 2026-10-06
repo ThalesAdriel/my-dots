@@ -5,13 +5,13 @@ import "root:/config"
 import "root:/components"
 import "root:/services"
 
-// The arrangement canvas and the fields for the selected display, filling its own sheet off the bottom of settings. Still a narrow column, so the mode list opens inline: a popup anchored inside a popup is two levels of xdg popup for a list the sheet can scroll.
+// The arrangement canvas and the fields for the selected display, filling its own sheet off the bottom of settings.
 Item {
     id: root
 
     readonly property int canvasHeight: 240
 
-    // How close a pull is, measured on screen, and how far it may reach in the arrangement itself: the canvas covers thousands of logical pixels in a few hundred, so without the second number a snap would drag a display from a third of a screen away.
+    // How close a pull is, measured on screen, and how far it may reach in the arrangement itself.
     readonly property int snapDistance: 14
     readonly property int snapLimit: 160
 
@@ -62,7 +62,7 @@ Item {
         };
     }
 
-    // Frozen for the length of a drag: bounds follow the arrangement, scale follows the bounds and every plate's position follows the scale, so left live the canvas would rescale under the pointer as the dragged display pushed the edges around.
+    // Frozen for the length of a drag.
     property var bounds: root.liveBounds
 
     onDraggingChanged: {
@@ -81,7 +81,7 @@ Item {
         return Math.min(canvas.width / box.width, canvas.height / box.height);
     }
 
-    // Centred rather than parked in the corner, so a single display sits in the middle of the canvas the way it sits in the middle of the desk.
+    // Centred rather than parked in the corner.
     readonly property real offsetX: (canvas.width - root.bounds.width * root.canvasScale) / 2
     readonly property real offsetY: (canvas.height - root.bounds.height * root.canvasScale) / 2
 
@@ -93,7 +93,7 @@ Item {
         return root.offsetY + (logical - root.bounds.y) * root.canvasScale;
     }
 
-    // Edges and centres of every other display, plus the origin, are what a dragged display sticks to; everything is in logical pixels, so the pull is the same however far the canvas is zoomed out.
+    // Edges and centres of every other display, plus the origin, are what a dragged display sticks to.
     function snapAxis(name: string, value: real, size: real, horizontal: bool): real {
         const targets = [0];
 
@@ -114,7 +114,7 @@ Item {
         let bestDistance = threshold;
 
         for (const target of targets) {
-            // The leading edge, the trailing edge and the centre all get to stick, which is what makes two displays line up along a shared edge as readily as along their middles.
+            // The leading edge, the trailing edge and the centre all get to stick.
             for (const candidate of [target, target - size, target - size / 2]) {
                 const distance = Math.abs(value - candidate);
                 if (distance < bestDistance) {
@@ -278,7 +278,7 @@ Item {
                         onPressed: event => {
                             Displays.selected = plate.modelData.name;
 
-                            // Held against the canvas rather than against the plate: the plate is what the drag moves, so a delta measured inside it is measured against a frame that is running away from the pointer.
+                            // Held against the canvas rather than against the plate.
                             const grab = plateMouse.mapToItem(canvas, event.x, event.y);
                             plateMouse.grabX = grab.x;
                             plateMouse.grabY = grab.y;
@@ -295,7 +295,7 @@ Item {
                             if (!plateMouse.pressed || !plate.entry)
                                 return;
 
-                            // In the canvas, which stands still, and only then back out to logical pixels: the pull is measured against the arrangement rather than against however big the canvas happens to be.
+                            // In the canvas, which stands still, and only then back out to logical pixels.
                             const point = plateMouse.mapToItem(canvas, event.x, event.y);
                             const deltaX = (point.x - plateMouse.grabX) / root.canvasScale;
                             const deltaY = (point.y - plateMouse.grabY) / root.canvasScale;

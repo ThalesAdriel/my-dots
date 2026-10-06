@@ -14,20 +14,20 @@ BarPopup {
 
     alignRight: true
 
-    // The brightness row is left out entirely on a machine with no backlight, and the panel closes the gap rather than leaving an empty card behind.
+    // The brightness row is left out entirely on a machine with no backlight.
     readonly property int brightnessRowHeight: Brightness.available ? 28 : 0
     readonly property int brightnessRowMargin: root.brightnessRowHeight > 0 ? 10 : 0
 
-    // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath. Off `settled` rather than off the click, since the startup probe already told the panel what to draw.
+    // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath.
     onSettledChanged: Brightness.watching = root.settled
 
     onShownChanged: {
         UiState.controlCenterOpen = root.shown;
 
-        // Hiding the panel does not send the pointer anywhere, so nothing would clear this on its own and the tooltip would be waiting on reopen.
+        // Hiding the panel does not send the pointer anywhere.
         root.hoveredAction = null;
 
-        // The list below already carries everything, so drop the toasts rather than showing the same notifications twice.
+        // The list below already carries everything.
         if (root.shown)
             Notifications.clearPopups();
     }
@@ -39,7 +39,7 @@ BarPopup {
         property string tooltip: ""
         property bool engaged: false
 
-        // The header carries the same buttons at the size the Clear button next to them is, rather than at the size of the row along the bottom.
+        // The header carries the same buttons at the size the Clear button next to them is.
         property bool compact: false
 
         signal triggered
@@ -113,7 +113,7 @@ BarPopup {
                 glyph: Glyphs.gear
                 tooltip: "System settings"
 
-                // The window opens over the middle of the screen, so the panel is put away rather than left hanging over it.
+                // The window opens over the middle of the screen.
                 onTriggered: {
                     root.shown = false;
                     UiState.settingsOpen = true;
@@ -134,7 +134,7 @@ BarPopup {
             }
         }
 
-        // The backlight, directly under System settings: something you reach for rather than read, so it sits at the top. A bare row rather than a Card, since the header above and the action row below are drawn straight onto the panel.
+        // The backlight, directly under System settings.
         Item {
             id: brightnessRow
 
@@ -148,7 +148,7 @@ BarPopup {
             visible: root.brightnessRowHeight > 0
             height: root.brightnessRowHeight
 
-            // The same 32 wide slot the gear above and the bell below sit in, so the slider starts on the column the System settings label and the Clear button already share.
+            // The same 32 wide slot the gear above and the bell below sit in.
             IconText {
                 id: brightnessIcon
 
@@ -205,10 +205,10 @@ BarPopup {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
 
-                // The same gap the label and the slider above keep from their own icons, so all three rows start their content on one column.
+                // The same gap the label and the slider above keep from their own icons.
                 spacing: 10
 
-                // Do not disturb reads as something you do to the list, so it sits with Clear rather than in the row of system actions.
+                // Do not disturb reads as something you do to the list.
                 ActionButton {
                     compact: true
                     glyph: Notifications.doNotDisturb ? Glyphs.bellOff : Glyphs.bell
@@ -335,7 +335,7 @@ BarPopup {
                     glyph: Glyphs.lock
                     tooltip: "Lock"
 
-                    // Through logind rather than at the locker directly, the same way scripts/power.sh does it: hypridle owns lock_cmd, so this cannot drift to the wrong locker, and the session is actually marked locked rather than merely covered by a window.
+                    // Through logind rather than at the locker directly, the same way scripts/power.sh does it.
                     onTriggered: Quickshell.execDetached(["loginctl", "lock-session"])
                 }
 
@@ -359,11 +359,11 @@ BarPopup {
             }
         }
 
-        // One tooltip for the whole action row, above whichever button is hovered, drawn inside the panel rather than as its own window: a popup anchored inside a popup is two levels of xdg popup for a label that fits in the space above the buttons.
+        // One tooltip for the whole action row, above whichever button is hovered, drawn inside the panel rather than as its own window.
         Item {
             id: actionTooltip
 
-            // What the pointer is over and what the tooltip is drawing have to be separate: the fade out outlives the pointer leaving, and reading the live button on the way out collapsed the tooltip to an empty box for the length of the fade.
+            // What the pointer is over and what the tooltip is drawing have to be separate.
             readonly property string target: root.hoveredAction ? root.hoveredAction.tooltip : ""
 
             property var anchorButton: null
@@ -383,7 +383,7 @@ BarPopup {
                 return Math.round(Math.min(Math.max(centre - actionTooltip.width / 2, root.panelPadding), free));
             }
 
-            // Follows whichever button is hovered rather than sitting over the bottom row: the gear and the do not disturb bell are up in the header now, so the label drops below a button that has no room over it.
+            // Follows whichever button is hovered rather than sitting over the bottom row.
             y: {
                 if (!actionTooltip.anchorButton)
                     return 0;
@@ -396,7 +396,7 @@ BarPopup {
 
             visible: actionTooltip.shown || tooltipSurface.opacity > 0.01
 
-            // The delay is per button, but only until one is on screen: after that, sliding along the row swaps the label straight away rather than waiting again at every button.
+            // The delay is per button, but only until one is on screen.
             onTargetChanged: {
                 if (actionTooltip.target === "") {
                     delayTimer.stop();

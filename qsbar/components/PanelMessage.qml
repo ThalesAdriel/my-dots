@@ -1,7 +1,7 @@
 import QtQuick
 import "root:/config"
 
-// A line of prose under a panel's controls: a note that something the module needs is not installed, or, with `warning`, the last thing that went wrong. Every warning is an error that only shows once something failed, so it is boxed in red with the alert triangle in front; as a line of red text it read like any other note. Four panels had the same ten lines for it.
+// A line of prose under a panel's controls.
 Rectangle {
     id: root
 

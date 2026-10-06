@@ -14,7 +14,7 @@ Rectangle {
 
     signal closeRequested
 
-    // A closed notification is destroyed as soon as its signal handlers return and a card can outlive that by an animation, so everything reads through here and a card that lost its notification goes blank rather than throwing on every binding.
+    // A closed notification is destroyed as soon as its signal handlers return and a card can outlive that by an animation.
     readonly property bool valid: root.notification !== null && root.notification !== undefined
 
     readonly property int urgency: root.valid ? root.notification.urgency : NotificationUrgency.Normal
@@ -27,7 +27,7 @@ Rectangle {
 
     readonly property var actions: root.valid && root.notification.actions ? root.notification.actions : []
 
-    // "default" is what clicking the notification itself does, so it belongs on the card rather than in the button row.
+    // "default" is what clicking the notification itself does.
     readonly property var defaultAction: {
         for (const action of root.actions) {
             if (action.identifier === "default")
@@ -43,7 +43,7 @@ Rectangle {
     property bool imageBroken: false
     property bool iconFailed: false
 
-    // A glyph for the icon this notification named, or "" for a name the shell has none for, and it wins over both of the others: an `audio-volume-high` off the volume keybind resolves to a placeholder square on a machine with no icon theme, which is a valid image as far as the loader is concerned, so the only place to turn it away is before it is asked for.
+    // A glyph for the icon this notification named, or "" for a name the shell has none for.
     readonly property string glyph: root.valid ? Notifications.iconGlyph(root.notification) : ""
 
     readonly property string imageSource: root.valid && root.glyph === "" ? Notifications.imageSource(root.notification) : ""
@@ -60,7 +60,7 @@ Rectangle {
     }
     onFallbackSourceChanged: root.iconFailed = false
 
-    // invoke() closes the notification on its own unless it is resident, and closing an already closed one is an error rather than a no-op, so the card deliberately does nothing else here.
+    // invoke() closes the notification on its own unless it is resident.
     function invokeAction(action: var): void {
         if (action)
             action.invoke();
@@ -171,7 +171,7 @@ Rectangle {
             sourceSize.width: 32
             sourceSize.height: 32
 
-            // Notifications point at images that are already gone often enough to be worth handling: drop to the app icon, then to no icon at all.
+            // Notifications point at images that are already gone often enough to be worth handling.
             onStatusChanged: {
                 if (iconImage.status !== Image.Error)
                     return;

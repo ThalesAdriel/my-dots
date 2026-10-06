@@ -3,12 +3,12 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 
-// What the media and volume keys talk to, the same way the overview keybind already talks to the shell: qs ipc call audio sinkUp. The bar owns PipeWire and MPRIS already, so routing the keys through here drops pamixer and playerctl and makes a key press light the bar's own level bar rather than a second, separate indicator.
-// One scope at the root rather than inside Bar, which Variants builds once per screen: two windows registering the same IPC target is one too many.
+// What the media and volume keys talk to, the same way the overview keybind already talks to the shell.
+// One scope at the root rather than inside Bar, which Variants builds once per screen.
 Scope {
     id: root
 
-    // Five percent a press, and a ceiling of one: the same step pamixer used and the same cap it applied without --allow-boost. Scrolling the bar icon still goes past it.
+    // Five percent a press, and a ceiling of one.
     readonly property real step: 0.05
     readonly property real maximum: 1.0
 
@@ -86,7 +86,7 @@ Scope {
     IpcHandler {
         target: "media"
 
-        // canTogglePlaying and friends are the player saying whether it will listen; calling anyway is how a dead binding looks like a broken key.
+        // canTogglePlaying and friends are the player saying whether it will listen.
         function playPause(): void {
             if (root.player && root.player.canTogglePlaying)
                 root.player.togglePlaying();
@@ -102,7 +102,7 @@ Scope {
                 root.player.previous();
         }
 
-        // Every player the bar can see, what each will accept, and which one a key goes to (marked *): what a media key that does nothing comes down to.
+        // Every player the bar can see, what each will accept, and which one a key goes to (marked *).
         function status(): string {
             const players = Mpris.players ? Mpris.players.values : [];
             if (players.length === 0)

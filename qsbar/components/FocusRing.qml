@@ -1,7 +1,7 @@
 import QtQuick
 import "root:/config"
 
-// The outline a control draws round itself while it has the keyboard. Only Tab ever gives these controls focus, since their MouseAreas do not take it, so a click never leaves a ring behind.
+// The outline a control draws round itself while it has the keyboard.
 Rectangle {
     property Item target: parent
 
