@@ -50,6 +50,11 @@ Scope {
             glyph: Glyphs.lock
         },
         {
+            key: "greeter",
+            title: "Login screen",
+            glyph: Glyphs.userLock
+        },
+        {
             key: "theme",
             title: "System theme",
             glyph: Glyphs.paintbrush
@@ -378,6 +383,13 @@ Scope {
                     color: Theme.fillTrack
                 }
 
+                // Under the page, so a list on it that can still scroll gets the wheel first.
+                WheelScroller {
+                    anchors.fill: pageArea
+                    target: pageArea
+                    step: 80
+                }
+
                 Flickable {
                     id: pageArea
 
@@ -396,6 +408,9 @@ Scope {
                     contentWidth: width
                     contentHeight: pageLoader.item ? pageLoader.item.implicitHeight : 0
                     boundsBehavior: Flickable.StopAtBounds
+
+                    // The wheel is the scroller's: left to the Flickable, the page kept gliding after the wheel stopped and the next click only stopped it.
+                    interactive: false
 
                     // Whatever Tab lands on is scrolled into view, with a little air, so the keyboard never ends up on a control below the fold.
                     readonly property Item focusedItem: Window.activeFocusItem

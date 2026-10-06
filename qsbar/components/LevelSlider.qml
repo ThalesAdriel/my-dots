@@ -22,8 +22,6 @@ Item {
     }
 
     Rectangle {
-        id: track
-
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
@@ -55,8 +53,6 @@ Item {
     }
 
     Rectangle {
-        id: handle
-
         width: 12
         height: 12
         radius: Theme.pill(12)
@@ -75,10 +71,12 @@ Item {
         }
     }
 
+    // preventStealing: a drag that wandered a little up or down was taken over by the settings page scrolling under it.
     MouseArea {
         id: dragArea
 
         anchors.fill: parent
+        preventStealing: true
 
         onPressed: event => root.applyPosition(event.x)
         onPositionChanged: event => {

@@ -78,24 +78,8 @@ Scope {
             return root.toggleMute(root.sink);
         }
 
-        function sinkStatus(): string {
-            return root.describe(root.sink);
-        }
-
-        function sourceUp(): string {
-            return root.nudge(root.source, 1);
-        }
-
-        function sourceDown(): string {
-            return root.nudge(root.source, -1);
-        }
-
         function sourceToggle(): string {
             return root.toggleMute(root.source);
-        }
-
-        function sourceStatus(): string {
-            return root.describe(root.source);
         }
     }
 

@@ -62,8 +62,6 @@ Item {
     implicitHeight: Theme.barHeight
 
     Rectangle {
-        id: indicator
-
         width: root.itemWidth
         height: 2
         color: Theme.textPrimary

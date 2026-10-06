@@ -139,8 +139,6 @@ Item {
                     height: root.rowHeight
 
                     Text {
-                        id: streamName
-
                         anchors.left: parent.left
                         anchors.right: streamValue.left
                         anchors.top: parent.top

@@ -20,7 +20,7 @@ Item {
 
     // The window's list of { key, title }, for the headings over each page in the results.
     property var pages: []
-    readonly property var pageKeys: ["appearance", "wallpaper", "bar", "notifications", "general", "displays", "lock", "theme", "apps"]
+    readonly property var pageKeys: ["appearance", "wallpaper", "bar", "notifications", "general", "displays", "lock", "greeter", "theme", "apps"]
 
     // A heading in the results was clicked: the window leaves the search for that page.
     signal pageRequested(string key)
@@ -413,25 +413,40 @@ Item {
                     }
                 }
 
+                // Filled with the colour itself inside a white ring and a dark one, so it reads on any part of the square, and drawn over the edge rather than cut off by it.
                 Rectangle {
                     x: picker.saturation * field.width - width / 2
                     y: (1 - picker.brightness) * field.height - height / 2
-                    width: 12
-                    height: 12
-                    radius: 6
-                    color: "transparent"
-                    border.width: 2
-                    border.color: picker.brightness > 0.6 && picker.saturation < 0.4 ? "#000000" : "#ffffff"
+                    z: 1
+                    width: 18
+                    height: 18
+                    radius: 9
+                    color: Qt.hsva(picker.hue, picker.saturation, picker.brightness, 1)
+                    border.width: 1
+                    border.color: "#000000"
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        radius: width / 2
+                        color: "transparent"
+                        border.width: 2
+                        border.color: "#ffffff"
+                    }
                 }
 
+                // preventStealing: a drag in the square that went a little up or down used to start scrolling the settings page instead. A little wider than the square, so the very edges can be reached without leaving it.
                 MouseArea {
                     function take(mouse: var): void {
-                        picker.saturation = picker.clamp(mouse.x / field.width);
-                        picker.brightness = 1 - picker.clamp(mouse.y / field.height);
+                        picker.saturation = picker.clamp((mouse.x - 9) / field.width);
+                        picker.brightness = 1 - picker.clamp((mouse.y - 9) / field.height);
                         picker.send();
                     }
 
                     anchors.fill: parent
+                    anchors.margins: -9
+                    cursorShape: Qt.CrossCursor
+                    preventStealing: true
                     onPressed: mouse => take(mouse)
                     onPositionChanged: mouse => take(mouse)
                 }
@@ -490,13 +505,14 @@ Item {
 
                 Rectangle {
                     x: picker.hue * strip.width - width / 2
+                    z: 1
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 4
-                    height: strip.height + 4
-                    radius: 2
-                    color: "#ffffff"
-                    border.width: 1
-                    border.color: "#000000"
+                    width: 8
+                    height: strip.height + 8
+                    radius: 3
+                    color: Qt.hsva(picker.hue, 1, 1, 1)
+                    border.width: 2
+                    border.color: "#ffffff"
                 }
 
                 MouseArea {
@@ -507,6 +523,10 @@ Item {
                     }
 
                     anchors.fill: parent
+                    anchors.topMargin: -6
+                    anchors.bottomMargin: -6
+                    cursorShape: Qt.PointingHandCursor
+                    preventStealing: true
                     onPressed: mouse => take(mouse)
                     onPositionChanged: mouse => take(mouse)
                 }
@@ -967,6 +987,11 @@ Item {
             }
         }
 
+        WheelScroller {
+            anchors.fill: browserList
+            target: browserList
+        }
+
         ListView {
             id: browserList
 
@@ -977,10 +1002,10 @@ Item {
             anchors.leftMargin: 10
             anchors.rightMargin: 10
 
-            height: Math.min(browserList.count, 8) * 26
+            height: Math.min(browserList.count, 8) * 30
             clip: true
             spacing: 2
-            boundsBehavior: Flickable.StopAtBounds
+            interactive: false
             model: folderModel
 
             // The arrows move through the list on their own, ListView does that; Enter takes what they landed on and Backspace goes up a level.
@@ -1018,7 +1043,7 @@ Item {
                 readonly property bool cursorHere: browserList.activeFocus && entry.ListView.isCurrentItem
 
                 width: browserList.width
-                height: 24
+                height: 28
                 radius: Theme.radius
                 color: entryMouse.containsPress ? Theme.fillPressed : entryMouse.containsMouse || entry.cursorHere ? Theme.fillHover : "transparent"
                 border.width: entry.cursorHere ? 1 : 0
@@ -1178,78 +1203,89 @@ Item {
             }
         }
 
-        ListView {
-            id: pickerList
-
+        // Scrolled by the wheel alone, and the scroller under the list rather than over it, so the rows keep their hover and their clicks.
+        Item {
             width: parent.width
-            height: Math.min(pickerList.count, 8) * 26
+            height: pickerList.height
             visible: pickerRow.open && pickerList.count > 0
 
-            clip: true
-            spacing: 2
-            boundsBehavior: Flickable.StopAtBounds
-            model: pickerRow.options
-
-            // Opened on the one already in use rather than at the top of a list that can run to dozens.
-            onVisibleChanged: {
-                if (pickerList.visible)
-                    pickerList.positionViewAtIndex(Math.max(pickerRow.options.indexOf(pickerRow.current), 0), ListView.Center);
+            WheelScroller {
+                anchors.fill: parent
+                target: pickerList
             }
 
-            delegate: Rectangle {
-                id: option
+            ListView {
+                id: pickerList
 
-                required property string modelData
+                width: parent.width
+                height: Math.min(pickerList.count, 8) * 30
 
-                readonly property bool chosen: option.modelData === pickerRow.current
+                clip: true
+                spacing: 2
+                interactive: false
+                model: pickerRow.options
 
-                width: pickerList.width
-                height: 24
-                radius: Theme.radius
-                color: {
-                    if (optionMouse.containsPress)
-                        return Theme.fillPressed;
-                    if (optionMouse.containsMouse)
-                        return Theme.fillHover;
-                    return option.chosen ? Theme.fillTrack : "transparent";
+                // Opened on the one already in use rather than at the top of a list that can run to dozens.
+                onVisibleChanged: {
+                    if (pickerList.visible)
+                        pickerList.positionViewAtIndex(Math.max(pickerRow.options.indexOf(pickerRow.current), 0), ListView.Center);
                 }
 
-                Text {
-                    anchors.left: parent.left
-                    anchors.right: optionCheck.left
-                    anchors.leftMargin: 9
-                    anchors.verticalCenter: parent.verticalCenter
+                delegate: Rectangle {
+                    id: option
 
-                    textFormat: Text.PlainText
-                    text: pickerRow.labelOf(option.modelData)
-                    color: option.chosen ? Theme.textPrimary : Theme.textSecondary
-                    font.family: Theme.sansFamily
-                    font.pixelSize: Theme.fontSizeSmall
-                    elide: Text.ElideRight
-                }
+                    required property string modelData
 
-                IconText {
-                    id: optionCheck
+                    readonly property bool chosen: option.modelData === pickerRow.current
 
-                    anchors.right: parent.right
-                    anchors.rightMargin: 9
-                    anchors.verticalCenter: parent.verticalCenter
+                    width: pickerList.width
+                    height: 28
+                    radius: Theme.radius
+                    color: {
+                        if (optionMouse.containsPress)
+                            return Theme.fillPressed;
+                        if (optionMouse.containsMouse)
+                            return Theme.fillHover;
+                        return option.chosen ? Theme.fillTrack : "transparent";
+                    }
 
-                    fillBarHeight: false
-                    visible: option.chosen
-                    text: Glyphs.check
-                    color: Theme.accent
-                    font.pixelSize: 10
-                }
+                    Text {
+                        anchors.left: parent.left
+                        anchors.right: optionCheck.left
+                        anchors.leftMargin: 9
+                        anchors.verticalCenter: parent.verticalCenter
 
-                MouseArea {
-                    id: optionMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        pickerRow.open = false;
-                        if (!option.chosen)
-                            pickerRow.picked(option.modelData);
+                        textFormat: Text.PlainText
+                        text: pickerRow.labelOf(option.modelData)
+                        color: option.chosen ? Theme.textPrimary : Theme.textSecondary
+                        font.family: Theme.sansFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                        elide: Text.ElideRight
+                    }
+
+                    IconText {
+                        id: optionCheck
+
+                        anchors.right: parent.right
+                        anchors.rightMargin: 9
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        fillBarHeight: false
+                        visible: option.chosen
+                        text: Glyphs.check
+                        color: Theme.accent
+                        font.pixelSize: 10
+                    }
+
+                    MouseArea {
+                        id: optionMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            pickerRow.open = false;
+                            if (!option.chosen)
+                                pickerRow.picked(option.modelData);
+                        }
                     }
                 }
             }
@@ -1392,6 +1428,8 @@ Item {
             return displaysPage;
         case "lock":
             return lockPage;
+        case "greeter":
+            return greeterPage;
         case "theme":
             return themePage;
         case "apps":
@@ -2178,6 +2216,224 @@ Item {
             ButtonRow {
                 label: "Restore lock screen defaults"
                 onTriggered: LockConfig.restoreDefaults()
+            }
+        }
+    }
+
+    // quickgreet, the greetd greeter: written to /var/lib/quickgreet through GreetConfig, and tried out from the first group without logging out.
+    Component {
+        id: greeterPage
+
+        Column {
+            spacing: 18
+
+            Component.onCompleted: {
+                Wallpaper.scan();
+                Wallpaper.refresh();
+            }
+
+            PanelMessage {
+                width: parent.width
+                visible: GreetConfig.missing && !root.searching
+                warning: true
+                text: "quickgreet is not installed, so nothing on this page is saved. Run ./install.sh config from the dotfiles first."
+            }
+
+            PanelMessage {
+                width: parent.width
+                visible: GreetConfig.broken && !root.searching
+                warning: true
+                text: "quickgreet.json is there but could not be read. Nothing on this page is saved until it is fixed by hand."
+            }
+
+            PanelMessage {
+                width: parent.width
+                visible: GreetConfig.lastError !== "" && !root.searching
+                warning: true
+                text: GreetConfig.lastError
+            }
+
+            Group {
+                title: "Test"
+
+                ButtonRow {
+                    label: "Test the login screen"
+                    onTriggered: GreetConfig.test()
+                }
+
+                PanelMessage {
+                    width: parent.width
+                    visible: !root.searching
+                    text: "Opens it over everything, as it will look at boot. Your password is checked but nobody is signed in; Esc on an empty field or any power button closes it."
+                }
+            }
+
+            Group {
+                title: "Background"
+
+                ChoiceRow {
+                    label: "Background"
+                    options: [
+                        {
+                            value: "image",
+                            label: "Picture"
+                        },
+                        {
+                            value: "color",
+                            label: "Solid colour"
+                        }
+                    ]
+                    current: GreetConfig.background
+                    onPicked: value => GreetConfig.background = value
+                }
+
+                WallpaperGrid {
+                    visible: !root.searching && GreetConfig.background === "image"
+                    selected: [GreetConfig.expand(GreetConfig.wallpaper)]
+                    onPicked: path => GreetConfig.setPicture("wallpaper", path)
+                }
+
+                // What the first output is showing; with different pictures on each, the first is as good a pick as any.
+                ButtonRow {
+                    readonly property string desktop: {
+                        const first = Wallpaper.outputs.length > 0 ? Wallpaper.current[Wallpaper.outputs[0]] : undefined;
+                        return first !== undefined ? first : "";
+                    }
+
+                    label: "Use the desktop wallpaper"
+                    applies: GreetConfig.background === "image"
+                    enabledAction: desktop !== "" && desktop !== GreetConfig.expand(GreetConfig.wallpaper)
+                    onTriggered: GreetConfig.setPicture("wallpaper", desktop)
+                }
+
+                FieldRow {
+                    label: "Path"
+                    applies: GreetConfig.background === "image"
+                    value: GreetConfig.wallpaper
+                    placeholder: "~/Pictures/wallpapers/w.jpg"
+                    browse: "file"
+                    nameFilters: root.imageFilters
+                    onCommitted: text => GreetConfig.setPicture("wallpaper", text)
+                }
+
+                SwatchRow {
+                    label: "Colour"
+                    applies: GreetConfig.background === "color"
+                    options: root.surfaceColors
+                    current: GreetConfig.color
+                    onPicked: value => GreetConfig.color = value
+                }
+
+                SliderRow {
+                    label: "Dim"
+                    applies: GreetConfig.background === "image"
+                    value: GreetConfig.dim
+                    minimum: 0
+                    maximum: 1
+                    decimals: 2
+                    onAdjusted: newValue => GreetConfig.dim = Math.round(newValue * 100) / 100
+                }
+
+                SliderRow {
+                    label: "Blur"
+                    applies: GreetConfig.background === "image"
+                    value: GreetConfig.blur
+                    minimum: 0
+                    maximum: 128
+                    suffix: "px"
+                    onAdjusted: newValue => GreetConfig.blur = Math.round(newValue)
+                }
+            }
+
+            Group {
+                title: "Animation layer"
+
+                PickerRow {
+                    label: "ASCII animation"
+                    options: GreetConfig.animations
+                    current: GreetConfig.animation
+                    labelOf: value => GreetConfig.label(value)
+                    onPicked: value => GreetConfig.animation = value
+                }
+
+                SliderRow {
+                    label: "Opacity"
+                    applies: GreetConfig.animation !== "none"
+                    value: GreetConfig.animationOpacity
+                    minimum: 0.05
+                    maximum: 1
+                    decimals: 2
+                    onAdjusted: newValue => GreetConfig.animationOpacity = Math.round(newValue * 100) / 100
+                }
+
+                // A slower animation is also a cheaper one: speed sets how often a frame is drawn.
+                SliderRow {
+                    label: "Speed"
+                    applies: GreetConfig.animation !== "none"
+                    value: GreetConfig.animationSpeed
+                    minimum: 25
+                    maximum: 200
+                    suffix: "%"
+                    onAdjusted: newValue => GreetConfig.animationSpeed = Math.round(newValue / 5) * 5
+                }
+            }
+
+            Group {
+                title: "Login box"
+
+                // The greeter already follows the screen's height; this is on top of that.
+                SliderRow {
+                    label: "Scale"
+                    value: GreetConfig.uiScale * 100
+                    minimum: 50
+                    maximum: 150
+                    suffix: "%"
+                    onAdjusted: newValue => GreetConfig.uiScale = Math.round(newValue / 5) / 20
+                }
+
+                PickerRow {
+                    label: "Border"
+                    options: GreetConfig.borders
+                    current: GreetConfig.border
+                    labelOf: value => GreetConfig.label(value)
+                    onPicked: value => GreetConfig.border = value
+                }
+
+                SliderRow {
+                    label: "Corner radius"
+                    value: GreetConfig.rounding
+                    minimum: 0
+                    maximum: 30
+                    suffix: "px"
+                    onAdjusted: newValue => GreetConfig.rounding = Math.round(newValue)
+                }
+
+                PickerRow {
+                    label: "Colour theme"
+                    options: GreetConfig.themes
+                    current: GreetConfig.theme
+                    labelOf: value => GreetConfig.label(value)
+                    onPicked: value => GreetConfig.theme = value
+                }
+            }
+
+            Group {
+                title: "Avatar"
+
+                FieldRow {
+                    label: "Picture"
+                    value: GreetConfig.avatar
+                    placeholder: "the account's own, or a silhouette"
+                    browse: "file"
+                    nameFilters: root.imageFilters
+                    onCommitted: text => GreetConfig.setPicture("avatar", text)
+                }
+            }
+
+            // Only this page's: the one in the sidebar is the shell's own look and leaves quickgreet.json alone.
+            ButtonRow {
+                label: "Restore login screen defaults"
+                onTriggered: GreetConfig.restoreDefaults()
             }
         }
     }

@@ -120,8 +120,6 @@ Item {
         height: block.titleHeight + block.rowHeight * 7
 
         Text {
-            id: blockTitle
-
             anchors.left: parent.left
             anchors.top: parent.top
             width: parent.width

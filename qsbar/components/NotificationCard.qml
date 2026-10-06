@@ -231,8 +231,6 @@ Rectangle {
             height: summaryText.implicitHeight
 
             Rectangle {
-                id: urgencyDot
-
                 anchors.left: parent.left
                 y: Math.max((Theme.fontSize - 7) / 2, 0) + 2
 

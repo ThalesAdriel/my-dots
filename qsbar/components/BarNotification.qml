@@ -306,8 +306,6 @@ Rectangle {
             height: summaryText.implicitHeight
 
             Rectangle {
-                id: urgencyDot
-
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
 

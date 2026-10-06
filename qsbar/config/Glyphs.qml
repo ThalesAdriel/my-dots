@@ -75,6 +75,7 @@ Singleton {
 
     readonly property string image: ""
     readonly property string paintbrush: ""
+    readonly property string userLock: ""
 
     readonly property var workspaceNumerals: ({
         "1": "一",
