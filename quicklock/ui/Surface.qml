@@ -39,8 +39,6 @@ Item {
     }
 
     Item {
-        id: content
-
         anchors.fill: parent
 
         opacity: Auth.unlocking ? 0 : 1

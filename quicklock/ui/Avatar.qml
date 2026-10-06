@@ -38,8 +38,7 @@ Item {
         sourceSize.height: Config.avatarSize
         asynchronous: true
         cache: false
-        smooth: true
-        mipmap: false
+        visible: false
     }
 
     Rectangle {

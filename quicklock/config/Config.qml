@@ -126,7 +126,6 @@ Singleton {
     readonly property int blurRadius: settings.blur
     readonly property real contrast: settings.contrast
     readonly property real vibrancy: settings.vibrancy
-    readonly property int downscale: 2
 
     readonly property int animFast: 100
     readonly property int animNormal: 200

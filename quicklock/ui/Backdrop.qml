@@ -5,7 +5,7 @@ import qs.config
 Item {
     id: root
 
-    readonly property int downscale: Math.max(1, Config.downscale)
+    readonly property int downscale: 2
     readonly property int tileWidth: Math.max(1, Math.ceil(root.width / root.downscale))
     readonly property int tileHeight: Math.max(1, Math.ceil(root.height / root.downscale))
     readonly property bool ready: wallpaper.status === Image.Ready
@@ -13,8 +13,6 @@ Item {
     clip: true
 
     Item {
-        id: tile
-
         width: root.tileWidth
         height: root.tileHeight
         transformOrigin: Item.TopLeft
@@ -42,14 +40,11 @@ Item {
             sourceSize.height: root.tileHeight
             asynchronous: true
             cache: false
-            smooth: true
-            mipmap: false
         }
 
         MultiEffect {
             anchors.fill: parent
             source: wallpaper
-            visible: root.ready
             autoPaddingEnabled: false
             blurEnabled: true
             blur: 1.0
