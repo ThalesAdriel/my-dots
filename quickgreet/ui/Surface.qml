@@ -89,63 +89,6 @@ Item {
                     warning: Caffeine.broken
                     onClicked: Caffeine.toggle()
                 }
-            }
-
-            SessionMenu {
-                // Lined up under the gear, the first of the two.
-                anchors.right: corner.right
-                anchors.rightMargin: Config.cornerSize + corner.spacing
-                anchors.top: corner.bottom
-                anchors.topMargin: 2
-
-                open: root.menuOpen
-                onPicked: root.menuOpen = false
-            }
-        }
-
-        // The card and the buttons under it as one, scaled about its middle.
-        Item {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: (8 + (12 + Config.tileHeight) / 2) * root.factor
-            width: Config.cardWidth
-            height: Config.cardHeight + 12 + Config.tileHeight
-
-            scale: root.factor
-
-            LoginCard {
-                id: card
-
-                anchors.top: parent.top
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                opacity: 0
-                scale: 0.96
-
-                Component.onCompleted: {
-                    card.opacity = 1;
-                    card.scale = 1;
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 260
-                        easing.type: Easing.OutQuad
-                    }
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: 320
-                        easing.type: Easing.OutBack
-                    }
-                }
-            }
-
-            Row {
-                anchors.horizontalCenter: card.horizontalCenter
-                anchors.top: card.bottom
-                anchors.topMargin: 12
-                spacing: Config.tileGap
 
                 Repeater {
                     model: [
@@ -169,12 +112,59 @@ Item {
                     Tile {
                         required property var modelData
 
-                        width: Math.floor((Config.cardWidth - Config.tileGap * 2) / 3)
-                        height: Config.tileHeight
+                        width: Config.cornerSize
+                        height: Config.cornerSize
                         glyph: modelData.glyph
                         label: modelData.label
-                        glyphSize: 64
+                        glyphSize: 24
                         onClicked: root.power(modelData.action)
+                    }
+                }
+            }
+
+            SessionMenu {
+                // Lined up under the gear, the first of the row.
+                anchors.left: corner.left
+                anchors.top: corner.bottom
+                anchors.topMargin: 2
+
+                open: root.menuOpen
+                onPicked: root.menuOpen = false
+            }
+        }
+
+        // The card has its own scale for the entrance, so the screen's goes on this.
+        Item {
+            anchors.centerIn: parent
+            width: Config.cardWidth
+            height: Config.cardHeight
+
+            scale: root.factor
+
+            LoginCard {
+                id: card
+
+                anchors.centerIn: parent
+
+                opacity: 0
+                scale: 0.96
+
+                Component.onCompleted: {
+                    card.opacity = 1;
+                    card.scale = 1;
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 260
+                        easing.type: Easing.OutQuad
+                    }
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 320
+                        easing.type: Easing.OutBack
                     }
                 }
             }

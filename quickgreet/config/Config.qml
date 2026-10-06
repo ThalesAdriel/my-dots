@@ -196,8 +196,6 @@ Singleton {
     readonly property int fieldWidth: 300
     readonly property int fieldHeight: 42
     readonly property int submitWidth: 70
-    readonly property int tileHeight: 120
-    readonly property int tileGap: 24
     readonly property int cornerSize: 60
     readonly property int menuWidth: 230
     readonly property int textSize: 15
