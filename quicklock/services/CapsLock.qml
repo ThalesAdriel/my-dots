@@ -37,7 +37,7 @@ Singleton {
 
     function observe(event) {
         if (root.sources.length > 0) {
-            // Only the key that can move it, and only after the fact: inside the event that toggled it the LED still reports the old state, which is what the settle is for.
+            // Only the key that can move it, and only after the fact.
             if (event.key === Qt.Key_CapsLock)
                 settle.restart();
             return;

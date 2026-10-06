@@ -75,12 +75,12 @@ Singleton {
     readonly property string timeFormat: settings.timeFormat
     readonly property string dateFormat: settings.dateFormat
 
-    // Qt reads anything between single quotes as literal text, so with those cut away what is left is format characters alone: an s among them is a seconds field and not somebody's word. An unterminated quote leaves its tail in, which at worst ticks a clock faster than it needed to.
+    // Qt reads anything between single quotes as literal text.
     function showsSeconds(format) {
         return format.replace(/'[^']*'/g, "").indexOf("s") !== -1;
     }
 
-    // What the clock has to tick at. Either format can ask for seconds, and until now neither got them: the tick was a minute whatever the file said, so "HH:mm:ss" sat there frozen.
+    // What the clock has to tick at.
     readonly property bool secondsVisible: root.showsSeconds(root.timeFormat) || root.showsSeconds(root.dateFormat)
 
     readonly property int clockOffset: 300
