@@ -70,7 +70,7 @@ hl.bind(super("M"), menu("fuzzel-sysmenu.sh"))
 hl.bind(super("CTRL + V"), script("launch_first_available.sh", "'pavucontrol-qt' 'pavucontrol'"))
 
 hl.bind(super("V"), launcher("cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"))
-hl.bind(super("PERIOD"), menu("fuzzel-emoji.sh", "copy"))
+hl.bind(super("PERIOD"), menu("fuzzel-emoji.sh"))
 hl.bind(super("A"), menu("audio_output_switch.sh"))
 hl.bind(super("SHIFT + A"), run("hyprpicker --autocopy"))
 hl.bind(super("TAB"), run(qsbar .. " overview toggle"))

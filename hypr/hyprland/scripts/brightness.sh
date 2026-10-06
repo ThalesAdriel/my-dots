@@ -15,12 +15,4 @@ apply() {
 case "${1-}" in
 --inc) apply 10%+ ;;
 --dec) apply 10%- ;;
---set)
-	if ! is_uint "${2-}" || [ "$2" -gt 100 ]; then
-		echo "${0##*/} --set wants a percentage, 0 to 100" >&2
-		exit 1
-	fi
-	apply "$2%"
-	;;
-*) brightnessctl -m | cut -d, -f4 ;;
 esac

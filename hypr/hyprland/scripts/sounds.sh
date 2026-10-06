@@ -1,11 +1,7 @@
 #!/bin/sh
 case "$1" in
---screenshot) name=screen-capture ;;
 --volume) name=audio-volume-change ;;
-*)
-	echo "Available sounds: --screenshot, --volume"
-	exit 0
-	;;
+*) exit 1 ;;
 esac
 
 for dir in "$HOME/.local/share/sounds/freedesktop" "/usr/share/sounds/freedesktop"; do

@@ -5,19 +5,7 @@ line=$(menu_from_data "$0")
 emoji=${line%% *}
 [ -n "$emoji" ] || exit 0
 
-case "${1:-type}" in
-type) wtype "$emoji" || wl-copy "$emoji" ;;
-copy) wl-copy "$emoji" ;;
-both)
-	wtype "$emoji"
-	wl-copy "$emoji"
-	;;
-*)
-	echo "usage: ${0##*/} [type|copy|both]" >&2
-	exit 1
-	;;
-esac
-exit
+exec wl-copy "$emoji"
 
 ### DATA ###
 😀 grinning face face smile happy joy :D grin

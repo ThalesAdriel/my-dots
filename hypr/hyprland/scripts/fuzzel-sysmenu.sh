@@ -4,15 +4,7 @@
 action=$(menu_from_data "$0" | cut -d ' ' -f1)
 [ -n "$action" ] || exit 0
 
-case "${1:-run}" in
-run) exec "${0%/*}/power.sh" "$action" ;;
-echo) echo "$action" ;;
-*)
-	echo "usage: ${0##*/} [run|echo]" >&2
-	exit 1
-	;;
-esac
-exit
+exec "${0%/*}/power.sh" "$action"
 
 ### DATA ###
 poweroff  ⏻  Power off the system

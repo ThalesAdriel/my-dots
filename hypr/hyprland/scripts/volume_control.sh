@@ -47,8 +47,5 @@ case "${1-}" in
 --inc) notify_sink "$(audio sinkUp)" ;;
 --dec) notify_sink "$(audio sinkDown)" ;;
 --toggle) notify_sink "$(audio sinkToggle)" ;;
---mic-inc) notify_source "$(audio sourceUp)" ;;
---mic-dec) notify_source "$(audio sourceDown)" ;;
 --toggle-mic) notify_source "$(audio sourceToggle)" ;;
-*) audio sinkStatus ;;
 esac
