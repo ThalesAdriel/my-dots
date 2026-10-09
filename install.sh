@@ -64,6 +64,7 @@ slurp
 starship
 steam
 vis
+vis-lexers
 wl-clipboard
 xdg-desktop-portal-gtk
 xdg-desktop-portal-hyprland
