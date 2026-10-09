@@ -54,6 +54,7 @@ hyprsunset
 imagemagick
 kitty
 libnotify
+lua-lpeg
 nautilus
 ncdu
 nwg-look
