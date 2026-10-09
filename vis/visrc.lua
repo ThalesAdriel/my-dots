@@ -4,9 +4,13 @@ require('vis')
 vis.events.subscribe(vis.events.INIT, function()
 	vis:command("set theme base-16")
 	
-	vis:map(vis.modes.NORMAL, "<C-k>", "0D")
 	vis:map(vis.modes.INSERT, "<C-k>", "<Escape>0DA")
 
+	vis:map(vis.modes.NORMAL, "<M-Up>", '"zddk"zP')
+	vis:map(vis.modes.NORMAL, "<M-Down>", '"zdd"zp')
+	vis:map(vis.modes.INSERT, "<M-Up>", '<Escape>"zddk"zPA')
+	vis:map(vis.modes.INSERT, "<M-Down>", '<Escape>"zdd"zpA')
+	
 	for _, mode in ipairs({ vis.modes.NORMAL, vis.modes.INSERT, vis.modes.VISUAL }) do
 		vis:map(mode, "<C-Left>", "<vis-motion-word-start-prev>")
 		vis:map(mode, "<C-Right>", "<vis-motion-word-start-next>")
