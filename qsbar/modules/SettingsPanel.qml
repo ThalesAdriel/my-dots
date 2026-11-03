@@ -2043,12 +2043,6 @@ Item {
                     current: Settings.directScanout
                     onPicked: value => Settings.directScanout = value
                 }
-
-                PanelMessage {
-                    width: parent.width
-                    visible: Settings.directScanout !== 0 && !root.searching
-                    text: "A game that only shows a black screen wants direct scanout off."
-                }
             }
         }
     }
@@ -2440,12 +2434,6 @@ Item {
                     label: "Test the login screen"
                     onTriggered: GreetConfig.test()
                 }
-
-                PanelMessage {
-                    width: parent.width
-                    visible: !root.searching
-                    text: "Opens it over everything, as it will look at boot. Your password is checked but nobody is signed in; Esc on an empty field or any power button closes it."
-                }
             }
 
             Group {
@@ -2698,12 +2686,6 @@ Item {
                     checked: SystemTheme.flatpakTheme
                     onToggled: SystemTheme.set("flatpak_theme", SystemTheme.flatpakTheme ? 0 : 1)
                 }
-
-                PanelMessage {
-                    width: parent.width
-                    visible: SystemTheme.flatpakTheme && !root.searching
-                    text: "Only a theme in ~/.themes or ~/.local/share/themes reaches Flatpak apps, and some GTK4 apps look wrong with a theme forced on them."
-                }
             }
 
             Group {
@@ -2821,12 +2803,6 @@ Item {
                     text: "Hyprland did not take the cursor: " + SystemTheme.cursorError
                 }
             }
-
-            PanelMessage {
-                width: parent.width
-                visible: !root.searching
-                text: "Applied now and saved to hypr/hyprland/theme.lua for the next login, and handed to xsettingsd for X11 apps. Apps that are already open may keep the old theme until they restart."
-            }
         }
     }
 
@@ -2864,12 +2840,7 @@ Item {
                     }
                 }
             }
-
-            PanelMessage {
-                width: parent.width
-                visible: !root.searching
-                text: "What xdg-open and links clicked in other applications open with, saved to ~/.config/mimeapps.list. Only applications that say they can open that kind of file are listed."
-            }
         }
     }
 }
+
