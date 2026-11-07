@@ -4,10 +4,37 @@ hl.window_rule({
 	center = true,
 })
 
-hl.window_rule({
-	match = { class = "^(steam|steamwebhelper)$", title = "^(Steam - .*|Friends List)$" },
-	float = true,
-})
+local steamHandled = {}
+local steamTiled = { [""] = true, ["Steam"] = true, ["Steam Big Picture Mode"] = true, ["SteamWebhelper"] = true }
+
+local function floatSteamWindow(w)
+	if not w or w.class ~= "steam" or w.mapped == false or steamHandled[w.address] then
+		return
+	end
+	local title = w.title or ""
+	if steamTiled[title] or title:match("^about:blank") then
+		return
+	end
+	steamHandled[w.address] = true
+	if not w.floating then
+		local addr = w.address:match("^0x") and w.address or ("0x" .. w.address)
+		hl.dispatch(hl.dsp.window.float({ action = "enable", window = "address:" .. addr }))
+	end
+end
+
+local function forgetSteamWindow(w)
+	if w then
+		steamHandled[w.address] = nil
+	end
+end
+
+hl.on("window.open", function(w)
+	forgetSteamWindow(w)
+	floatSteamWindow(w)
+end)
+hl.on("window.title", floatSteamWindow)
+hl.on("window.close", forgetSteamWindow)
+hl.on("window.destroy", forgetSteamWindow)
 
 hl.window_rule({
 	match = { class = "^(mpv)$" },
