@@ -1,6 +1,7 @@
 require("hyprland.env")
 require("hyprland.general")
 pcall(require, "hyprland.monitors")
+pcall(require, "hyprland.gaming")
 require("hyprland.colors")
 require("hyprland.rules")
 require("hyprland.keybinds")

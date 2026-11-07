@@ -1,7 +1,6 @@
 hl.window_rule({
 	match = { class = "^(com.heroicgameslauncher.hgl)$" },
 	float = false,
-	center = true,
 })
 
 local steamHandled = {}

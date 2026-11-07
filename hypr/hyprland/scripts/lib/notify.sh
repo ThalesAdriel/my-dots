@@ -1,5 +1,4 @@
 #!/bin/sh
-# Never /tmp: a file name another user can guess there is one they can plant a symlink under. The runtime dir is this user's alone, the same fallback the quicklock launcher uses.
 notify_state_dir=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 
 is_uint() {
