@@ -37,7 +37,11 @@ Scope {
     Timer {
         id: release
         interval: Config.animNormal
-        onTriggered: lock.locked = false
+        // Quickshell does not emit lockedChanged when locked goes back to false, so the exit cannot wait for it.
+        onTriggered: {
+            lock.locked = false;
+            farewell.start();
+        }
     }
 
     Timer {
