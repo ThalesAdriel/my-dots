@@ -1,5 +1,7 @@
 # My dots and stuff that i use
 
+![alt text](screenshots/Screenshot_05.png "Screenshot")
+
 ## Installation
 
 ### Requirements
@@ -18,19 +20,19 @@ OBS: Some of my configs are still messy or broken. I plan to clean and fix them 
 <summary>Screenshots</summary>
 
   ![alt text](screenshots/Screenshot_01.png "Screenshot")
-  ![alt text](screenshots/Screenshot_02.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_03.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_04.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_05.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_06.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_07.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_02.png "Screenshot")
+  ![alt text](screenshots/Screenshot_03.png "Screenshot")
+  ![alt text](screenshots/Screenshot_04.png "Screenshot")
+  ![alt text](screenshots/Screenshot_05.png "Screenshot")
+  ![alt text](screenshots/Screenshot_06.png "Screenshot")
+  ![alt text](screenshots/Screenshot_07.png "Screenshot")
 
 </details>
 
 
 [My wallpaper](https://www.wikiart.org/en/claude-monet/the-promenade-woman-with-a-parasol) is slightly modified artwork of Claude Monet
 
-Credits to the people who helped me achieve my 'rice':
+Credits to the people who work helped me to create my 'rice':
 
 [end_4](https://github.com/end-4/dots-hyprland)
 
