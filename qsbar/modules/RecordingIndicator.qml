@@ -20,7 +20,6 @@ BarButton {
             SequentialAnimation on opacity {
                 running: true
                 loops: Animation.Infinite
-                alwaysRunToEnd: false
 
                 NumberAnimation {
                     from: 1.0

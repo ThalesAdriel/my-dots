@@ -13,7 +13,7 @@ PanelWindow {
 
     required property Item anchorItem
     property bool alignRight: false
-    property int gap: 0
+    readonly property int gap: 0
     property bool shown: false
     property bool dismissing: false
     property bool rendered: false

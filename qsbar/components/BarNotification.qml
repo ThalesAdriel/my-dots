@@ -10,10 +10,6 @@ Rectangle {
     id: root
 
     required property var notification
-    property bool showActions: true
-
-    // Inside a shared surface the pill paints no background of its own.
-    property bool flat: false
 
     signal closeRequested
 
@@ -40,7 +36,7 @@ Rectangle {
         }
         return null;
     }
-    readonly property var actionList: root.showActions ? root.actions.filter(action => action.identifier !== "default") : []
+    readonly property var actionList: root.actions.filter(action => action.identifier !== "default")
 
     readonly property string screenshotPath: root.valid ? Notifications.screenshotPath(root.notification) : ""
 
@@ -129,12 +125,10 @@ Rectangle {
     readonly property int verticalPadding: 10
     readonly property int iconSize: 34
 
-    // Not animated here.
     implicitHeight: Math.max(Math.max(textColumn.implicitHeight, root.showIcon ? root.iconSize : 0) + root.verticalPadding * 2, Settings.notificationHeight)
 
-    // The bar's own surface, so the pill and the bar read as one piece of chrome.
-    color: root.flat ? "transparent" : Theme.barBackground
-    radius: root.flat ? 0 : Theme.cardRadius
+    // The surface the toasts share paints the background for all of them.
+    color: "transparent"
     border.color: Theme.urgent
     border.width: root.critical ? 1 : 0
 

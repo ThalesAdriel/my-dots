@@ -155,7 +155,7 @@ Item {
                         font.pixelSize: Theme.fontSizeSmall
                     }
 
-                    // Left click is the one thing the row does.
+                    // Left click connects, disconnects or pairs; right click forgets a paired device.
                     MouseArea {
                         id: deviceMouse
 

@@ -37,10 +37,6 @@ Item {
         objects: root.active ? root.sinkNodes : []
     }
 
-    PwObjectTracker {
-        objects: [root.sink, root.source]
-    }
-
     Column {
         id: content
 
@@ -197,7 +193,7 @@ Item {
         Rectangle {
             width: content.width
             height: 1
-            color: Theme.popupBorder
+            color: Theme.cardBorder
         }
 
         AppVolumeSection {
@@ -209,7 +205,7 @@ Item {
         Rectangle {
             width: content.width
             height: 1
-            color: Theme.popupBorder
+            color: Theme.cardBorder
             visible: root.sinkNodes.length > 1
         }
 

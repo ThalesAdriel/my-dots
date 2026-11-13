@@ -91,11 +91,18 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
 
     // Only an absolute folder reaches find.
     function scan(): void {
-        scanProcess.running = false;
         if (!root.folder.startsWith("/")) {
+            scanProcess.running = false;
             root.images = [];
             return;
         }
+
+        // Three pages ask as they are built, and a search builds all three at once.
+        if (scanProcess.running && scanProcess.folder === root.folder)
+            return;
+
+        scanProcess.running = false;
+        scanProcess.folder = root.folder;
         scanProcess.command = ["sh", "-c", root.scanScript, "qsbar-wallpapers", root.folder, root.thumbDir];
         scanProcess.running = true;
     }
@@ -171,6 +178,9 @@ find -L "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname
     // ponytail: one level deep and every match drawn at once; a folder of thousands of images wants a GridView over this instead of a Repeater.
     Process {
         id: scanProcess
+
+        // The folder this run is listing.
+        property string folder: ""
 
         stdout: StdioCollector {
             onStreamFinished: {

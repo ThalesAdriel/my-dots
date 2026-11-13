@@ -6,7 +6,7 @@ import "root:/components"
 Item {
     id: root
 
-    property int maximumWidth: 340
+    readonly property int maximumWidth: 340
 
     readonly property var activeWindow: ToplevelManager.activeToplevel
 

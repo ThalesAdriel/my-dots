@@ -7,7 +7,6 @@ Item {
     property real value: 0
     property real maximum: 1.0
     property color fillColor: Theme.accent
-    property bool animated: true
 
     signal moved(real newValue)
 
@@ -42,7 +41,7 @@ Item {
             color: root.fillColor
 
             Behavior on width {
-                enabled: root.animated && !dragArea.pressed
+                enabled: !dragArea.pressed
                 NumberAnimation {
                     duration: Theme.durationFast
                     easing.type: Easing.Bezier
@@ -62,7 +61,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         Behavior on x {
-            enabled: root.animated && !dragArea.pressed
+            enabled: !dragArea.pressed
             NumberAnimation {
                 duration: Theme.durationFast
                 easing.type: Easing.Bezier
@@ -71,7 +70,6 @@ Item {
         }
     }
 
-    // preventStealing.
     MouseArea {
         id: dragArea
 

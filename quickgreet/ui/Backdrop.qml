@@ -41,6 +41,9 @@ Item {
             sourceSize.height: root.tileHeight
             asynchronous: true
             cache: false
+
+            // Drawn by the effect below, not a second time under it.
+            visible: false
         }
 
         MultiEffect {

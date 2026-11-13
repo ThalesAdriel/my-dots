@@ -12,11 +12,6 @@ Scope {
 
         locked: true
 
-        onLockedChanged: {
-            if (!lock.locked)
-                farewell.start();
-        }
-
         WlSessionLockSurface {
             color: Config.background
 

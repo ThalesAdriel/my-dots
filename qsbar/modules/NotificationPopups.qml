@@ -204,7 +204,6 @@ PanelWindow {
                         BarNotification {
                             notification: wrapper.modelData
                             width: wrapper.width
-                            flat: true
                             onCloseRequested: wrapper.finish(true)
                         }
                     }

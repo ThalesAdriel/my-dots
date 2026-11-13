@@ -2,8 +2,12 @@
 . "${0%/*}/lib/notify.sh"
 . "${0%/*}/lib/sound.sh"
 
+# One press at a time: a held key repeats faster than qs ipc answers, and without the lock the calls pile up.
 audio() {
-	qs ipc -p "$HOME/.config/qsbar/shell.qml" call audio "$1" 2>/dev/null
+	(
+		flock -n 9 || exit 0
+		qs ipc -p "$HOME/.config/qsbar/shell.qml" call audio "$1" 2>/dev/null
+	) 9>"${XDG_RUNTIME_DIR:-/tmp}/qsbar-volume.lock"
 }
 
 sink_icon() {

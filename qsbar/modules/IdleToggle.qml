@@ -6,7 +6,6 @@ import "root:/components"
 BarButton {
     id: root
 
-    // Shared through settings.
     readonly property bool inhibiting: Settings.keepAwake
 
     onPrimaryClicked: Settings.keepAwake = !Settings.keepAwake
@@ -35,7 +34,6 @@ BarButton {
         IconText {
             anchors.centerIn: parent
             text: Glyphs.idleBlocked
-            color: Theme.textPrimary
             opacity: root.inhibiting ? 1 : 0
             scale: root.inhibiting ? 1 : 0.7
 
@@ -58,7 +56,6 @@ BarButton {
         IconText {
             anchors.centerIn: parent
             text: Glyphs.idleAllowed
-            color: Theme.textPrimary
             opacity: root.inhibiting ? 0 : 1
             scale: root.inhibiting ? 0.7 : 1
 

@@ -10,7 +10,6 @@ import "root:/services"
 Item {
     id: root
 
-    // Handed down from the panel.
     property bool active: true
 
     property bool expanded: false

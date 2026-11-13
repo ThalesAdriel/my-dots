@@ -18,9 +18,6 @@ Scope {
     // The same six the bar keeps a dot for, laid out the same way round.
     readonly property int workspaceCount: scope.columns * scope.rows
 
-    // A row with nothing on it is a row of empty rectangles.
-    readonly property bool hideEmptyRows: true
-
     // How much of the space it could take it actually takes.
     readonly property real sizeFactor: 0.66
 
@@ -80,7 +77,7 @@ Scope {
             // The overview only takes the keyboard while it is up, and only on the output the pointer is on.
             readonly property bool focusedHere: Hyprland.focusedMonitor && root.hyprMonitor && Hyprland.focusedMonitor.id === root.hyprMonitor.id
 
-            WlrLayershell.namespace: Theme.overviewLayerNamespace
+            WlrLayershell.namespace: "qsbar"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: UiState.overviewOpen && root.focusedHere ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
@@ -104,14 +101,11 @@ Scope {
 
             readonly property int gap: 12
 
-            // Which workspaces get a tile.
+            // Which workspaces get a tile: a row with nothing on it would be a row of empty rectangles.
             readonly property var visibleWorkspaces: {
                 const all = [];
                 for (let id = 1; id <= scope.workspaceCount; id++)
                     all.push(id);
-
-                if (!scope.hideEmptyRows)
-                    return all;
 
                 const kept = [];
                 for (let row = 0; row < scope.rows; row++) {
@@ -267,16 +261,9 @@ Scope {
                             clip: !scope.dragging
                             z: scope.dragging ? 1 : 0
 
-                            color: Theme.overviewCard
+                            color: Theme.solidCard
                             border.width: tile.targeted || tile.active ? 2 : 0
-                            border.color: tile.targeted ? Theme.accent : tile.active ? Theme.accent : Theme.cardBorder
-
-                            // Never below 1.
-                            Behavior on border.color {
-                                ColorAnimation {
-                                    duration: Theme.durationFast
-                                }
-                            }
+                            border.color: Theme.accent
 
                             // Under the windows, so a click that misses one is a click on the workspace itself.
                             MouseArea {
@@ -389,7 +376,7 @@ Scope {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: Theme.radius
-                                        color: Theme.overviewBackground
+                                        color: Theme.solidBackground
                                     }
 
                                     // A capture is not ready the moment it is asked for.
@@ -521,7 +508,7 @@ Scope {
                     height: hoverLabel.implicitHeight + 14
                     radius: Theme.pill(height)
 
-                    color: Theme.overviewCard
+                    color: Theme.solidCard
 
                     opacity: scope.hoveredClient ? 1 : 0
                     visible: opacity > 0.01

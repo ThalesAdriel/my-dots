@@ -24,7 +24,6 @@ BarButton {
     BarText {
         text: Qt.formatDateTime(clock.date, "dd.MM.yyyy")
         font.family: Theme.monoFamily
-        color: Theme.textPrimary
     }
 
     BarPopup {

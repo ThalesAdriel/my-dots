@@ -17,6 +17,20 @@ Item {
     readonly property int itemWidth: Theme.iconSlot + 2
     readonly property int itemSpacing: Theme.iconPadding + 2
 
+    // The entry the menu belongs to, or belonged to last.
+    property var menuEntry: null
+
+    // A click on the entry whose menu is up has already closed it, by taking the focus grab away.
+    function toggleMenu(entry: var): void {
+        if (root.menuEntry === entry && (trayMenu.shown || trayMenu.dismissing)) {
+            trayMenu.shown = false;
+            return;
+        }
+
+        root.menuEntry = entry;
+        trayMenu.shown = true;
+    }
+
     implicitWidth: toggleButton.implicitWidth + drawer.width
     implicitHeight: Theme.barHeight
 
@@ -26,6 +40,14 @@ Item {
         interval: 1500
         running: true
         onTriggered: settleTimer.expired = true
+    }
+
+    // One menu for the drawer, moved to whichever entry asks for it, rather than a layer surface per tray icon.
+    TrayMenu {
+        id: trayMenu
+
+        anchorItem: root.menuEntry ? root.menuEntry : toggleButton
+        menuHandle: root.menuEntry && !root.menuEntry.isPlaceholder ? root.menuEntry.modelData.menu : null
     }
 
     Row {
@@ -42,7 +64,6 @@ Item {
                 IconText {
                     anchors.centerIn: parent
                     text: root.expanded ? Glyphs.collapse : Glyphs.expand
-                    color: Theme.textPrimary
                 }
             }
         }
@@ -83,6 +104,14 @@ Item {
                         required property var modelData
 
                         readonly property bool isPlaceholder: !root.resolved
+                        readonly property bool menuShown: root.menuEntry === trayEntry && trayMenu.shown
+
+                        Component.onDestruction: {
+                            if (root.menuEntry === trayEntry) {
+                                trayMenu.shown = false;
+                                root.menuEntry = null;
+                            }
+                        }
 
                         width: root.itemWidth
                         height: Theme.barHeight - 8
@@ -121,7 +150,7 @@ Item {
                             radius: Theme.hoverRadius
                             visible: !trayEntry.isPlaceholder
                             color: {
-                                if (trayMenu.shown)
+                                if (trayEntry.menuShown)
                                     return Theme.fillHover;
                                 return trayMouse.containsPress ? Theme.fillPressed : trayMouse.containsMouse ? Theme.fillHover : "transparent";
                             }
@@ -141,13 +170,6 @@ Item {
                             source: trayEntry.isPlaceholder ? "" : trayEntry.modelData.icon
                         }
 
-                        TrayMenu {
-                            id: trayMenu
-
-                            anchorItem: trayEntry
-                            menuHandle: trayEntry.isPlaceholder ? null : trayEntry.modelData.menu
-                        }
-
                         MouseArea {
                             id: trayMouse
 
@@ -159,11 +181,11 @@ Item {
                             onClicked: event => {
                                 if (event.button === Qt.LeftButton) {
                                     if (trayEntry.modelData.onlyMenu)
-                                        trayMenu.toggle();
+                                        root.toggleMenu(trayEntry);
                                     else
                                         trayEntry.modelData.activate();
                                 } else if (event.button === Qt.RightButton) {
-                                    trayMenu.toggle();
+                                    root.toggleMenu(trayEntry);
                                 } else {
                                     trayEntry.modelData.secondaryActivate();
                                 }
@@ -174,7 +196,7 @@ Item {
 
                         BarTooltip {
                             anchorItem: trayEntry
-                            shown: trayMouse.containsMouse && !trayEntry.isPlaceholder && !trayMenu.shown
+                            shown: trayMouse.containsMouse && !trayEntry.isPlaceholder && !trayEntry.menuShown
                             text: {
                                 if (trayEntry.isPlaceholder)
                                     return "";

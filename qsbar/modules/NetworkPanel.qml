@@ -37,8 +37,6 @@ Item {
         anonymousField.clear();
         certificateField.clear();
         passwordField.clear();
-
-        UiState.keyboardCapture = false;
     }
 
     function begin(point: var): void {

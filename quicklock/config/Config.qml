@@ -114,7 +114,6 @@ Singleton {
     readonly property string caffeineIcon: settings.caffeineIcon
     readonly property bool caffeineDefault: settings.caffeine
 
-    readonly property bool fadeOnEmpty: true
     readonly property int fadeTimeout: 2000
     readonly property int fadeDuration: 180
 

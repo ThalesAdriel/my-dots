@@ -34,7 +34,7 @@ Item {
         color: Config.line
     }
 
-    // Up to a cell wider and taller than the card, so the lines.
+    // Up to a cell wider and taller than the card.
     Text {
         id: frame
 

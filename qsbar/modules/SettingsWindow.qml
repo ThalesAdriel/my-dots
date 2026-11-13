@@ -192,7 +192,7 @@ Scope {
 
                 anchors.fill: parent
 
-                color: Theme.settingsBackground
+                color: Theme.solidBackground
                 radius: Theme.cardRadius
 
                 // Taking the focus on a click that lands on nothing is what ends an edit in a text field when you click away from it.

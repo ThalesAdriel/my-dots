@@ -49,7 +49,6 @@ Rectangle {
         fillBarHeight: false
         visible: root.iconOnly
         text: root.glyph
-        color: Theme.textPrimary
         font.pixelSize: Theme.fontSizeSmall
     }
 

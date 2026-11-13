@@ -40,13 +40,16 @@ Item {
             sourceSize.height: root.tileHeight
             asynchronous: true
             cache: false
+
+            // Drawn by the effect below, not a second time under it.
+            visible: false
         }
 
         MultiEffect {
             anchors.fill: parent
             source: wallpaper
             autoPaddingEnabled: false
-            blurEnabled: true
+            blurEnabled: Config.blurRadius > 0
             blur: 1.0
             blurMax: Math.max(2, Math.min(64, Math.round(Config.blurRadius / root.downscale)))
             blurMultiplier: 1.0

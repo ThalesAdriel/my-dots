@@ -13,14 +13,13 @@ Item {
 
     property string page: "appearance"
 
-    // The search field's text.
     property string query: ""
     readonly property bool searching: root.query.trim() !== ""
     readonly property string needle: root.query.trim().toLowerCase()
 
     // The window's list of { key, title }, for the headings over each page in the results.
     property var pages: []
-    readonly property var pageKeys: ["appearance", "wallpaper", "bar", "notifications", "general", "displays", "lock", "greeter", "theme", "apps"]
+    readonly property var pageKeys: root.pages.map(entry => entry.key)
 
     // A heading in the results was clicked: the window leaves the search for that page.
     signal pageRequested(string key)
@@ -94,7 +93,7 @@ Item {
                 height: groupRows.implicitHeight + 24
 
                 radius: Theme.cardRadius
-                color: Theme.settingsCard
+                color: Theme.solidCard
 
                 Column {
                     id: groupRows
@@ -435,7 +434,6 @@ Item {
                     }
                 }
 
-                // preventStealing.
                 MouseArea {
                     function take(mouse: var): void {
                         picker.saturation = picker.clamp((mouse.x - 9) / field.width);
@@ -957,7 +955,7 @@ Item {
         property bool folders: false
         property var nameFilters: []
 
-        // The field's value.
+        // Where the browser opens: the field's value.
         property string start: ""
 
         readonly property string home: Quickshell.env("HOME") || "/"
@@ -1525,7 +1523,6 @@ Item {
         }
     }
 
-    // One block per page.
     Column {
         id: pageStack
 

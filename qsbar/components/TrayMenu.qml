@@ -80,7 +80,7 @@ BarPopup {
                             anchors.right: parent.right
                             height: 1
                             visible: entryItem.modelData.isSeparator
-                            color: Theme.popupBorder
+                            color: Theme.cardBorder
                         }
 
                         Text {
@@ -168,7 +168,7 @@ BarPopup {
                                     anchors.right: parent.right
                                     height: 1
                                     visible: subEntry.modelData.isSeparator
-                                    color: Theme.popupBorder
+                                    color: Theme.cardBorder
                                 }
 
                                 Text {

@@ -84,8 +84,6 @@ Item {
     implicitWidth: root.bodyWidth + root.padding * 2
     implicitHeight: header.height + root.bodyHeight + root.padding * 3
 
-    // Nothing here animates.
-
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
@@ -268,8 +266,8 @@ Item {
 
             doubleClickEnabled: true
 
+            // The right click goes to the area over the whole calendar.
             onPrimaryClicked: root.reset()
-            onSecondaryClicked: root.toggleView()
             onDoubleClicked: root.toggleView()
 
             BarText {
@@ -296,8 +294,6 @@ Item {
     }
 
     Item {
-        id: body
-
         anchors.top: header.bottom
         anchors.topMargin: root.padding
         anchors.horizontalCenter: parent.horizontalCenter
@@ -356,7 +352,6 @@ Item {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
-        hoverEnabled: false
 
         onClicked: root.toggleView()
 

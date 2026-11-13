@@ -16,7 +16,7 @@ Singleton {
     property bool available: true
     property string lastError: ""
 
-    // [{ name, description, x, y, width, height, refresh, scale, modes.
+    // [{ name, description, x, y, width, height, refresh, scale, modes }].
     property var monitors: []
 
     // What the panel is editing.
@@ -208,18 +208,7 @@ Singleton {
     }
 
     function syncDraft(): void {
-        const next = {};
-        for (const monitor of root.monitors) {
-            next[monitor.name] = {
-                x: monitor.x,
-                y: monitor.y,
-                width: monitor.width,
-                height: monitor.height,
-                refresh: monitor.refresh,
-                scale: monitor.scale
-            };
-        }
-        root.draft = next;
+        root.draft = root.liveLayout();
     }
 
     function update(name: string, changes: var): void {

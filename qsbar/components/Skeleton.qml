@@ -13,7 +13,6 @@ Rectangle {
     SequentialAnimation on opacity {
         running: root.active && root.visible
         loops: Animation.Infinite
-        alwaysRunToEnd: false
         NumberAnimation {
             from: 1.0
             to: 0.4

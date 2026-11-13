@@ -8,7 +8,7 @@ PopupWindow {
     required property Item anchorItem
     property string text: ""
     property bool shown: false
-    property int gap: 6
+    readonly property int gap: 6
 
     anchor.item: anchorItem
     anchor.rect.y: anchorItem ? anchorItem.height + root.gap : 0

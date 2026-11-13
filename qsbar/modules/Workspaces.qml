@@ -35,7 +35,6 @@ Item {
         return table;
     }
 
-    // The model, and only the model.
     property var workspaceIds: root.persistentIds
 
     onWorkspaceStateChanged: {
@@ -157,7 +156,6 @@ Item {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
-        hoverEnabled: false
         onWheel: event => {
             const steps = event.angleDelta.y;
             if (steps === 0)

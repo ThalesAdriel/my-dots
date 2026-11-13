@@ -11,8 +11,7 @@ Singleton {
 
     property bool watching: false
 
-    // [{ address, at.
-    property var clients: []
+    // hyprctl's own client objects, by address and by the id of the workspace they are on.
     property var clientByAddress: ({})
     property var clientsByWorkspace: ({})
 
@@ -136,7 +135,6 @@ Singleton {
                     byWorkspace[workspaceId].push(client);
                 }
 
-                root.clients = parsed;
                 root.clientByAddress = table;
                 root.clientsByWorkspace = byWorkspace;
             }

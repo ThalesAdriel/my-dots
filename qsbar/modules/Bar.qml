@@ -110,7 +110,7 @@ PanelWindow {
             }
 
             Loader {
-                active: Settings.showRecording && Recording.active
+                active: Recording.active
                 visible: active
                 source: "root:/modules/RecordingIndicator.qml"
             }

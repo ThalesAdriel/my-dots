@@ -15,7 +15,7 @@ Item {
     implicitWidth: Config.fieldWidth + root.outline * 2
     implicitHeight: Config.fieldHeight + root.outline * 2
 
-    opacity: (!Config.fadeOnEmpty || root.awake || Auth.length > 0 || Auth.busy || Auth.failed) ? 1 : 0
+    opacity: (root.awake || Auth.length > 0 || Auth.busy || Auth.failed) ? 1 : 0
 
     Behavior on opacity {
         NumberAnimation {
@@ -27,7 +27,7 @@ Item {
     Timer {
         id: idle
         interval: Config.fadeTimeout
-        running: Config.fadeOnEmpty
+        running: true
         onTriggered: root.awake = false
     }
 
@@ -36,8 +36,7 @@ Item {
 
         function onActivity() {
             root.awake = true;
-            if (Config.fadeOnEmpty)
-                idle.restart();
+            idle.restart();
         }
 
         function onBufferChanged() {

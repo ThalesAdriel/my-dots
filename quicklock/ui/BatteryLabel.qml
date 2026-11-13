@@ -1,8 +1,8 @@
 import Quickshell.Services.UPower
 import qs.config
-// O proprio diretorio, explicito: carregado por URL pelo Loader do StatusLine,.
-// este arquivo nao ganha a resolucao implicita de tipos irmaos, e TextLabel.
-// abaixo e' um deles.
+// Its own directory, spelled out: loaded by URL through StatusLine's Loader,
+// this file does not get the implicit resolution of sibling types, and
+// TextLabel below is one of them.
 import qs.ui
 
 // The one file that needs Quickshell.Services.UPower, loaded rather than imported from a singleton so a build without it costs this label and nothing else.

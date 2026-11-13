@@ -19,7 +19,6 @@ Rectangle {
     signal primaryClicked
     signal doubleClicked
     signal secondaryClicked
-    signal middleClicked
     signal scrolled(int steps)
 
     implicitWidth: contentRow.implicitWidth + root.leftPadding + root.rightPadding
@@ -31,9 +30,7 @@ Rectangle {
             return "transparent";
         if (mouseArea.containsPress)
             return Theme.fillPressed;
-        if (mouseArea.containsMouse)
-            return Theme.fillHover;
-        if (root.highlighted)
+        if (mouseArea.containsMouse || root.highlighted)
             return Theme.fillHover;
         return "transparent";
     }
@@ -64,8 +61,6 @@ Rectangle {
                     root.primaryClicked();
                 else if (event.button === Qt.RightButton)
                     root.secondaryClicked();
-                else if (event.button === Qt.MiddleButton)
-                    root.middleClicked();
             }
 
             onDoubleClicked: event => {

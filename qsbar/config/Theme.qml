@@ -34,15 +34,14 @@ Singleton {
     readonly property color surfaceBase: Settings.surfaceColor
     readonly property color popupTint: Qt.lighter(surfaceBase, 1.35)
     readonly property color popupBackground: Qt.rgba(popupTint.r, popupTint.g, popupTint.b, Settings.panelOpacity)
-    readonly property color popupBorder: Qt.rgba(1, 1, 1, 0.18)
 
     // Lifted by laying white over the surface rather than with Qt.lighter.
     readonly property color cardTint: Qt.tint(surfaceBase, Qt.rgba(1, 1, 1, 0.08))
     readonly property color cardBackground: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, Math.min(Settings.panelOpacity + 0.06, 1))
 
-    // The settings sheet covers the control center rather than blending into it.
-    readonly property color settingsBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
-    readonly property color settingsCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
+    // Opaque: the settings sheet covers what is under it, and a window preview in the overview carries its own alpha.
+    readonly property color solidBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
+    readonly property color solidCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
     readonly property string barLayerNamespace: {
         if (Settings.panelBlur)
             return "qsbar-blur-popups";
@@ -53,10 +52,6 @@ Singleton {
     // The panels welded to the bar bring their own entrance, sliding down out from under it behind their own clip.
     readonly property string popupLayerNamespace: Settings.panelBlur ? "qsbar-blur-panel" : "qsbar-panel"
 
-    // A window preview carries its own alpha.
-    readonly property color overviewBackground: Qt.rgba(surfaceBase.r, surfaceBase.g, surfaceBase.b, 1)
-    readonly property color overviewCard: Qt.rgba(cardTint.r, cardTint.g, cardTint.b, 1)
-    readonly property string overviewLayerNamespace: "qsbar"
     readonly property color cardBorder: Qt.rgba(1, 1, 1, 0.18)
     readonly property int cardRadius: Settings.panelRadius
 

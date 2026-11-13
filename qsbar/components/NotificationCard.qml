@@ -9,8 +9,7 @@ Rectangle {
     id: root
 
     required property var notification
-    property int padding: 16
-    property bool showActions: true
+    readonly property int padding: 16
 
     signal closeRequested
 
@@ -35,7 +34,7 @@ Rectangle {
         }
         return null;
     }
-    readonly property var actionList: root.showActions ? root.actions.filter(action => action.identifier !== "default") : []
+    readonly property var actionList: root.actions.filter(action => action.identifier !== "default")
 
     // Only set when this really is a screenshot and the file it saved is still on disk for an editor to open.
     readonly property string screenshotPath: root.valid ? Notifications.screenshotPath(root.notification) : ""
