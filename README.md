@@ -4,13 +4,34 @@
 
 ### Requirements
 
+- Arch Linux (uses `pacman` and `sudo`)
 - `git`, to clone this repo
-- `rsync`, which the script uses to copy the configs
+- `rsync`, used to sync configs *(installed automatically when running `full`)*
 
 ### Usage
 
-    ./install.sh [fonts|apps|config|full]
+Run interactively with a menu:
 
+```sh
+./install.sh
+```
+
+Or pass a command directly:
+
+```sh
+./install.sh [fonts|apps|config|full|greeter|--update]
+```
+
+| Command | What it does |
+| --- | --- |
+| `fonts` | Installs the font packages only |
+| `apps` | Installs shell & app packages (optional Bluetooth), enables services, and applies post-install fixes |
+| `config` | Syncs dotfiles into `~/.config` (backing up replaced files to `~/.config_backup_*`) and installs `quickgreet` |
+| `full` | Full setup: fonts, programs, configs, login screen, services, and post-install fixes |
+| `greeter` | Installs/updates only the `quickgreet` login screen (`/usr/share/quickgreet`) and enables `greetd` |
+| `update` / `--update` | Updates dotfiles cleanly without creating backup folders, preserving local customizations (`theme.lua`, `monitors.lua`, `gaming.lua`, `autostart.lua`, `hypridle.conf`, `quicklock.json`, `quickgreet.json`) and refreshing `quickgreet` if installed |
+
+> **Tip:** Run `./install.sh` as your normal user (not `root`) — it calls `sudo` only when needed.
 
 OBS: Some of my configs are still messy or broken. I plan to clean and fix them later. I’m publishing this now because a few of my friends showed interest.
 
@@ -18,15 +39,14 @@ OBS: Some of my configs are still messy or broken. I plan to clean and fix them 
 <summary>Screenshots</summary>
 
   ![alt text](screenshots/Screenshot_01.png "Screenshot")
-  ![alt text](screenshots/Screenshot_02.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_03.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_04.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_05.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_06.png "Screenshot"))
-  ![alt text](screenshots/Screenshot_07.png "Screenshot"))
+  ![alt text](screenshots/Screenshot_02.png "Screenshot")
+  ![alt text](screenshots/Screenshot_03.png "Screenshot")
+  ![alt text](screenshots/Screenshot_04.png "Screenshot")
+  ![alt text](screenshots/Screenshot_05.png "Screenshot")
+  ![alt text](screenshots/Screenshot_06.png "Screenshot")
+  ![alt text](screenshots/Screenshot_07.png "Screenshot")
 
 </details>
-
 
 [My wallpaper](https://www.wikiart.org/en/claude-monet/the-promenade-woman-with-a-parasol) is slightly modified artwork of Claude Monet
 
@@ -49,4 +69,3 @@ Credits to the people who helped me achieve my 'rice':
 [JaKooLit](https://github.com/JaKooLit/Hyprland-Dots)
 
 [Samillion](https://github.com/Samillion/ModernZ)
-
