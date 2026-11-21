@@ -366,6 +366,94 @@ Item {
         }
 
         // The form: one password field for a personal network, the whole 802.1X set for an enterprise one.
+        // VPN / WireGuard connections managed by NetworkManager.
+        Column {
+            id: vpnSection
+
+            width: parent.width
+            spacing: 8
+            visible: Network.available && Network.vpns.length > 0
+
+            Text {
+                text: "VPN"
+                color: Theme.textMuted
+                font.family: Theme.sansFamily
+                font.pixelSize: Theme.fontSizeSmall
+                font.weight: Theme.fontWeightStrong
+                font.capitalization: Font.AllUppercase
+            }
+
+            Repeater {
+                model: Network.vpns
+
+                delegate: Card {
+                    id: vpnCard
+
+                    required property var modelData
+
+                    width: vpnSection.width
+                    height: 44
+
+                    Row {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 12
+                        anchors.right: vpnAction.left
+                        anchors.rightMargin: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 10
+
+                        IconText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            fillBarHeight: false
+                            text: Glyphs.shield
+                            color: vpnCard.modelData.active ? Theme.accent : Theme.textMuted
+                            font.pixelSize: Theme.fontSizeSmall
+                        }
+
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - 26
+                            spacing: 1
+
+                            Text {
+                                width: parent.width
+                                textFormat: Text.PlainText
+                                text: vpnCard.modelData.name
+                                color: Theme.textPrimary
+                                font.family: Theme.sansFamily
+                                font.pixelSize: Theme.fontSizeSmall
+                                font.weight: vpnCard.modelData.active ? Theme.fontWeightStrong : Theme.fontWeightRegular
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                width: parent.width
+                                textFormat: Text.PlainText
+                                text: vpnCard.modelData.active ? ("Connected · " + vpnCard.modelData.type) : vpnCard.modelData.type
+                                color: vpnCard.modelData.active ? Theme.accent : Theme.textMuted
+                                font.family: Theme.sansFamily
+                                font.pixelSize: Theme.fontSizeSmall - 1
+                                elide: Text.ElideRight
+                            }
+                        }
+                    }
+
+                    PanelButton {
+                        id: vpnAction
+
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        label: vpnCard.modelData.active ? "Disconnect" : "Connect"
+                        accented: !vpnCard.modelData.active
+                        available: !Network.busy
+                        onActivated: Network.toggleVpn(vpnCard.modelData.name, vpnCard.modelData.active)
+                    }
+                }
+            }
+        }
+
         Column {
             id: form
 

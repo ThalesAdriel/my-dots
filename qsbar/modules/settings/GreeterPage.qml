@@ -18,7 +18,7 @@ Column {
         width: parent.width
         visible: GreetConfig.missing && !SettingsContext.searching
         warning: true
-        text: "quickgreet is not installed, so nothing on this page is saved. Run sudo ./install.sh --greeter from the dotfiles first."
+        text: "quickgreet is not installed, so nothing on this page is saved. Run ./install.sh config from the dotfiles first."
     }
 
     PanelMessage {

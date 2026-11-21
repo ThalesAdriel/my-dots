@@ -48,6 +48,8 @@ Item {
             return "settings/GeneralPage.qml";
         case "displays":
             return "settings/DisplaysPage.qml";
+        case "connections":
+            return "settings/ConnectionsPage.qml";
         case "lock":
             return "settings/LockPage.qml";
         case "greeter":

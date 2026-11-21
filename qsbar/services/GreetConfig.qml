@@ -175,7 +175,7 @@ Singleton {
 
         onExited: exitCode => {
             if (exitCode === 127)
-                root.lastError = "quickgreet is not installed: run sudo ./install.sh --greeter from the dotfiles";
+                root.lastError = "quickgreet is not installed: run ./install.sh config from the dotfiles";
         }
     }
 

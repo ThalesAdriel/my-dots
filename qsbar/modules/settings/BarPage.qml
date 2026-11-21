@@ -83,6 +83,12 @@ Column {
         }
 
         ToggleRow {
+            label: "VPN (always shown when active)"
+            checked: Settings.showVpn
+            onToggled: Settings.showVpn = !Settings.showVpn
+        }
+
+        ToggleRow {
             label: "Bluetooth"
             checked: Settings.showBluetooth
             onToggled: Settings.showBluetooth = !Settings.showBluetooth

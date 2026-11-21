@@ -30,6 +30,7 @@ Singleton {
 
     // The four bar modules that stay off until asked for: each costs a polled process while it is on.
     property alias showNetwork: adapter.showNetwork
+    property alias showVpn: adapter.showVpn
     property alias showBluetooth: adapter.showBluetooth
     property alias showBattery: adapter.showBattery
     property alias showRecording: adapter.showRecording
@@ -113,6 +114,7 @@ Singleton {
         adapter.moduleSpacing = 0;
         adapter.workspaceSpacing = 2;
         adapter.showNetwork = false;
+        adapter.showVpn = false;
         adapter.showBluetooth = false;
         adapter.showBattery = false;
         adapter.showRecording = false;
@@ -176,6 +178,7 @@ Singleton {
             property int workspaceSpacing: 2
 
             property bool showNetwork: false
+            property bool showVpn: false
             property bool showBluetooth: false
             property bool showBattery: false
             property bool showRecording: false

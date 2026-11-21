@@ -45,6 +45,11 @@ Scope {
             glyph: Glyphs.desktop
         },
         {
+            key: "connections",
+            title: "Network & Bluetooth",
+            glyph: Glyphs.wifi
+        },
+        {
             key: "lock",
             title: "Lock screen",
             glyph: Glyphs.lock

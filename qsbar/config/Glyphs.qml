@@ -42,6 +42,7 @@ Singleton {
     // One wifi glyph for every strength.
     readonly property string wifi: ""
     readonly property string networkWired: ""
+    readonly property string shield: ""
     readonly property string rotate: ""
     readonly property string eye: ""
     readonly property string eyeSlash: ""

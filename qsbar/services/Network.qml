@@ -9,8 +9,9 @@ import "root:/config"
 Singleton {
     id: root
 
-    // Nothing runs until the module is on screen.
-    readonly property bool enabled: Settings.showNetwork
+    // Nothing runs until the network/VPN bar module or Settings page is open.
+    property bool pageOpen: false
+    readonly property bool enabled: Settings.showNetwork || Settings.showVpn || root.pageOpen
 
     // The panel needs the access point list and the saved profiles and the bar needs neither.
     property bool detailed: false
@@ -32,6 +33,27 @@ Singleton {
     // [{ ssid, signal, security, enterprise, active }].
     property var accessPoints: []
     property var savedNames: []
+    // [{ name, type, active }] for WireGuard and NetworkManager VPN profiles.
+    property var vpns: []
+    property var activeVpnNames: []
+
+    readonly property var activeVpns: {
+        const list = [];
+        for (const name of root.activeVpnNames) {
+            list.push(name);
+        }
+        return list;
+    }
+    readonly property bool vpnConnected: root.activeVpnNames.length > 0
+    readonly property string vpnSummary: {
+        if (!root.available)
+            return "NetworkManager not found";
+        if (root.activeVpnNames.length === 1)
+            return "VPN: " + root.activeVpnNames[0];
+        if (root.activeVpnNames.length > 1)
+            return "VPN: " + root.activeVpnNames.length + " active";
+        return "VPN disconnected";
+    }
 
     readonly property var wifiDevice: {
         for (const device of root.devices) {
@@ -205,6 +227,41 @@ Singleton {
         root.runQueue([["nmcli", "connection", "delete", "id", name]], "");
     }
 
+    function connectVpn(name: string): void {
+        if (!root.usableName(name))
+            return;
+
+        root.runQueue([["nmcli", "connection", "up", "id", name]], "");
+    }
+
+    function disconnectVpn(name: string): void {
+        if (!root.usableName(name))
+            return;
+
+        root.runQueue([["nmcli", "connection", "down", "id", name]], "");
+    }
+
+    function toggleVpn(name: string, currentlyActive: bool): void {
+        if (currentlyActive)
+            root.disconnectVpn(name);
+        else
+            root.connectVpn(name);
+    }
+
+    function importWireguard(path: string): void {
+        const raw = String(path || "").trim();
+        if (raw === "")
+            return;
+        const home = Quickshell.env("HOME") || "/home";
+        const cleaned = raw.startsWith("file://") ? raw.slice(7) : raw;
+        const full = cleaned.startsWith("~/") ? home + cleaned.slice(1) : cleaned;
+        if (!full.startsWith("/")) {
+            root.lastError = "Not an absolute path: " + raw;
+            return;
+        }
+        root.runQueue([["nmcli", "connection", "import", "type", "wireguard", "file", full]], "");
+    }
+
     // Commands run one after the other and stop at the first failure.
     property var queue: []
     property string queueSecret: ""
@@ -258,7 +315,9 @@ else
 fi
 echo "#saved"
 if [ "$1" = full ]; then
-    nmcli -t -f NAME,TYPE connection show 2>/dev/null
+    nmcli -t -f NAME,TYPE,ACTIVE connection show 2>/dev/null
+else
+    nmcli -t -f NAME,TYPE connection show --active 2>/dev/null
 fi
 exit 0`
 
@@ -266,6 +325,8 @@ exit 0`
         const devices = [];
         const points = [];
         const saved = [];
+        const vpns = [];
+        const activeVpns = [];
         let section = "";
 
         for (const line of text.split("\n")) {
@@ -300,14 +361,45 @@ exit 0`
                     enterprise: security.indexOf("802.1X") !== -1,
                     active: fields[0] === "*"
                 });
-            } else if (section === "saved" && fields.length >= 2 && fields[1] === "802-11-wireless") {
-                saved.push(fields[0]);
+            } else if (section === "saved" && fields.length >= 2) {
+                const connName = fields[0];
+                const connType = fields[1];
+                if (full) {
+                    const isActive = fields.length >= 3 && fields[2] === "yes";
+                    if (connType === "802-11-wireless")
+                        saved.push(connName);
+                    if (connType === "wireguard" || connType === "vpn") {
+                        vpns.push({
+                            name: connName,
+                            type: connType,
+                            active: isActive
+                        });
+                        if (isActive && activeVpns.indexOf(connName) === -1)
+                            activeVpns.push(connName);
+                    }
+                } else {
+                    if ((connType === "wireguard" || connType === "vpn") && activeVpns.indexOf(connName) === -1)
+                        activeVpns.push(connName);
+                }
+            }
+        }
+
+        // Also catch WireGuard interfaces reported in #devices even if connection metadata differs.
+        for (const dev of devices) {
+            if (dev.type === "wireguard" && dev.state === "connected") {
+                const label = dev.connection || dev.device;
+                if (label && activeVpns.indexOf(label) === -1)
+                    activeVpns.push(label);
             }
         }
 
         root.devices = devices;
-        if (full)
+        root.activeVpnNames = activeVpns;
+        if (full) {
             root.savedNames = saved;
+            vpns.sort((a, b) => (a.active === b.active) ? a.name.localeCompare(b.name) : (a.active ? -1 : 1));
+            root.vpns = vpns;
+        }
 
         // A brief read only ever carries the active access point.
         root.accessPoints = full ? points : root.mergeActive(points);

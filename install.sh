@@ -59,6 +59,7 @@ nautilus
 ncdu
 nwg-look
 polkit
+rsync
 satty
 slurp
 starship
@@ -83,6 +84,17 @@ bluez-utils
 SERVICES="
 NetworkManager.service
 power-profiles-daemon.service
+"
+
+# User-customized files preserved during --update if they already exist in $CONFIG_DIR.
+LOCAL_CONFIGS="
+hypr/hyprland/theme.lua
+hypr/hyprland/monitors.lua
+hypr/hyprland/gaming.lua
+hypr/hyprland/autostart.lua
+hypr/hypridle.conf
+quicklock/quicklock.json
+quickgreet/quickgreet.json
 "
 
 WANT_BLUETOOTH=no
@@ -117,9 +129,13 @@ check_environment() {
     have pacman || die "this installer is for Arch and pacman is not here"
 }
 
-check_dotfiles() {
+check_dotfiles_dir() {
     [ -d "$SCRIPT_DIR/hypr" ] || die "no hypr/ next to $SELF; run it from inside the dotfiles folder"
-    have rsync || die "rsync is not installed"
+}
+
+check_dotfiles() {
+    check_dotfiles_dir
+    have rsync || die "rsync is not installed (run: sudo pacman -S rsync)"
 }
 
 install_packages() {
@@ -135,33 +151,89 @@ app_packages() {
     echo "$packages"
 }
 
-install_config() {
-    backup="$HOME/.config_backup_$(date +%Y%m%d_%H%M%S)"
-    mkdir -m 700 "$backup"
-
-    echo "==> Copying dotfiles -> $CONFIG_DIR"
-    rsync -a --info=stats1 \
-        --chmod=D755,F644 \
-        --backup --backup-dir="$backup" \
-        --exclude=".git/" \
-        --exclude=".gitignore" \
-        --exclude="README*" \
-        --exclude="LICENSE*" \
-        --exclude="$SELF" \
-        "$SCRIPT_DIR/" "$CONFIG_DIR/"
-
-    if rmdir "$backup" 2>/dev/null; then
-        echo "  nothing was replaced, no backup kept"
-    else
-        echo "  replaced files saved in $backup"
-    fi
-
+mark_executables() {
     echo "==> Marking scripts as executable"
     LC_ALL=C find "$SCRIPT_DIR" -name .git -prune -o -type f -exec \
         awk -v src="$SCRIPT_DIR/" 'FNR == 1 && /^(#!|\177ELF)/ { print substr(FILENAME, length(src) + 1) } { nextfile }' {} + |
         while IFS= read -r file; do
             [ ! -f "$CONFIG_DIR/$file" ] || chmod 755 "$CONFIG_DIR/$file"
         done
+}
+
+# Sync each top-level folder individually with --delete so removed repo files are cleaned up
+# without ever touching unrelated folders in $CONFIG_DIR.
+# Mode: "install" (backs up replaced files) or "update" (no backup clutter, preserves LOCAL_CONFIGS).
+sync_dotfiles() {
+    mode=$1
+    backup=""
+
+    if [ "$mode" = install ]; then
+        backup="$HOME/.config_backup_$(date +%Y%m%d_%H%M%S)"
+        mkdir -m 700 "$backup"
+        echo "==> Syncing dotfiles -> $CONFIG_DIR (with backup)"
+    else
+        echo "==> Updating dotfiles -> $CONFIG_DIR (preserving local customizations)"
+    fi
+
+    mkdir -p "$CONFIG_DIR"
+
+    for dir in "$SCRIPT_DIR"/*/; do
+        [ -d "$dir" ] || continue
+        name=$(basename "$dir")
+        case "$name" in
+            .git) continue ;;
+        esac
+
+        mkdir -p "$CONFIG_DIR/$name"
+
+        set -- -a --delete --info=stats1 \
+            --chmod=D755,F644 \
+            --exclude=".git/" \
+            --exclude=".gitignore" \
+            --exclude="README*" \
+            --exclude="LICENSE*" \
+            --exclude="$SELF"
+
+        if [ "$mode" = install ]; then
+            mkdir -p "$backup/$name"
+            set -- "$@" --backup --backup-dir="$backup/$name"
+        else
+            for rel in $LOCAL_CONFIGS; do
+                case "$rel" in
+                    "$name"/*)
+                        sub=${rel#"$name"/}
+                        if [ -e "$CONFIG_DIR/$rel" ]; then
+                            set -- "$@" --exclude="/$sub" --filter="P /$sub"
+                        fi
+                        ;;
+                esac
+            done
+        fi
+
+        rsync "$@" "$dir" "$CONFIG_DIR/$name/"
+
+        if [ "$mode" = install ]; then
+            rmdir "$backup/$name" 2>/dev/null || true
+        fi
+    done
+
+    if [ "$mode" = install ]; then
+        if rmdir "$backup" 2>/dev/null; then
+            echo "  nothing was replaced, no backup kept"
+        else
+            echo "  replaced files saved in $backup"
+        fi
+    fi
+
+    mark_executables
+}
+
+install_config() {
+    sync_dotfiles install
+}
+
+update_config() {
+    sync_dotfiles update
 }
 
 hypr_input() {
@@ -201,7 +273,7 @@ install_greeter() {
 }
 
 enable_unit() {
-    if systemctl list-unit-files "$1" >/dev/null 2>&1; then
+    if systemctl cat "$1" >/dev/null 2>&1; then
         sudo systemctl enable --now "$1" || echo "  could not enable $1"
     else
         echo "  $1 is not installed, skipping"
@@ -234,8 +306,12 @@ post_fixes() {
         gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
     fi
 
-    sudo usermod -aG gamemode "$(id -un)"
-    echo "  added to the gamemode group, log out and back in to apply it"
+    if getent group gamemode >/dev/null 2>&1; then
+        sudo usermod -aG gamemode "$(id -un)"
+        echo "  added to the gamemode group, log out and back in to apply it"
+    else
+        echo "  gamemode group not found, skipping usermod"
+    fi
 }
 
 run_fonts() {
@@ -256,11 +332,20 @@ run_config() {
     install_greeter
 }
 
-run_full() {
+run_update() {
     check_dotfiles
+    update_config
+    if [ -d /usr/share/quickgreet ]; then
+        install_greeter
+    fi
+}
+
+run_full() {
+    check_dotfiles_dir
     confirm "Full install: overwrites $CONFIG_DIR, installs the login screen and every package listed. Continue?" || die "cancelled"
     ask_bluetooth
     install_packages $FONTS $(app_packages)
+    have rsync || die "rsync is still not available after package install"
     install_config
     install_greeter
     enable_services
@@ -268,7 +353,7 @@ run_full() {
 }
 
 run_greeter() {
-    have rsync || die "rsync is not installed"
+    have rsync || die "rsync is not installed (run: sudo pacman -S rsync)"
     [ -d "$CONFIG_DIR/quickgreet" ] || die "no quickgreet/ in $CONFIG_DIR; install the config files first"
     confirm "Login screen only: installs greetd if missing, copies $CONFIG_DIR/quickgreet to /usr/share/quickgreet and enables greetd. Continue?" || die "cancelled"
     id greeter >/dev/null 2>&1 || install_packages greetd
@@ -282,8 +367,9 @@ menu() {
     echo "3) Config files only"
     echo "4) Full install (config + fonts + programs)"
     echo "5) Login screen only"
-    echo "6) Quit"
-    printf "Choose [1-6]: "
+    echo "6) Update configs (keep local settings, no backups)"
+    echo "7) Quit"
+    printf "Choose [1-7]: "
     read -r choice
 
     case "$choice" in
@@ -292,7 +378,8 @@ menu() {
         3) run_config ;;
         4) run_full ;;
         5) run_greeter ;;
-        6) echo "Bye"; exit 0 ;;
+        6) run_update ;;
+        7) echo "Bye"; exit 0 ;;
         *) die "invalid choice" ;;
     esac
 }
@@ -305,8 +392,9 @@ case "${1:-}" in
     config) run_config ;;
     full) run_full ;;
     greeter) run_greeter ;;
+    update | --update) run_update ;;
     "") menu ;;
-    *) die "unknown command '$1'; use fonts, apps, config, full or greeter" ;;
+    *) die "unknown command '$1'; use fonts, apps, config, full, greeter or --update" ;;
 esac
 
 echo "DONE!"

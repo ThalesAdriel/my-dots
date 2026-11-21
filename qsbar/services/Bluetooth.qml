@@ -9,7 +9,8 @@ import "root:/config"
 Singleton {
     id: root
 
-    readonly property bool enabled: Settings.showBluetooth
+    property bool pageOpen: false
+    readonly property bool enabled: Settings.showBluetooth || root.pageOpen
 
     property bool detailed: false
 
