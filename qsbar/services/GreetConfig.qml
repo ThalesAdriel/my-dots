@@ -25,6 +25,9 @@ Singleton {
     property alias border: adapter.border
     property alias rounding: adapter.rounding
     property alias uiScale: adapter.scale
+    property alias showClock: adapter.showClock
+    property alias showBattery: adapter.showBattery
+    property alias followPointer: adapter.followPointer
 
     // Not installed yet: there is no file, and nowhere to write one.
     property bool missing: false
@@ -119,6 +122,9 @@ Singleton {
         adapter.border = "brackets";
         adapter.rounding = 0;
         adapter.scale = 1;
+        adapter.showClock = true;
+        adapter.showBattery = true;
+        adapter.followPointer = true;
         root.setPicture("wallpaper", "");
         root.setPicture("avatar", "");
     }
@@ -164,11 +170,12 @@ Singleton {
     Process {
         id: tester
 
-        command: ["sh", "-c", "for q in /usr/share/quickgreet/quickgreet \"${XDG_CONFIG_HOME:-$HOME/.config}/quickgreet/quickgreet\"; do [ -x \"$q\" ] && exec \"$q\"; done; exit 127"]
+        // Prefer the user's config copy when testing so local edits show up immediately; fall back to system install.
+        command: ["sh", "-c", "for q in \"${XDG_CONFIG_HOME:-$HOME/.config}/quickgreet/quickgreet\" /usr/share/quickgreet/quickgreet; do [ -x \"$q\" ] && exec \"$q\"; done; exit 127"]
 
         onExited: exitCode => {
             if (exitCode === 127)
-                root.lastError = "quickgreet is not installed: run ./install.sh config from the dotfiles";
+                root.lastError = "quickgreet is not installed: run sudo ./install.sh --greeter from the dotfiles";
         }
     }
 
@@ -212,6 +219,9 @@ Singleton {
             property string border: "brackets"
             property int rounding: 0
             property real scale: 1
+            property bool showClock: true
+            property bool showBattery: true
+            property bool followPointer: true
         }
     }
 

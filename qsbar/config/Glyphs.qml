@@ -11,6 +11,7 @@ Singleton {
 
     // The backlight, on the control center slider and on the XF86MonBrightness notification.
     readonly property string sun: ""
+    readonly property string moon: ""
 
     readonly property string bell: ""
     readonly property string bellOff: ""

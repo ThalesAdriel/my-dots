@@ -1,4 +1,22 @@
-local theme = require("hyprland.theme")
+local default_theme = {
+	cursor_theme = "Adwaita",
+	cursor_size = 24,
+	icon_theme = "Adwaita",
+	gtk_theme = "Adwaita",
+	color_scheme = "prefer-dark",
+	title_buttons = "close",
+}
+local ok, loaded_theme = pcall(require, "hyprland.theme")
+local theme = default_theme
+if ok and type(loaded_theme) == "table" then
+	theme = {}
+	for k, v in pairs(default_theme) do
+		theme[k] = v
+	end
+	for k, v in pairs(loaded_theme) do
+		theme[k] = v
+	end
+end
 
 local home = os.getenv("HOME")
 local quickshell_env = "export MALLOC_CONF=narenas:2,background_thread:true; f=/usr/share/glvnd/egl_vendor.d/10_nvidia.json; [ -e $f ] && ! ls -l /sys/class/drm/card[0-9]/device/driver /sys/class/drm/card[0-9][0-9]/device/driver 2>/dev/null | grep -qv '/nvidia$' && export __EGL_VENDOR_LIBRARY_FILENAMES=$f; "
@@ -45,10 +63,4 @@ hl.on("hyprland.start", function()
 
 	hl.exec_cmd(table.concat(interface, "; "))
 	hl.exec_cmd("hyprctl setcursor " .. theme.cursor_theme .. " " .. theme.cursor_size)
-
-	hl.exec_cmd("xhost si:localuser:root")
-
-	hl.timer(function()
-		hl.exec_cmd("flatpak run org.qbittorrent.qBittorrent")
-	end, { timeout = 4000, type = "oneshot" })
 end)

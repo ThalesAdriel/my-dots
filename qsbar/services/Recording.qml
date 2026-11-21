@@ -11,9 +11,9 @@ Singleton {
 
     readonly property bool enabled: Settings.showRecording
 
-    // The probe walks every process in /proc and reads each cmdline.
+    // The probe scans /proc/*/comm with shell builtins (0 child forks when idle).
     readonly property int idleInterval: 10000
-    readonly property int activeInterval: 2500
+    readonly property int activeInterval: 5000
     readonly property int interval: root.active ? root.activeInterval : root.idleInterval
 
     property bool active: false
@@ -29,15 +29,26 @@ Singleton {
         return hours > 0 ? hours + ":" + padded(minutes) + ":" + padded(seconds) : minutes + ":" + padded(seconds);
     }
 
-    // pgrep -x matches /proc/<pid>/comm, truncated to 15 characters, and gpu-screen-recorder is 19 long.
-    readonly property string script: `command -v pgrep >/dev/null 2>&1 || exit 127
-for pid in $(pgrep -f gpu-screen-recorder 2>/dev/null); do
-    first=$(tr '\\000' '\\n' < "/proc/$pid/cmdline" 2>/dev/null | head -n 1)
+    // /proc/<pid>/comm truncates "gpu-screen-recorder" (19 chars) to 15 chars: "gpu-screen-reco".
+    // Filtering comm first avoids spawning pgrep -f and reading every process's cmdline on the system.
+    readonly property string script: `for f in /proc/[0-9]*/comm; do
+    read -r c <"$f" 2>/dev/null || continue
+    [ "$c" = "gpu-screen-reco" ] || continue
+    pid=\${f#/proc/}; pid=\${pid%/comm}
+    cmd=$(tr '\\000' '\\n' <"/proc/$pid/cmdline" 2>/dev/null) || continue
+    first=\${cmd%%
+*}
     case "$first" in
         */gpu-screen-recorder|gpu-screen-recorder) ;;
         *) continue ;;
     esac
-    grep -qzx -- "-r" "/proc/$pid/cmdline" 2>/dev/null && continue
+    case "
+$cmd
+" in
+        *"
+-r
+"*) continue ;;
+    esac
     ps -o etimes= -p "$pid" 2>/dev/null | tr -d " "
     exit 0
 done
@@ -65,7 +76,7 @@ exit 0`
         }
     }
 
-    // Runs on the tick rather than counting locally.
+    // Resyncs against /proc on the probe interval.
     Timer {
         interval: root.interval
         running: root.enabled
@@ -75,6 +86,14 @@ exit 0`
             if (!probe.running)
                 probe.running = true;
         }
+    }
+
+    // Smooth 1s local tick while recording, without extra subprocesses.
+    Timer {
+        interval: 1000
+        running: root.enabled && root.active
+        repeat: true
+        onTriggered: root.elapsed += 1
     }
 
     onEnabledChanged: {

@@ -112,14 +112,15 @@ Singleton {
             return;
 
         // Carried on the process rather than read off root when it exits.
+        readProcess.full = root.detailed;
         readProcess.rescanning = root.scanning;
-        readProcess.command = ["sh", "-c", root.readScript, "qsbar-network", root.detailed ? "full" : "brief", root.scanning ? "rescan" : "cache"];
+        readProcess.command = ["sh", "-c", root.readScript, "qsbar-network", readProcess.full ? "full" : "brief", readProcess.rescanning ? "rescan" : "cache"];
         readProcess.running = true;
     }
 
     // A scan is a request, not a command.
     function rescan(): void {
-        if (root.scanning || !root.available)
+        if (root.scanning || !root.enabled || !root.available)
             return;
 
         root.scanning = true;
@@ -209,7 +210,7 @@ Singleton {
     property string queueSecret: ""
 
     function runQueue(commands: var, secret: string): void {
-        if (root.busy)
+        if (root.busy || !root.available)
             return;
 
         root.busy = true;
@@ -261,7 +262,7 @@ if [ "$1" = full ]; then
 fi
 exit 0`
 
-    function parse(text: string): void {
+    function parse(text: string, full: bool): void {
         const devices = [];
         const points = [];
         const saved = [];
@@ -305,10 +306,11 @@ exit 0`
         }
 
         root.devices = devices;
-        root.savedNames = saved;
+        if (full)
+            root.savedNames = saved;
 
         // A brief read only ever carries the active access point.
-        root.accessPoints = root.detailed ? points : root.mergeActive(points);
+        root.accessPoints = full ? points : root.mergeActive(points);
     }
 
     function mergeActive(points: var): var {
@@ -335,19 +337,26 @@ exit 0`
     Process {
         id: readProcess
 
+        property bool full: false
         property bool rescanning: false
 
         stdout: StdioCollector {
-            onStreamFinished: root.parse(this.text)
+            onStreamFinished: root.parse(this.text, readProcess.full)
         }
 
         onExited: (exitCode, exitStatus) => {
             root.available = exitCode !== 127;
-            if (!root.available)
+            if (!root.available) {
                 root.lastError = "nmcli is not installed";
+                root.scanning = false;
+                return;
+            }
 
             if (readProcess.rescanning)
                 root.scanning = false;
+
+            if (root.enabled && ((root.detailed && !readProcess.full) || (root.scanning && !readProcess.rescanning)))
+                root.refresh();
         }
     }
 
@@ -421,6 +430,7 @@ exit 0`
         if (root.enabled) {
             root.refresh();
         } else {
+            root.scanning = false;
             monitorProcess.running = false;
             settleTimer.stop();
         }

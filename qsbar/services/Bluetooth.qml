@@ -53,7 +53,8 @@ Singleton {
         if (!root.enabled || readProcess.running)
             return;
 
-        readProcess.command = ["sh", "-c", root.readScript, "qsbar-bluetooth", root.detailed ? "full" : "brief"];
+        readProcess.full = root.detailed;
+        readProcess.command = ["sh", "-c", root.readScript, "qsbar-bluetooth", readProcess.full ? "full" : "brief"];
         readProcess.running = true;
     }
 
@@ -62,7 +63,7 @@ Singleton {
     }
 
     function scan(): void {
-        if (root.scanning)
+        if (root.scanning || !root.enabled || !root.available || !root.powered)
             return;
 
         root.scanning = true;
@@ -122,7 +123,7 @@ Singleton {
     property var queue: []
 
     function runQueue(commands: var): void {
-        if (root.busy)
+        if (root.busy || !root.available)
             return;
 
         root.stopScan();
@@ -220,14 +221,21 @@ exit 0`
     Process {
         id: readProcess
 
+        property bool full: false
+
         stdout: StdioCollector {
             onStreamFinished: root.parse(this.text)
         }
 
         onExited: (exitCode, exitStatus) => {
             root.available = exitCode !== 127;
-            if (!root.available)
+            if (!root.available) {
                 root.lastError = "bluetoothctl is not installed";
+                return;
+            }
+
+            if (root.enabled && root.detailed && !readProcess.full)
+                root.refresh();
         }
     }
 
@@ -272,7 +280,11 @@ exit 0`
     Process {
         id: scanProcess
         command: ["bluetoothctl", "--timeout", "12", "scan", "on"]
-        onExited: root.refresh()
+        onExited: {
+            scanTimer.stop();
+            root.scanning = false;
+            root.refresh();
+        }
     }
 
     // The bluez counterpart of `nmcli monitor`, and the reason this is not a ten second poll any more.
@@ -321,6 +333,7 @@ exit 0`
         if (root.enabled) {
             root.refresh();
         } else {
+            root.stopScan();
             monitorProcess.running = false;
             settleTimer.stop();
         }
@@ -329,5 +342,7 @@ exit 0`
     onDetailedChanged: {
         if (root.detailed)
             root.refresh();
+        else
+            root.stopScan();
     }
 }

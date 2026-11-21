@@ -29,6 +29,9 @@ Singleton {
 
     readonly property string border: settings.border
     readonly property int rounding: settings.rounding
+    readonly property bool showClock: settings.showClock
+    readonly property bool showBattery: settings.showBattery
+    readonly property bool followPointer: settings.followPointer
 
     // On top of following the screen's height, which Surface does.
     readonly property real uiScale: Math.max(0.5, Math.min(2, settings.scale))
@@ -236,6 +239,9 @@ Singleton {
             property string border: "brackets"
             property int rounding: 0
             property real scale: 1
+            property bool showClock: true
+            property bool showBattery: true
+            property bool followPointer: true
         }
     }
 }

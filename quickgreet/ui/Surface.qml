@@ -8,6 +8,7 @@ Item {
     id: root
 
     property bool menuOpen: false
+    readonly property alias battery: battery
 
     // The mockup was drawn at 1080 lines.
     readonly property real factor: Config.uiScale * root.height / 1080
@@ -131,6 +132,60 @@ Item {
                 open: root.menuOpen
                 onPicked: root.menuOpen = false
             }
+        }
+
+        // Clock & date centered cleanly in the space above the login card.
+        Item {
+            id: clockHolder
+
+            visible: Config.showClock
+            readonly property real cardTop: (parent.height - Config.cardHeight * root.factor) / 2
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Math.max(20 * root.factor, (cardTop - height * root.factor) / 2)
+            width: clockColumn.implicitWidth
+            height: clockColumn.implicitHeight
+
+            transformOrigin: Item.Top
+            scale: root.factor
+
+            Column {
+                id: clockColumn
+
+                spacing: 4
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    text: Clock.time
+                    color: Config.text
+                    font.family: Config.fontFamily
+                    font.pixelSize: 64
+                    font.weight: Font.Light
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    text: Clock.date
+                    color: Config.muted
+                    font.family: Config.fontFamily
+                    font.pixelSize: Config.textSize + 3
+                }
+            }
+        }
+
+        // Battery indicator in the bottom-right status corner, clear of power buttons and session menu.
+        BatteryLabel {
+            id: battery
+
+            visible: Config.showBattery && battery.present
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 20
+
+            transformOrigin: Item.BottomRight
+            scale: root.factor
         }
 
         // The card has its own scale for the entrance, so the screen's goes on this.

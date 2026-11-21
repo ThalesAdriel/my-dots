@@ -14,5 +14,8 @@
   "animationSpeed": 100,
   "border": "brackets",
   "rounding": 0,
-  "scale": 1
+  "scale": 1,
+  "showClock": true,
+  "showBattery": true,
+  "followPointer": true
 }

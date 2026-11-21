@@ -132,6 +132,7 @@ Singleton {
     }
 
     function dismissAll(): void {
+        root.clearPopups();
         for (const item of root.tracked.slice())
             item.dismiss();
     }
@@ -340,7 +341,7 @@ Singleton {
         if (!text)
             return "";
 
-        return root.sanitizeAnchors(root.clampText(text).replace(/<img[^>]*>/gi, "")).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;").replace(/<(?!\/?(?:b|i|u|a|br)[\s\/>])/g, "&lt;");
+        return root.sanitizeAnchors(root.clampText(text).replace(/<img[^>]*>/gi, "")).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;").replace(/<(?!\/?(?:b|i|u|a|br)[\s\/>])/gi, "&lt;");
     }
 
     SystemClock {
@@ -366,6 +367,7 @@ Singleton {
                 target: entry.modelData
 
                 function onClosed(): void {
+                    root.removePopup(entry.modelData);
                     root.forget(entry.modelData);
                 }
 

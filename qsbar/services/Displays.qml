@@ -64,9 +64,15 @@ Singleton {
     }
 
     function logicalSize(entry: var): var {
+        if (!entry)
+            return {
+                width: 0,
+                height: 0
+            };
+        const scale = entry.scale > 0 ? entry.scale : 1;
         return {
-            width: Math.round(entry.width / entry.scale),
-            height: Math.round(entry.height / entry.scale)
+            width: Math.round(entry.width / scale),
+            height: Math.round(entry.height / scale)
         };
     }
 
@@ -160,6 +166,7 @@ Singleton {
                 continue;
 
             const scale = item.scale > 0 ? item.scale : 1;
+            const refresh = Number(item.refreshRate) > 0 ? Number(item.refreshRate) : 60;
             const modes = [];
             const seen = {};
 
@@ -175,7 +182,7 @@ Singleton {
             const current = {
                 width: item.width,
                 height: item.height,
-                refresh: item.refreshRate
+                refresh: refresh
             };
             current.label = root.modeLabel(current);
             if (!seen[current.label])
@@ -188,14 +195,17 @@ Singleton {
                 y: item.y,
                 width: item.width,
                 height: item.height,
-                refresh: item.refreshRate,
+                refresh: refresh,
                 scale: scale,
                 modes: modes
             });
         }
 
+        const wasAvailable = root.available;
         root.monitors = list;
         root.available = true;
+        if (!wasAvailable)
+            root.lastError = "";
 
         if (root.selected === "" || root.indexOf(root.selected) === -1)
             root.selected = list.length > 0 ? list[0].name : "";
@@ -244,12 +254,14 @@ Singleton {
         return rules;
     }
 
-    function apply(layout: var): void {
+    property var pendingApplyCommand: null
+
+    function apply(layout: var): bool {
         let command;
         if (Hyprland.usingLua) {
             const rules = root.luaRules(layout);
             if (rules.length === 0)
-                return;
+                return false;
 
             // One eval rather than a call each.
             command = ["hyprctl", "eval", rules.join(" ")];
@@ -261,13 +273,18 @@ Singleton {
                     steps.push("keyword monitor " + root.spec(name, entry));
             }
             if (steps.length === 0)
-                return;
+                return false;
             command = ["hyprctl", "--batch", steps.join(" ; ")];
         }
 
         root.lastError = "";
+        if (applyProcess.running) {
+            root.pendingApplyCommand = command;
+            return true;
+        }
         applyProcess.command = command;
         applyProcess.running = true;
+        return true;
     }
 
     // An empty layout still writes the file, as a header alone.
@@ -296,10 +313,13 @@ Singleton {
         if (root.previewing)
             return;
 
-        previousLayout = root.liveLayout();
+        const previous = root.liveLayout();
+        if (!root.apply(root.draft))
+            return;
+
+        previousLayout = previous;
         root.previewing = true;
         root.previewSeconds = root.previewTimeout;
-        root.apply(root.draft);
         previewTimer.start();
     }
 
@@ -433,7 +453,16 @@ Singleton {
             }
         }
 
-        onExited: root.refresh()
+        onExited: {
+            if (root.pendingApplyCommand !== null) {
+                const next = root.pendingApplyCommand;
+                root.pendingApplyCommand = null;
+                applyProcess.command = next;
+                applyProcess.running = true;
+                return;
+            }
+            root.refresh();
+        }
     }
 
     Timer {

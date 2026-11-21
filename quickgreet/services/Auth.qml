@@ -12,6 +12,10 @@ Singleton {
     id: root
 
     property string user: Sessions.lastUser
+    onUserChanged: {
+        if (root.prompt !== "")
+            root.cancel();
+    }
     property string buffer: ""
     property string message: ""
     property int attempts: 0
@@ -38,11 +42,27 @@ Singleton {
             Greetd.respond(response);
     }
 
+    function cancel() {
+        root.prompt = "";
+        root.answered = false;
+        root.reason = "";
+        if (Config.preview) {
+            if (pam.active)
+                pam.abort();
+        } else if (Greetd.state !== GreetdState.Inactive) {
+            Greetd.cancelSession();
+        }
+    }
+
     function submit() {
         if (root.busy || root.launching)
             return;
 
         if (root.prompt !== "") {
+            if (Config.preview ? !pam.active : Greetd.state !== GreetdState.Authenticating) {
+                root.fail("Authentication session ended");
+                return;
+            }
             root.prompt = "";
             root.busy = true;
             root.answer(root.buffer);
@@ -90,6 +110,8 @@ Singleton {
     function fail(text) {
         root.buffer = "";
         root.prompt = "";
+        root.answered = false;
+        root.reason = "";
         root.busy = false;
         root.attempts += 1;
         root.failed = true;
@@ -104,10 +126,10 @@ Singleton {
                 root.answer(root.buffer);
             } else {
                 root.buffer = "";
-                root.prompt = text;
+                root.prompt = (text && text.trim().length > 0) ? text.trim() : "Response";
                 root.busy = false;
             }
-        } else if (text.length > 0) {
+        } else if (text && text.length > 0) {
             root.message = text;
             if (isError)
                 root.reason = text;
@@ -116,6 +138,9 @@ Singleton {
 
     function succeed() {
         root.buffer = "";
+        root.prompt = "";
+        root.answered = false;
+        root.reason = "";
         root.busy = false;
         root.failed = false;
         root.launching = true;
@@ -145,9 +170,15 @@ Singleton {
             root.buffer = (event.modifiers & Qt.ControlModifier) ? "" : root.buffer.slice(0, -1);
             return;
         case Qt.Key_Escape:
-            // The one way out of a preview from the keyboard.
-            if (Config.preview && root.buffer.length === 0)
-                Qt.quit();
+            if (root.buffer.length === 0) {
+                if (root.prompt !== "") {
+                    root.cancel();
+                    return;
+                }
+                // The one way out of a preview from the keyboard.
+                if (Config.preview)
+                    Qt.quit();
+            }
             root.buffer = "";
             return;
         case Qt.Key_U:
@@ -158,6 +189,9 @@ Singleton {
             }
             break;
         }
+
+        if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+            return;
 
         const t = event.text;
         if (t.length === 0)
@@ -177,10 +211,17 @@ Singleton {
 
         interval: Config.preview ? 1400 : Config.animNormal
         onTriggered: {
-            if (Config.preview)
+            if (Config.preview) {
                 Qt.quit();
-            else
-                Greetd.launch(Sessions.session.command, Sessions.session.environment, true);
+                return;
+            }
+            const session = Sessions.session;
+            if (!session) {
+                root.launching = false;
+                root.fail("No session to start");
+                return;
+            }
+            Greetd.launch(session.command, session.environment, true);
         }
     }
 
@@ -193,12 +234,13 @@ Singleton {
         }
 
         function onAuthFailure(message) {
-            root.fail(root.reason || "Authentication failed");
+            root.fail(root.reason || message || "Authentication failed");
         }
 
         function onError(error) {
+            launch.stop();
             root.launching = false;
-            root.fail(error);
+            root.fail(error || "Authentication error");
         }
 
         function onReadyToLaunch() {
@@ -212,6 +254,10 @@ Singleton {
         config: "login"
 
         onPamMessage: root.question(pam.message, pam.responseRequired, pam.messageIsError)
+
+        onError: error => {
+            root.fail(error === PamError.StartFailed ? "Authentication unavailable" : "Authentication error");
+        }
 
         onCompleted: result => {
             if (result === PamResult.Success)

@@ -2,6 +2,8 @@ local home = os.getenv("HOME")
 local scripts = home .. "/.config/hypr/hyprland/scripts"
 local qsbar = "qs ipc -p " .. home .. "/.config/qsbar/shell.qml call"
 local terminals = "'kitty -1' 'foot' 'alacritty' 'wezterm' 'konsole'"
+local browsers = "'flatpak run io.gitlab.librewolf-community' 'librewolf' 'firefox' 'chromium'"
+local notes = "'flatpak run md.obsidian.Obsidian --ozone-platform=x11' 'obsidian'"
 local shots = home .. "/Pictures/Screenshots"
 local stamp = "\"$(date '+%Y-%m-%d_%H.%M.%S').png\""
 
@@ -63,9 +65,9 @@ hl.bind(super("space"), launcher("fuzzel"))
 hl.bind(super("Return"), script("launch_first_available.sh", terminals))
 hl.bind(super("T"), script("launch_first_available.sh", terminals))
 hl.bind(super("E"), run("nautilus"))
-hl.bind(super("W"), run("flatpak run io.gitlab.librewolf-community"))
+hl.bind(super("W"), script("launch_first_available.sh", browsers))
 hl.bind(super("X"), run("kitty -1 vis"))
-hl.bind(super("O"), run("flatpak run md.obsidian.Obsidian --ozone-platform=x11"))
+hl.bind(super("O"), script("launch_first_available.sh", notes))
 hl.bind(super("M"), menu("fuzzel-sysmenu.sh"))
 
 hl.bind(super("V"), launcher("cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"))

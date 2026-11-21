@@ -89,7 +89,7 @@ BarPopup {
         id: content
 
         implicitWidth: root.panelWidth
-        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
+        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + nightLightRow.height + 10 + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
 
         Item {
             id: headerRow
@@ -189,10 +189,66 @@ BarPopup {
             }
         }
 
+        // Night light toggle and colour temperature slider, aligned with the rows above and below.
+        Item {
+            id: nightLightRow
+
+            anchors.top: brightnessRow.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: root.panelPadding
+            anchors.rightMargin: root.panelPadding
+            anchors.topMargin: 10
+
+            height: 28
+
+            ActionButton {
+                id: nightLightButton
+
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+
+                compact: true
+                glyph: Glyphs.moon
+                tooltip: NightLight.enabled ? "Night light is on (" + NightLight.temperature + "K)" : "Night light"
+                engaged: NightLight.enabled
+                onTriggered: NightLight.toggle()
+            }
+
+            LevelSlider {
+                anchors.left: nightLightButton.right
+                anchors.leftMargin: 10
+                anchors.right: nightLightValue.left
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+
+                maximum: NightLight.maxTemperature - NightLight.minTemperature
+                value: NightLight.temperature - NightLight.minTemperature
+                fillColor: NightLight.enabled ? Theme.accent : Theme.textMuted
+                opacity: NightLight.enabled ? 1 : 0.45
+
+                onMoved: newValue => NightLight.setTemperature(NightLight.minTemperature + newValue)
+            }
+
+            Text {
+                id: nightLightValue
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: 42
+                horizontalAlignment: Text.AlignRight
+                text: NightLight.temperature + "K"
+                color: NightLight.enabled ? Theme.textPrimary : Theme.textSecondary
+                font.family: Theme.monoFamily
+                font.pixelSize: Theme.fontSizeSmall
+            }
+        }
+
         Item {
             id: actionRow
 
-            anchors.top: brightnessRow.bottom
+            anchors.top: nightLightRow.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding

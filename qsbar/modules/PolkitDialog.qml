@@ -15,10 +15,23 @@ Scope {
 
     // A flow that has completed is one whose window should already be going away.
     readonly property bool active: agent.isActive && scope.flow !== null && !scope.flow.isCompleted
+    readonly property bool awaitingResponse: scope.active && scope.flow.isResponseRequired
+
+    function focusPrompt(): void {
+        if (!scope.active)
+            return;
+        if (scope.awaitingResponse)
+            field.focusInput();
+        else
+            keyRoot.forceActiveFocus();
+    }
 
     function submit(): void {
-        if (scope.flow && scope.flow.isResponseRequired)
-            scope.flow.submit(field.text);
+        if (scope.flow && scope.flow.isResponseRequired) {
+            const response = field.text;
+            field.clear();
+            scope.flow.submit(response);
+        }
     }
 
     function cancel(): void {
@@ -37,9 +50,15 @@ Scope {
     // Cleared on the way out too, so a password does not outlive the prompt it was typed into.
     onActiveChanged: {
         if (scope.active)
-            Qt.callLater(field.focusInput);
+            Qt.callLater(scope.focusPrompt);
         else
             field.clear();
+    }
+
+    // Restores focus when PAM re-prompts in the same flow (retry / 2FA), or keeps Esc working while waiting.
+    onAwaitingResponseChanged: {
+        if (scope.active)
+            Qt.callLater(scope.focusPrompt);
     }
 
     PanelWindow {
@@ -75,6 +94,8 @@ Scope {
         }
 
         Item {
+            id: keyRoot
+
             anchors.fill: parent
             focus: true
 

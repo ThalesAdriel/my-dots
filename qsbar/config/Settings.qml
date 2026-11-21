@@ -40,6 +40,10 @@ Singleton {
     // Where the brightness slider was left on a machine with no backlight to read back from.
     property alias gammaBrightness: adapter.gammaBrightness
 
+    // Night light (hyprsunset colour temperature) and floating volume/brightness OSD.
+    property alias nightLightEnabled: adapter.nightLightEnabled
+    property alias nightLightTemperature: adapter.nightLightTemperature
+
     // Where a toast is drawn: "integrated" hangs it off the bar, "floating" is the detached card.
     property alias notificationStyle: adapter.notificationStyle
 
@@ -124,6 +128,8 @@ Singleton {
         adapter.clockUse12Hour = false;
         adapter.clockShowProgress = false;
         adapter.calendarYearView = true;
+        adapter.nightLightEnabled = false;
+        adapter.nightLightTemperature = 4000;
     }
 
     FileView {
@@ -177,6 +183,8 @@ Singleton {
             property var displayLayout: ({})
 
             property int gammaBrightness: 100
+            property bool nightLightEnabled: false
+            property int nightLightTemperature: 4000
 
             property string notificationStyle: "integrated"
             property int notificationWidth: 380

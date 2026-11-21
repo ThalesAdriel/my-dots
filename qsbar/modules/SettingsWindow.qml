@@ -63,6 +63,11 @@ Scope {
             key: "apps",
             title: "Default applications",
             glyph: Glyphs.apps
+        },
+        {
+            key: "startup",
+            title: "Startup apps",
+            glyph: Glyphs.play
         }
     ]
 
