@@ -35,6 +35,7 @@ Or pass a command directly:
 
 OBS: Some of my configs are still messy or broken. I plan to clean and fix them later. I’m publishing this now because a few of my friends showed interest.
 
+  ![alt text](screenshots/Screenshot_01.png "Screenshot")
 <details>
 <summary>Screenshots</summary>
 
