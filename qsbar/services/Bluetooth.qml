@@ -12,7 +12,8 @@ Singleton {
     property bool pageOpen: false
     readonly property bool enabled: Settings.showBluetooth || root.pageOpen
 
-    property bool detailed: false
+    property bool popupDetailed: false
+    readonly property bool detailed: root.popupDetailed || root.pageOpen
 
     readonly property int idleInterval: 10000
     readonly property int activeInterval: 2500

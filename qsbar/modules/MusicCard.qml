@@ -97,6 +97,7 @@ Card {
             source: root.artSource
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
+            cache: false
             sourceSize.width: 144
             sourceSize.height: 144
             visible: artImage.status === Image.Ready

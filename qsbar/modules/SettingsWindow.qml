@@ -119,6 +119,8 @@ Scope {
             // Whichever way it is closed, a text field still holding the focus gets to save before the page under it is torn down.
             focusSink.forceActiveFocus();
             scope.open = UiState.settingsOpen;
+            if (!scope.open)
+                Qt.callLater(gc);
         }
     }
 

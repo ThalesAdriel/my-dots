@@ -167,6 +167,7 @@ Rectangle {
             visible: root.showImage && iconImage.status === Image.Ready
             fillMode: Image.PreserveAspectFit
             asynchronous: true
+            cache: false
             sourceSize.width: 32
             sourceSize.height: 32
 

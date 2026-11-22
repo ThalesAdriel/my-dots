@@ -112,5 +112,11 @@ Column {
             checked: Settings.keepAwake
             onToggled: Settings.keepAwake = !Settings.keepAwake
         }
+
+        ToggleRow {
+            label: "Night light in Control Center"
+            checked: Settings.showNightLight
+            onToggled: Settings.showNightLight = !Settings.showNightLight
+        }
     }
 }

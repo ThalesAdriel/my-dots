@@ -126,7 +126,7 @@ PanelWindow {
 
             // The remaining optional modules, off until switched on in bar settings, through a Loader rather than a visible binding.
             Loader {
-                active: Settings.showVpn || Network.vpnConnected
+                active: Settings.showVpn || (Settings.showNetwork && Network.vpnConnected)
                 visible: active
                 source: "root:/modules/VpnIndicator.qml"
             }

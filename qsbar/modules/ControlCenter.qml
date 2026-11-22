@@ -18,6 +18,10 @@ BarPopup {
     readonly property int brightnessRowHeight: Brightness.available ? 28 : 0
     readonly property int brightnessRowMargin: root.brightnessRowHeight > 0 ? 10 : 0
 
+    // Night light can be hidden from Control Center in Bar settings.
+    readonly property int nightLightRowHeight: Settings.showNightLight ? 28 : 0
+    readonly property int nightLightRowMargin: root.nightLightRowHeight > 0 ? 10 : 0
+
     // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath.
     onSettledChanged: Brightness.watching = root.settled
 
@@ -89,7 +93,7 @@ BarPopup {
         id: content
 
         implicitWidth: root.panelWidth
-        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + nightLightRow.height + 10 + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
+        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + nightLightRow.height + root.nightLightRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
 
         Item {
             id: headerRow
@@ -198,9 +202,10 @@ BarPopup {
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding
             anchors.rightMargin: root.panelPadding
-            anchors.topMargin: 10
+            anchors.topMargin: root.nightLightRowMargin
 
-            height: 28
+            visible: root.nightLightRowHeight > 0
+            height: root.nightLightRowHeight
 
             ActionButton {
                 id: nightLightButton

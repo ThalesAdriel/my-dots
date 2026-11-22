@@ -45,7 +45,7 @@ BarButton {
         warm: root.containsMouse
 
         readonly property bool wantsDetail: vpnPopup.prepared || vpnPopup.shown
-        onWantsDetailChanged: Network.detailed = vpnPopup.wantsDetail
+        onWantsDetailChanged: Network.vpnPopupDetailed = vpnPopup.wantsDetail
 
         Item {
             implicitWidth: 300

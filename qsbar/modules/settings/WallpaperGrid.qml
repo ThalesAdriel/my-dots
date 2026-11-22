@@ -105,6 +105,7 @@ Column {
                     sourceSize.width: 256
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
+                    cache: false
                     smooth: true
 
                     onKeepableChanged: {

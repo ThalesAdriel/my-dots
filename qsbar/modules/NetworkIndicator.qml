@@ -89,7 +89,7 @@ BarButton {
         // The access point list and the saved profiles are only read while this is open.
         readonly property bool wantsDetail: networkPopup.prepared || networkPopup.shown
 
-        onWantsDetailChanged: Network.detailed = networkPopup.wantsDetail
+        onWantsDetailChanged: Network.networkPopupDetailed = networkPopup.wantsDetail
 
         onShownChanged: {
             if (!networkPopup.shown && panelLoader.item)

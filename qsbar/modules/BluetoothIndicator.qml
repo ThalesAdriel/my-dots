@@ -53,7 +53,7 @@ BarButton {
         // The brief read the indicator lives on lists nothing paired or nearby.
         readonly property bool wantsDetail: bluetoothPopup.prepared || bluetoothPopup.settled
 
-        onWantsDetailChanged: Bluetooth.detailed = bluetoothPopup.wantsDetail
+        onWantsDetailChanged: Bluetooth.popupDetailed = bluetoothPopup.wantsDetail
 
         Loader {
             asynchronous: true

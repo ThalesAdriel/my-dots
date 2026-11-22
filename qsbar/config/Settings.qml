@@ -34,6 +34,9 @@ Singleton {
     property alias showBluetooth: adapter.showBluetooth
     property alias showBattery: adapter.showBattery
     property alias showRecording: adapter.showRecording
+    property alias showNightLight: adapter.showNightLight
+    property alias nightLightEnabled: adapter.nightLightEnabled
+    property alias nightLightTemperature: adapter.nightLightTemperature
 
     // The saved monitor arrangement, keyed by connector.
     property alias displayLayout: adapter.displayLayout
@@ -42,8 +45,6 @@ Singleton {
     property alias gammaBrightness: adapter.gammaBrightness
 
     // Night light (hyprsunset colour temperature) and floating volume/brightness OSD.
-    property alias nightLightEnabled: adapter.nightLightEnabled
-    property alias nightLightTemperature: adapter.nightLightTemperature
 
     // Where a toast is drawn: "integrated" hangs it off the bar, "floating" is the detached card.
     property alias notificationStyle: adapter.notificationStyle
@@ -118,6 +119,9 @@ Singleton {
         adapter.showBluetooth = false;
         adapter.showBattery = false;
         adapter.showRecording = false;
+        adapter.showNightLight = true;
+        adapter.nightLightEnabled = false;
+        adapter.nightLightTemperature = 4000;
         adapter.notificationStyle = "integrated";
         adapter.notificationWidth = 380;
         adapter.notificationHeight = 64;
@@ -130,8 +134,6 @@ Singleton {
         adapter.clockUse12Hour = false;
         adapter.clockShowProgress = false;
         adapter.calendarYearView = true;
-        adapter.nightLightEnabled = false;
-        adapter.nightLightTemperature = 4000;
     }
 
     FileView {
@@ -182,12 +184,13 @@ Singleton {
             property bool showBluetooth: false
             property bool showBattery: false
             property bool showRecording: false
+            property bool showNightLight: true
+            property bool nightLightEnabled: false
+            property int nightLightTemperature: 4000
 
             property var displayLayout: ({})
 
             property int gammaBrightness: 100
-            property bool nightLightEnabled: false
-            property int nightLightTemperature: 4000
 
             property string notificationStyle: "integrated"
             property int notificationWidth: 380

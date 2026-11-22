@@ -13,8 +13,10 @@ Singleton {
     property bool pageOpen: false
     readonly property bool enabled: Settings.showNetwork || Settings.showVpn || root.pageOpen
 
-    // The panel needs the access point list and the saved profiles and the bar needs neither.
-    property bool detailed: false
+    // The panel or Settings page needs the access point list, saved profiles and VPN list; the bar needs none of them.
+    property bool networkPopupDetailed: false
+    property bool vpnPopupDetailed: false
+    readonly property bool detailed: root.networkPopupDetailed || root.vpnPopupDetailed || root.pageOpen
 
     readonly property int idleInterval: 6000
     readonly property int activeInterval: 2500
@@ -36,6 +38,23 @@ Singleton {
     // [{ name, type, active }] for WireGuard and NetworkManager VPN profiles.
     property var vpns: []
     property var activeVpnNames: []
+
+    // Active interface IPv4/IPv6 info & connection settings, only populated during full reads (Settings / open panel).
+    property string activeConnection: ""
+    property string ipAddress: ""
+    property string gateway: ""
+    property string dnsServers: ""
+    property string ipv6Address: ""
+    property string ipv6Gateway: ""
+    property string ipv6Dns: ""
+    property string ipv4Method: "auto"
+    property string ipv6Method: "auto"
+    property string dnsPreset: "auto"
+    property string customDns: ""
+    property bool autoconnect: true
+    property string macMode: "permanent"
+    property bool hotspotActive: false
+    property string revealedPassword: ""
 
     readonly property var activeVpns: {
         const list = [];
@@ -191,6 +210,164 @@ Singleton {
         root.runQueue([["nmcli", "--ask", "device", "wifi", "connect", name]], password);
     }
 
+    function connectHidden(name: string, password: string): void {
+        if (!root.usableName(name))
+            return;
+
+        if (password && password.length > 0)
+            root.runQueue([["nmcli", "--ask", "device", "wifi", "connect", name, "hidden", "yes"]], password);
+        else
+            root.runQueue([["nmcli", "device", "wifi", "connect", name, "hidden", "yes"]], "");
+    }
+
+    function setIpv6Method(method: string): void {
+        const allowed = ["auto", "disabled", "ignore", "link-local"];
+        if (allowed.indexOf(method) === -1 || !root.usableName(root.activeConnection))
+            return;
+
+        root.runQueue([
+            ["nmcli", "connection", "modify", "id", root.activeConnection, "ipv6.method", method],
+            ["nmcli", "connection", "up", "id", root.activeConnection]
+        ], "");
+    }
+
+    function setAutoconnect(enabled: bool): void {
+        if (!root.usableName(root.activeConnection))
+            return;
+
+        root.runQueue([
+            ["nmcli", "connection", "modify", "id", root.activeConnection, "connection.autoconnect", enabled ? "yes" : "no"]
+        ], "");
+    }
+
+    function setMacMode(mode: string): void {
+        const allowed = ["permanent", "random", "stable"];
+        if (allowed.indexOf(mode) === -1 || !root.usableName(root.activeConnection))
+            return;
+
+        root.runQueue([
+            ["nmcli", "connection", "modify", "id", root.activeConnection, "802-11-wireless.cloned-mac-address", mode],
+            ["nmcli", "connection", "up", "id", root.activeConnection]
+        ], "");
+    }
+
+    function setDnsPreset(preset: string, customList: string): void {
+        if (!root.usableName(root.activeConnection))
+            return;
+
+        let args;
+        if (preset === "auto") {
+            args = ["ipv4.ignore-auto-dns", "no", "ipv4.dns", "", "ipv6.ignore-auto-dns", "no", "ipv6.dns", ""];
+        } else if (preset === "cloudflare") {
+            args = ["ipv4.ignore-auto-dns", "yes", "ipv4.dns", "1.1.1.1 1.0.0.1", "ipv6.ignore-auto-dns", "yes", "ipv6.dns", "2606:4700:4700::1111 2606:4700:4700::1001"];
+        } else if (preset === "google") {
+            args = ["ipv4.ignore-auto-dns", "yes", "ipv4.dns", "8.8.8.8 8.8.4.4", "ipv6.ignore-auto-dns", "yes", "ipv6.dns", "2001:4860:4860::8888 2001:4860:4860::8844"];
+        } else if (preset === "quad9") {
+            args = ["ipv4.ignore-auto-dns", "yes", "ipv4.dns", "9.9.9.9 149.112.112.112", "ipv6.ignore-auto-dns", "yes", "ipv6.dns", "2620:fe::fe 2620:fe::9"];
+        } else if (preset === "custom") {
+            const tokens = String(customList || "").replace(/,/g, " ").trim().split(/\s+/).filter(t => t !== "");
+            if (tokens.length === 0 || tokens.some(t => !/^[0-9a-fA-F.:]+$/.test(t))) {
+                root.lastError = "Invalid DNS server list";
+                return;
+            }
+            const v4 = tokens.filter(t => t.indexOf(":") === -1);
+            const v6 = tokens.filter(t => t.indexOf(":") !== -1);
+            args = [
+                "ipv4.ignore-auto-dns", v4.length > 0 ? "yes" : "no",
+                "ipv4.dns", v4.join(" "),
+                "ipv6.ignore-auto-dns", v6.length > 0 ? "yes" : "no",
+                "ipv6.dns", v6.join(" ")
+            ];
+        } else {
+            return;
+        }
+
+        root.runQueue([
+            ["nmcli", "connection", "modify", "id", root.activeConnection].concat(args),
+            ["nmcli", "connection", "up", "id", root.activeConnection]
+        ], "");
+    }
+
+    function setIpv4Auto(): void {
+        if (!root.usableName(root.activeConnection))
+            return;
+
+        root.runQueue([
+            ["nmcli", "connection", "modify", "id", root.activeConnection, "ipv4.method", "auto", "ipv4.addresses", "", "ipv4.gateway", ""],
+            ["nmcli", "connection", "up", "id", root.activeConnection]
+        ], "");
+    }
+
+    function setIpv4Manual(cidr: string, gw: string): void {
+        if (!root.usableName(root.activeConnection))
+            return;
+
+        const cleanCidr = String(cidr || "").trim();
+        const cleanGw = String(gw || "").trim();
+        if (!/^\d{1,3}(\.\d{1,3}){3}\/\d{1,2}$/.test(cleanCidr)) {
+            root.lastError = "IPv4 address must be in CIDR format (e.g. 192.168.1.50/24)";
+            return;
+        }
+        if (cleanGw !== "" && !/^\d{1,3}(\.\d{1,3}){3}$/.test(cleanGw)) {
+            root.lastError = "Invalid IPv4 gateway address";
+            return;
+        }
+
+        root.runQueue([
+            ["nmcli", "connection", "modify", "id", root.activeConnection, "ipv4.method", "manual", "ipv4.addresses", cleanCidr, "ipv4.gateway", cleanGw],
+            ["nmcli", "connection", "up", "id", root.activeConnection]
+        ], "");
+    }
+
+    function startHotspot(ssid: string, password: string): void {
+        if (!root.wifiDevice) {
+            root.lastError = "No Wi-Fi device available for hotspot";
+            return;
+        }
+        const cleanSsid = String(ssid || "").trim();
+        const cleanPass = String(password || "");
+        if (!root.usableName(cleanSsid))
+            return;
+        if (cleanPass !== "" && cleanPass.length < 8) {
+            root.lastError = "Hotspot password must be at least 8 characters";
+            return;
+        }
+        const cmd = ["nmcli", "device", "wifi", "hotspot", "ifname", root.wifiDevice.device, "ssid", cleanSsid];
+        if (cleanPass !== "")
+            cmd.push("password", cleanPass);
+        root.runQueue([cmd], "");
+    }
+
+    function stopHotspot(): void {
+        if (!root.wifiDevice)
+            return;
+        if (root.hotspotActive && root.activeConnection !== "")
+            root.runQueue([["nmcli", "connection", "down", "id", root.activeConnection]], "");
+        else
+            root.runQueue([["nmcli", "device", "disconnect", root.wifiDevice.device]], "");
+    }
+
+    function copyText(value: string): void {
+        const text = String(value || "").trim();
+        if (text === "")
+            return;
+        Quickshell.execDetached(["wl-copy", "--", text]);
+    }
+
+    function revealWifiPassword(): void {
+        if (!root.available || !root.wifiConnected || !root.usableName(root.activeConnection))
+            return;
+        if (secretProcess.running)
+            return;
+        root.lastError = "";
+        secretProcess.command = ["nmcli", "-s", "-g", "802-11-wireless-security.psk", "connection", "show", "id", root.activeConnection];
+        secretProcess.running = true;
+    }
+
+    function clearPassword(): void {
+        root.revealedPassword = "";
+    }
+
     // WPA Enterprise, which is what eduroam is.
     function connectEnterprise(name: string, identity: string, anonymous: string, password: string, eap: string, phase2: string, caCertificate: string): void {
         if (!root.usableName(name))
@@ -316,6 +493,16 @@ fi
 echo "#saved"
 if [ "$1" = full ]; then
     nmcli -t -f NAME,TYPE,ACTIVE connection show 2>/dev/null
+    echo "#ip"
+    dev=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null | awk -F: '$3 == "connected" && ($2 == "ethernet" || $2 == "bridge" || $2 == "wifi") { print $1; exit }')
+    if [ -n "$dev" ]; then
+        nmcli -t -f IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,IP6.ADDRESS,IP6.GATEWAY,IP6.DNS device show "$dev" 2>/dev/null
+        con=$(nmcli -t -f DEVICE,CONNECTION device status 2>/dev/null | awk -F: -v d="$dev" '$1 == d { print $2; exit }')
+        if [ -n "$con" ]; then
+            printf 'CONN_NAME:%s\n' "$con"
+            nmcli -t -f ipv4.method,ipv4.ignore-auto-dns,ipv4.dns,ipv6.method,connection.autoconnect,802-11-wireless.cloned-mac-address,802-11-wireless.mode connection show id "$con" 2>/dev/null
+        fi
+    fi
 else
     nmcli -t -f NAME,TYPE connection show --active 2>/dev/null
 fi
@@ -327,6 +514,20 @@ exit 0`
         const saved = [];
         const vpns = [];
         const activeVpns = [];
+        let activeConnection = "";
+        let ipAddress = "";
+        let gateway = "";
+        const dnsList = [];
+        let ipv6Address = "";
+        let ipv6Gateway = "";
+        const dns6List = [];
+        let ipv4Method = "auto";
+        let ipv6Method = "auto";
+        let ignoreAutoDns = false;
+        let configuredDns = "";
+        let autoconnect = true;
+        let macMode = "permanent";
+        let hotspotActive = false;
         let section = "";
 
         for (const line of text.split("\n")) {
@@ -340,6 +541,45 @@ exit 0`
 
             if (section === "radio") {
                 root.wifiRadio = line.trim() === "enabled";
+                continue;
+            }
+
+            if (section === "ip") {
+                const idx = line.indexOf(":");
+                if (idx === -1)
+                    continue;
+                const key = line.slice(0, idx);
+                const val = line.slice(idx + 1).trim().replace(/\\:/g, ":");
+                if (!val)
+                    continue;
+                if (key === "CONN_NAME")
+                    activeConnection = val;
+                else if (key === "ipv4.method")
+                    ipv4Method = val;
+                else if (key === "ipv6.method")
+                    ipv6Method = val;
+                else if (key === "ipv4.ignore-auto-dns")
+                    ignoreAutoDns = val === "yes";
+                else if (key === "ipv4.dns")
+                    configuredDns = val;
+                else if (key === "connection.autoconnect")
+                    autoconnect = val !== "no";
+                else if (key === "802-11-wireless.cloned-mac-address")
+                    macMode = (val === "random" || val === "stable") ? val : "permanent";
+                else if (key === "802-11-wireless.mode")
+                    hotspotActive = val === "ap";
+                else if (key.startsWith("IP4.ADDRESS") && ipAddress === "")
+                    ipAddress = val;
+                else if (key === "IP4.GATEWAY" && gateway === "")
+                    gateway = val;
+                else if (key.startsWith("IP4.DNS") && dnsList.indexOf(val) === -1)
+                    dnsList.push(val);
+                else if (key.startsWith("IP6.ADDRESS") && ipv6Address === "")
+                    ipv6Address = val;
+                else if (key === "IP6.GATEWAY" && ipv6Gateway === "")
+                    ipv6Gateway = val;
+                else if (key.startsWith("IP6.DNS") && dns6List.indexOf(val) === -1)
+                    dns6List.push(val);
                 continue;
             }
 
@@ -399,6 +639,35 @@ exit 0`
             root.savedNames = saved;
             vpns.sort((a, b) => (a.active === b.active) ? a.name.localeCompare(b.name) : (a.active ? -1 : 1));
             root.vpns = vpns;
+            if (root.activeConnection !== activeConnection)
+                root.revealedPassword = "";
+            root.activeConnection = activeConnection;
+            root.ipAddress = ipAddress;
+            root.gateway = gateway;
+            root.dnsServers = dnsList.join(", ");
+            root.ipv6Address = ipv6Address;
+            root.ipv6Gateway = ipv6Gateway;
+            root.ipv6Dns = dns6List.join(", ");
+            root.ipv4Method = ipv4Method;
+            root.ipv6Method = ipv6Method;
+            root.autoconnect = autoconnect;
+            root.macMode = macMode;
+            root.hotspotActive = hotspotActive;
+            if (!ignoreAutoDns || configuredDns === "") {
+                root.dnsPreset = "auto";
+                root.customDns = "";
+            } else {
+                const norm = configuredDns.replace(/,/g, " ").trim().replace(/\s+/g, " ");
+                if (norm === "1.1.1.1 1.0.0.1" || norm === "1.1.1.1")
+                    root.dnsPreset = "cloudflare";
+                else if (norm === "8.8.8.8 8.8.4.4" || norm === "8.8.8.8")
+                    root.dnsPreset = "google";
+                else if (norm === "9.9.9.9 149.112.112.112" || norm === "9.9.9.9")
+                    root.dnsPreset = "quad9";
+                else
+                    root.dnsPreset = "custom";
+                root.customDns = norm;
+            }
         }
 
         // A brief read only ever carries the active access point.
@@ -483,6 +752,19 @@ exit 0`
             }
 
             root.nextStep();
+        }
+    }
+
+    Process {
+        id: secretProcess
+
+        stdout: StdioCollector {
+            onStreamFinished: root.revealedPassword = this.text.trim()
+        }
+
+        onExited: exitCode => {
+            if (exitCode !== 0)
+                root.lastError = "Could not read saved Wi-Fi password";
         }
     }
 
