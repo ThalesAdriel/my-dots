@@ -60,6 +60,10 @@ Item {
             return "settings/AppsPage.qml";
         case "startup":
             return "settings/StartupPage.qml";
+        case "input":
+            return "settings/InputPage.qml";
+        case "keybinds":
+            return "settings/KeybindsPage.qml";
         default:
             return "settings/AppearancePage.qml";
         }

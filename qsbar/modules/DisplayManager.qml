@@ -102,6 +102,8 @@ Item {
                 continue;
 
             const entry = Displays.draft[other];
+            if (!entry || entry.disabled)
+                continue;
             const otherSize = Displays.logicalSize(entry);
             const start = horizontal ? entry.x : entry.y;
             const extent = horizontal ? otherSize.width : otherSize.height;
@@ -246,6 +248,7 @@ Item {
                     height: Math.max(plate.size.height * root.canvasScale, 8)
 
                     radius: Theme.radius
+                    opacity: plate.entry && plate.entry.disabled ? 0.35 : 1
                     color: plate.chosen ? Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, 0.28) : Theme.skeletonFill
                     border.width: 1
                     border.color: plate.chosen ? Theme.accent : Theme.cardBorder
@@ -257,7 +260,7 @@ Item {
                         anchors.right: parent.right
 
                         textFormat: Text.PlainText
-                        text: (plate.index + 1) + "  " + plate.modelData.name
+                        text: (plate.index + 1) + "  " + plate.modelData.name + (plate.entry && plate.entry.disabled ? " (off)" : "")
                         color: plate.chosen ? Theme.textPrimary : Theme.textSecondary
                         font.family: Theme.monoFamily
                         font.pixelSize: 9
@@ -325,16 +328,57 @@ Item {
 
         Text {
             width: parent.width
-            visible: root.selectedEntry !== null && root.selectedEntry.scale !== 1
+            visible: root.selectedEntry !== null && (root.selectedEntry.disabled || root.selectedEntry.scale !== 1 || (root.selectedEntry.transform || 0) !== 0)
             text: {
                 if (!root.selectedEntry)
                     return "";
+                if (root.selectedEntry.disabled)
+                    return "Disabled";
                 const size = Displays.logicalSize(root.selectedEntry);
-                return size.width + "×" + size.height + " logical · " + root.selectedEntry.scale + "× scale";
+                const rot = (root.selectedEntry.transform || 0) !== 0 ? " · " + Displays.transformLabel(root.selectedEntry.transform) : "";
+                return size.width + "×" + size.height + " logical · " + root.selectedEntry.scale + "× scale" + rot;
             }
             color: Theme.textMuted
             font.family: Theme.sansFamily
             font.pixelSize: Theme.fontSizeSmall
+        }
+
+        Item {
+            width: parent.width
+            height: 30
+            visible: root.selectedEntry !== null
+
+            Text {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Display"
+                color: Theme.textSecondary
+                font.family: Theme.sansFamily
+                font.pixelSize: Theme.fontSizeSmall
+            }
+
+            Row {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
+
+                PanelButton {
+                    label: "Enabled"
+                    accented: root.selectedEntry !== null && !root.selectedEntry.disabled
+                    onActivated: Displays.update(Displays.selected, {
+                        disabled: false
+                    })
+                }
+
+                PanelButton {
+                    label: "Disabled"
+                    accented: root.selectedEntry !== null && root.selectedEntry.disabled
+                    available: root.selectedEntry !== null && (root.selectedEntry.disabled || Displays.canDisable(Displays.selected))
+                    onActivated: Displays.update(Displays.selected, {
+                        disabled: true
+                    })
+                }
+            }
         }
 
         StepperRow {
@@ -522,6 +566,69 @@ Item {
                             hoverEnabled: true
                             onClicked: Displays.update(Displays.selected, {
                                 scale: scaleChoice.modelData
+                            })
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
+            width: parent.width
+            height: 30
+            visible: root.selectedEntry !== null
+
+            Text {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Rotation"
+                color: Theme.textSecondary
+                font.family: Theme.sansFamily
+                font.pixelSize: Theme.fontSizeSmall
+            }
+
+            Row {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
+
+                Repeater {
+                    model: Displays.transformOptions
+
+                    delegate: Rectangle {
+                        id: rotationChoice
+
+                        required property int modelData
+
+                        readonly property bool chosen: root.selectedEntry !== null && (root.selectedEntry.transform || 0) === rotationChoice.modelData
+
+                        width: rotationLabel.implicitWidth + 14
+                        height: 22
+                        radius: Theme.radius
+                        color: {
+                            if (rotationMouse.containsPress)
+                                return Theme.fillPressed;
+                            if (rotationMouse.containsMouse)
+                                return Theme.fillHover;
+                            return rotationChoice.chosen ? Theme.accent : Theme.fillTrack;
+                        }
+
+                        Text {
+                            id: rotationLabel
+                            anchors.centerIn: parent
+                            text: Displays.transformLabel(rotationChoice.modelData)
+                            color: rotationChoice.chosen ? Theme.textPrimary : Theme.textSecondary
+                            font.family: Theme.monoFamily
+                            font.pixelSize: 9
+                            font.weight: Font.Bold
+                        }
+
+                        MouseArea {
+                            id: rotationMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: Displays.update(Displays.selected, {
+                                transform: rotationChoice.modelData
                             })
                         }
                     }

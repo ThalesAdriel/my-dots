@@ -55,6 +55,14 @@ Singleton {
     // A floor rather than a fixed height.
     property alias notificationHeight: adapter.notificationHeight
     property alias notificationSeconds: adapter.notificationSeconds
+    property alias dndOnFullscreen: adapter.dndOnFullscreen
+
+    // Saved custom appearance presets.
+    property alias appearancePresets: adapter.appearancePresets
+
+    // Smooth scrolling and speed multiplier for the settings window.
+    property alias settingsSmoothScroll: adapter.settingsSmoothScroll
+    property alias settingsScrollSpeed: adapter.settingsScrollSpeed
 
     // Real surface captures in the overview.
     property alias overviewPreviews: adapter.overviewPreviews
@@ -97,18 +105,18 @@ Singleton {
 
     function restoreDefaults(): void {
         adapter.barColor = "#000000";
-        adapter.barOpacity = 0.85;
+        adapter.barOpacity = 0.30;
         adapter.barRadius = 0;
         adapter.barHeight = 25;
         adapter.outerCorners = true;
         adapter.outerCornerRadius = 12;
-        adapter.barBlur = false;
+        adapter.barBlur = true;
         adapter.panelRadius = 0;
         adapter.surfaceColor = "#000000";
-        adapter.panelOpacity = 0.85;
-        adapter.panelBlur = false;
+        adapter.panelOpacity = 0.30;
+        adapter.panelBlur = true;
         adapter.hoverOpacity = 0.26;
-        adapter.hoverRadius = 0;
+        adapter.hoverRadius = 4;
         adapter.accentColor = "#e01b24";
         adapter.iconSize = 12;
         adapter.iconPadding = 3;
@@ -126,6 +134,10 @@ Singleton {
         adapter.notificationWidth = 380;
         adapter.notificationHeight = 64;
         adapter.notificationSeconds = 10;
+        adapter.dndOnFullscreen = false;
+        adapter.appearancePresets = [];
+        adapter.settingsSmoothScroll = true;
+        adapter.settingsScrollSpeed = 2.3;
         adapter.overviewPreviews = true;
         adapter.wallpaperTransition = "fade";
         adapter.wallpaperTransitionSeconds = 1.2;
@@ -159,19 +171,19 @@ Singleton {
             id: adapter
 
             property string barColor: "#000000"
-            property real barOpacity: 0.85
+            property real barOpacity: 0.30
             property int barRadius: 0
             property int barHeight: 25
             property bool outerCorners: true
             property int outerCornerRadius: 12
-            property bool barBlur: false
+            property bool barBlur: true
             property int panelRadius: 0
             property string surfaceColor: "#000000"
-            property real panelOpacity: 0.85
-            property bool panelBlur: false
+            property real panelOpacity: 0.30
+            property bool panelBlur: true
 
             property real hoverOpacity: 0.26
-            property int hoverRadius: 0
+            property int hoverRadius: 4
             property string accentColor: "#e01b24"
 
             property int iconSize: 12
@@ -196,6 +208,11 @@ Singleton {
             property int notificationWidth: 380
             property int notificationHeight: 64
             property int notificationSeconds: 10
+            property bool dndOnFullscreen: false
+
+            property var appearancePresets: []
+            property bool settingsSmoothScroll: true
+            property real settingsScrollSpeed: 2.3
 
             property bool overviewPreviews: true
 

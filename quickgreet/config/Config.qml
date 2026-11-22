@@ -30,6 +30,14 @@ Singleton {
     readonly property string border: settings.border
     readonly property int rounding: settings.rounding
     readonly property bool showClock: settings.showClock
+    readonly property bool clockUse12Hour: settings.clockUse12Hour
+    readonly property bool clockShowSeconds: settings.clockShowSeconds
+    readonly property int clockSize: Math.max(36, Math.min(96, settings.clockSize))
+    readonly property string cardPosition: (settings.cardPosition === "left" || settings.cardPosition === "right") ? settings.cardPosition : "center"
+    readonly property real cardOpacity: Math.max(0.2, Math.min(1.0, settings.cardOpacity))
+    readonly property bool showPowerButtons: settings.showPowerButtons
+    readonly property bool showSessionMenu: settings.showSessionMenu
+    readonly property bool showAvatar: settings.showAvatar
     readonly property bool showBattery: settings.showBattery
     readonly property bool followPointer: settings.followPointer
 
@@ -161,7 +169,7 @@ Singleton {
         return Qt.rgba(a.r + (b.r - a.r) * amount, a.g + (b.g - a.g) * amount, a.b + (b.b - a.b) * amount, 1);
     }
 
-    readonly property color card: root.alpha(root.theme.active, 0.62)
+    readonly property color card: root.alpha(root.theme.active, root.cardOpacity)
     readonly property color field: root.alpha(root.theme.bg, 0.7)
     readonly property color hover: root.alpha(root.theme.fg, 0.1)
     readonly property color text: root.theme.fg
@@ -187,6 +195,7 @@ Singleton {
     }
 
     readonly property string fontFamily: root.pick(["Rubik", "Inter", "Noto Sans", "Cantarell", "DejaVu Sans"])
+    readonly property string fontFamilyClock: root.pick(["Space Grotesk", "Rubik", "Inter", "Noto Sans", "DejaVu Sans"])
 
     // The Mono variant of a Nerd Font keeps every glyph one cell wide.
     readonly property string monoFamily: root.pick(["JetBrainsMono Nerd Font Mono", "JetBrains Mono", "DejaVu Sans Mono", "Noto Sans Mono", "monospace"])
@@ -240,6 +249,14 @@ Singleton {
             property int rounding: 0
             property real scale: 1
             property bool showClock: true
+            property bool clockUse12Hour: false
+            property bool clockShowSeconds: false
+            property int clockSize: 64
+            property string cardPosition: "center"
+            property real cardOpacity: 0.62
+            property bool showPowerButtons: true
+            property bool showSessionMenu: true
+            property bool showAvatar: true
             property bool showBattery: true
             property bool followPointer: true
         }

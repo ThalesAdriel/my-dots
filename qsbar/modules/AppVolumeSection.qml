@@ -37,7 +37,7 @@ Item {
 
     // Only while the rows are actually being drawn.
     PwObjectTracker {
-        objects: root.active && root.expansion > 0 ? root.streams : []
+        objects: root.active && root.expansion > 0 ? root.streams.concat(Audio.sinks) : []
     }
 
     Rectangle {
@@ -133,13 +133,14 @@ Item {
                     required property var modelData
 
                     readonly property bool ready: streamRow.modelData.ready && streamRow.modelData.audio !== null
+                    readonly property var currentSink: Audio.currentSinkFor(streamRow.modelData)
 
                     width: streamsColumn.width
                     height: root.rowHeight
 
                     Text {
                         anchors.left: parent.left
-                        anchors.right: streamValue.left
+                        anchors.right: sinkPicker.visible ? sinkPicker.left : streamValue.left
                         anchors.top: parent.top
                         anchors.leftMargin: 6
                         anchors.rightMargin: 8
@@ -150,6 +151,49 @@ Item {
                         font.family: Theme.sansFamily
                         font.pixelSize: Theme.fontSizeSmall
                         elide: Text.ElideRight
+                    }
+
+                    Rectangle {
+                        id: sinkPicker
+
+                        anchors.right: streamValue.left
+                        anchors.rightMargin: 6
+                        anchors.verticalCenter: streamValue.verticalCenter
+
+                        visible: Audio.sinks.length > 1
+                        width: Math.min(sinkLabel.implicitWidth + 12, 112)
+                        height: 18
+                        radius: Theme.radius
+                        color: sinkMouse.containsPress ? Theme.fillPressed : sinkMouse.containsMouse ? Theme.fillHover : Theme.fillTrack
+
+                        Text {
+                            id: sinkLabel
+
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            textFormat: Text.PlainText
+                            text: streamRow.currentSink ? Audio.describe(streamRow.currentSink) : "Output"
+                            color: Theme.textSecondary
+                            font.family: Theme.sansFamily
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
+                        }
+
+                        MouseArea {
+                            id: sinkMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            enabled: streamRow.ready && Audio.sinks.length > 1
+                            onClicked: {
+                                const next = Audio.nextSinkFor(streamRow.modelData);
+                                if (next)
+                                    Audio.moveStreamToSink(streamRow.modelData, next);
+                            }
+                        }
                     }
 
                     Text {

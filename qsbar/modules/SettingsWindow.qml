@@ -73,6 +73,16 @@ Scope {
             key: "startup",
             title: "Startup apps",
             glyph: Glyphs.play
+        },
+        {
+            key: "input",
+            title: "Input",
+            glyph: Glyphs.sliders
+        },
+        {
+            key: "keybinds",
+            title: "Keybinds",
+            glyph: Glyphs.comment
         }
     ]
 
@@ -105,7 +115,7 @@ Scope {
         scope.showPage(scope.pages[(index + delta + count) % count].key);
     }
 
-    onQueryChanged: pageArea.contentY = 0
+    onQueryChanged: pageArea.resetScroll()
 
     Connections {
         target: UiState
@@ -272,7 +282,7 @@ Scope {
 
                     width: card.sidebarWidth
 
-                    readonly property int rowHeight: 32
+                    readonly property int rowHeight: 30
                     readonly property int rowSpacing: 2
                     readonly property int currentIndex: Math.max(scope.pages.findIndex(entry => entry.key === scope.page), 0)
 
@@ -395,13 +405,6 @@ Scope {
                     color: Theme.fillTrack
                 }
 
-                // Under the page, so a list on it that can still scroll gets the wheel first.
-                WheelScroller {
-                    anchors.fill: pageArea
-                    target: pageArea
-                    step: 80
-                }
-
                 Flickable {
                     id: pageArea
 
@@ -420,14 +423,25 @@ Scope {
                     contentWidth: width
                     contentHeight: pageLoader.item ? pageLoader.item.implicitHeight : 0
                     boundsBehavior: Flickable.StopAtBounds
+                    flickableDirection: Flickable.VerticalFlick
+                    interactive: true
 
-                    // The wheel is the scroller's.
-                    interactive: false
+                    property real smoothTargetY: 0
 
                     // Whatever Tab lands on is scrolled into view, with a little air.
                     readonly property Item focusedItem: Window.activeFocusItem
 
                     onFocusedItemChanged: pageArea.reveal(pageArea.focusedItem)
+                    onDraggingChanged: {
+                        if (pageArea.dragging)
+                            smoothScrollAnim.stop();
+                    }
+
+                    function resetScroll(): void {
+                        smoothScrollAnim.stop();
+                        pageArea.contentY = 0;
+                        pageArea.smoothTargetY = 0;
+                    }
 
                     function reveal(item: Item): void {
                         let inside = false;
@@ -442,10 +456,58 @@ Scope {
 
                         const top = item.mapToItem(pageArea.contentItem, 0, 0).y;
                         const bottomLimit = Math.max(pageArea.contentHeight - pageArea.height, 0);
-                        if (top < pageArea.contentY + 8)
+                        if (top < pageArea.contentY + 8) {
+                            smoothScrollAnim.stop();
                             pageArea.contentY = Math.max(top - 16, 0);
-                        else if (top + item.height > pageArea.contentY + pageArea.height - 8)
+                            pageArea.smoothTargetY = pageArea.contentY;
+                        } else if (top + item.height > pageArea.contentY + pageArea.height - 8) {
+                            smoothScrollAnim.stop();
                             pageArea.contentY = Math.min(top + item.height - pageArea.height + 16, bottomLimit);
+                            pageArea.smoothTargetY = pageArea.contentY;
+                        }
+                    }
+
+                    NumberAnimation {
+                        id: smoothScrollAnim
+
+                        target: pageArea
+                        property: "contentY"
+                        duration: 180
+                        easing.type: Easing.OutCubic
+                    }
+
+                    WheelHandler {
+                        id: smoothWheel
+
+                        enabled: Settings.settingsSmoothScroll
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        orientation: Qt.Vertical
+
+                        onWheel: event => {
+                            const maxY = Math.max(pageArea.contentHeight - pageArea.height, 0);
+                            if (maxY <= 0) {
+                                event.accepted = false;
+                                return;
+                            }
+
+                            const speed = Math.min(Math.max(Settings.settingsScrollSpeed, 0.4), 2.5);
+                            const rawDelta = event.pixelDelta.y !== 0 ? event.pixelDelta.y : (event.angleDelta.y / 120) * 90;
+                            const delta = rawDelta * speed;
+                            const base = smoothScrollAnim.running ? pageArea.smoothTargetY : pageArea.contentY;
+                            const next = Math.min(Math.max(base - delta, 0), maxY);
+
+                            if (next === base && !smoothScrollAnim.running) {
+                                event.accepted = false;
+                                return;
+                            }
+
+                            pageArea.smoothTargetY = next;
+                            smoothScrollAnim.stop();
+                            smoothScrollAnim.from = pageArea.contentY;
+                            smoothScrollAnim.to = next;
+                            smoothScrollAnim.start();
+                            event.accepted = true;
+                        }
                     }
 
                     Loader {
@@ -487,7 +549,7 @@ Scope {
 
                     visible: pageArea.visibleArea.heightRatio < 1
                     color: Theme.textMuted
-                    opacity: pageArea.moving ? 1 : 0.5
+                    opacity: pageArea.moving || smoothScrollAnim.running ? 1 : 0.5
 
                     Behavior on opacity {
                         NumberAnimation {
@@ -501,7 +563,7 @@ Scope {
 
     // Each page arrives from a few pixels down while it fades in, and the scroll goes back to the top.
     onPageChanged: {
-        pageArea.contentY = 0;
+        pageArea.resetScroll();
         pageEntrance.restart();
     }
 

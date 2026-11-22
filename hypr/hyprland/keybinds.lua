@@ -64,7 +64,7 @@ end
 hl.bind(super("space"), launcher("fuzzel"))
 hl.bind(super("Return"), script("launch_first_available.sh", terminals))
 hl.bind(super("T"), script("launch_first_available.sh", terminals))
-hl.bind(super("E"), run("nautilus"))
+hl.bind(super("E"), run("hyprctl -j clients | grep -q '\"org\\.gnome\\.Nautilus\"' && hyprctl dispatch 'hl.dsp.focus({ window = \"class:^(org\\\\.gnome\\\\.Nautilus)$\" })' || exec nautilus"))
 hl.bind(super("W"), script("launch_first_available.sh", browsers))
 hl.bind(super("X"), run("kitty -1 vis"))
 hl.bind(super("O"), script("launch_first_available.sh", notes))

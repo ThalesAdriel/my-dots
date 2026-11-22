@@ -26,6 +26,14 @@ Singleton {
     property alias rounding: adapter.rounding
     property alias uiScale: adapter.scale
     property alias showClock: adapter.showClock
+    property alias clockUse12Hour: adapter.clockUse12Hour
+    property alias clockShowSeconds: adapter.clockShowSeconds
+    property alias clockSize: adapter.clockSize
+    property alias cardPosition: adapter.cardPosition
+    property alias cardOpacity: adapter.cardOpacity
+    property alias showPowerButtons: adapter.showPowerButtons
+    property alias showSessionMenu: adapter.showSessionMenu
+    property alias showAvatar: adapter.showAvatar
     property alias showBattery: adapter.showBattery
     property alias followPointer: adapter.followPointer
 
@@ -123,6 +131,14 @@ Singleton {
         adapter.rounding = 0;
         adapter.scale = 1;
         adapter.showClock = true;
+        adapter.clockUse12Hour = false;
+        adapter.clockShowSeconds = false;
+        adapter.clockSize = 64;
+        adapter.cardPosition = "center";
+        adapter.cardOpacity = 0.62;
+        adapter.showPowerButtons = true;
+        adapter.showSessionMenu = true;
+        adapter.showAvatar = true;
         adapter.showBattery = true;
         adapter.followPointer = true;
         root.setPicture("wallpaper", "");
@@ -220,6 +236,14 @@ Singleton {
             property int rounding: 0
             property real scale: 1
             property bool showClock: true
+            property bool clockUse12Hour: false
+            property bool clockShowSeconds: false
+            property int clockSize: 64
+            property string cardPosition: "center"
+            property real cardOpacity: 0.62
+            property bool showPowerButtons: true
+            property bool showSessionMenu: true
+            property bool showAvatar: true
             property bool showBattery: true
             property bool followPointer: true
         }

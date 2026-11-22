@@ -16,6 +16,14 @@
   "rounding": 0,
   "scale": 1,
   "showClock": true,
+  "clockUse12Hour": false,
+  "clockShowSeconds": false,
+  "clockSize": 64,
+  "cardPosition": "center",
+  "cardOpacity": 0.62,
+  "showPowerButtons": true,
+  "showSessionMenu": true,
+  "showAvatar": true,
   "showBattery": true,
   "followPointer": true
 }

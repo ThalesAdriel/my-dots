@@ -46,4 +46,25 @@ Column {
             onToggled: Settings.overviewPreviews = !Settings.overviewPreviews
         }
     }
+
+    Group {
+        title: "Settings window"
+
+        ToggleRow {
+            label: "Smooth scrolling"
+            checked: Settings.settingsSmoothScroll
+            onToggled: Settings.settingsSmoothScroll = !Settings.settingsSmoothScroll
+        }
+
+        SliderRow {
+            applies: Settings.settingsSmoothScroll
+            label: "Scroll speed"
+            value: Settings.settingsScrollSpeed
+            minimum: 0.4
+            maximum: 2.5
+            decimals: 1
+            suffix: "x"
+            onAdjusted: newValue => Settings.settingsScrollSpeed = Math.round(newValue * 10) / 10
+        }
+    }
 }

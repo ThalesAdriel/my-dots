@@ -155,7 +155,36 @@ Column {
     }
 
     Group {
-        title: "Login box"
+        title: "Card & layout"
+
+        ChoiceRow {
+            label: "Position"
+            options: [
+                {
+                    value: "left",
+                    label: "Left"
+                },
+                {
+                    value: "center",
+                    label: "Center"
+                },
+                {
+                    value: "right",
+                    label: "Right"
+                }
+            ]
+            current: GreetConfig.cardPosition
+            onPicked: value => GreetConfig.cardPosition = value
+        }
+
+        SliderRow {
+            label: "Card opacity"
+            value: GreetConfig.cardOpacity
+            minimum: 0.2
+            maximum: 1
+            decimals: 2
+            onAdjusted: newValue => GreetConfig.cardOpacity = Math.round(newValue * 100) / 100
+        }
 
         // The greeter already follows the screen's height; this is on top of that.
         SliderRow {
@@ -191,6 +220,12 @@ Column {
             labelOf: value => GreetConfig.label(value)
             onPicked: value => GreetConfig.theme = value
         }
+
+        ToggleRow {
+            label: "Show avatar"
+            checked: GreetConfig.showAvatar
+            onToggled: GreetConfig.showAvatar = !GreetConfig.showAvatar
+        }
     }
 
     Group {
@@ -198,6 +233,7 @@ Column {
 
         FieldRow {
             label: "Picture"
+            applies: GreetConfig.showAvatar
             value: GreetConfig.avatar
             placeholder: "the account's own, or a silhouette"
             browse: "file"
@@ -207,7 +243,7 @@ Column {
     }
 
     Group {
-        title: "Display and status"
+        title: "Clock"
 
         ToggleRow {
             label: "Show clock and date"
@@ -216,9 +252,49 @@ Column {
         }
 
         ToggleRow {
+            label: "Use 12-hour clock"
+            applies: GreetConfig.showClock
+            checked: GreetConfig.clockUse12Hour
+            onToggled: GreetConfig.clockUse12Hour = !GreetConfig.clockUse12Hour
+        }
+
+        ToggleRow {
+            label: "Show seconds"
+            applies: GreetConfig.showClock
+            checked: GreetConfig.clockShowSeconds
+            onToggled: GreetConfig.clockShowSeconds = !GreetConfig.clockShowSeconds
+        }
+
+        SliderRow {
+            label: "Clock size"
+            applies: GreetConfig.showClock
+            value: GreetConfig.clockSize
+            minimum: 36
+            maximum: 96
+            suffix: "px"
+            onAdjusted: newValue => GreetConfig.clockSize = Math.round(newValue)
+        }
+    }
+
+    Group {
+        title: "Display and status"
+
+        ToggleRow {
             label: "Show battery indicator"
             checked: GreetConfig.showBattery
             onToggled: GreetConfig.showBattery = !GreetConfig.showBattery
+        }
+
+        ToggleRow {
+            label: "Show power buttons"
+            checked: GreetConfig.showPowerButtons
+            onToggled: GreetConfig.showPowerButtons = !GreetConfig.showPowerButtons
+        }
+
+        ToggleRow {
+            label: "Show session menu"
+            checked: GreetConfig.showSessionMenu
+            onToggled: GreetConfig.showSessionMenu = !GreetConfig.showSessionMenu
         }
 
         ToggleRow {

@@ -16,7 +16,7 @@ Singleton {
     property bool available: true
     property string lastError: ""
 
-    // [{ name, description, x, y, width, height, refresh, scale, modes }].
+    // [{ name, description, x, y, width, height, refresh, scale, disabled, transform, modes }].
     property var monitors: []
 
     // What the panel is editing.
@@ -36,6 +36,11 @@ Singleton {
     readonly property int previewTimeout: 12
 
     readonly property var scaleOptions: [1, 1.25, 1.5, 1.75, 2]
+    readonly property var transformOptions: [0, 1, 2, 3]
+
+    function transformLabel(transform: int): string {
+        return (transform * 90) + "°";
+    }
 
     readonly property bool hasSavedLayout: {
         const saved = Settings.displayLayout;
@@ -47,6 +52,10 @@ Singleton {
             const entry = root.draft[monitor.name];
             if (!entry)
                 continue;
+            if (!!entry.disabled !== !!monitor.disabled)
+                return true;
+            if ((entry.transform || 0) !== (monitor.transform || 0))
+                return true;
             if (entry.x !== monitor.x || entry.y !== monitor.y)
                 return true;
             if (entry.width !== monitor.width || entry.height !== monitor.height)
@@ -63,6 +72,25 @@ Singleton {
         return root.draft[name] !== undefined ? root.draft[name] : null;
     }
 
+    function enabledCount(layout: var): int {
+        if (!layout)
+            return 0;
+        let count = 0;
+        for (const key of Object.keys(layout)) {
+            const entry = layout[key];
+            if (entry && !entry.disabled)
+                count += 1;
+        }
+        return count;
+    }
+
+    function canDisable(name: string): bool {
+        const entry = root.draft[name];
+        if (!entry || entry.disabled)
+            return false;
+        return root.enabledCount(root.draft) > 1;
+    }
+
     function logicalSize(entry: var): var {
         if (!entry)
             return {
@@ -70,9 +98,18 @@ Singleton {
                 height: 0
             };
         const scale = entry.scale > 0 ? entry.scale : 1;
+        const w = Math.round(entry.width / scale);
+        const h = Math.round(entry.height / scale);
+        const t = entry.transform || 0;
+        if (t === 1 || t === 3) {
+            return {
+                width: h,
+                height: w
+            };
+        }
         return {
-            width: Math.round(entry.width / scale),
-            height: Math.round(entry.height / scale)
+            width: w,
+            height: h
         };
     }
 
@@ -115,6 +152,13 @@ Singleton {
         clean.y = Math.round(clean.y);
         clean.width = Math.round(clean.width);
         clean.height = Math.round(clean.height);
+        clean.disabled = entry.disabled === true;
+
+        const rawTransform = entry.transform === undefined ? 0 : Math.round(Number(entry.transform));
+        if (!isFinite(rawTransform) || rawTransform < 0 || rawTransform > 3)
+            return null;
+        clean.transform = rawTransform;
+
         return clean;
     }
 
@@ -161,12 +205,7 @@ Singleton {
             if (!item || !root.usableName(item.name))
                 continue;
 
-            // A disabled output reports 0x0 at 0 Hz.
-            if (item.disabled === true || !(item.width > 0) || !(item.height > 0))
-                continue;
-
-            const scale = item.scale > 0 ? item.scale : 1;
-            const refresh = Number(item.refreshRate) > 0 ? Number(item.refreshRate) : 60;
+            const disabled = item.disabled === true;
             const modes = [];
             const seen = {};
 
@@ -178,10 +217,28 @@ Singleton {
                 modes.push(mode);
             }
 
+            // A disabled output often reports 0x0 at 0 Hz; fall back to its first mode so re-enabling works cleanly.
+            let width = Number(item.width) > 0 ? Math.round(Number(item.width)) : (modes.length > 0 ? modes[0].width : 0);
+            let height = Number(item.height) > 0 ? Math.round(Number(item.height)) : (modes.length > 0 ? modes[0].height : 0);
+            const refresh = Number(item.refreshRate) > 0 ? Number(item.refreshRate) : (modes.length > 0 ? modes[0].refresh : 60);
+
+            if (!disabled && (width <= 0 || height <= 0))
+                continue;
+            if (disabled && (width <= 0 || height <= 0)) {
+                width = 1920;
+                height = 1080;
+            }
+
+            const scale = item.scale > 0 ? item.scale : 1;
+            const rawTransform = Math.round(Number(item.transform) || 0);
+            const transform = rawTransform >= 0 && rawTransform <= 3 ? rawTransform : 0;
+            const x = isFinite(Number(item.x)) ? Math.round(Number(item.x)) : 0;
+            const y = isFinite(Number(item.y)) ? Math.round(Number(item.y)) : 0;
+
             // Whatever it is running now belongs in the list even when the driver did not report it as available.
             const current = {
-                width: item.width,
-                height: item.height,
+                width: width,
+                height: height,
                 refresh: refresh
             };
             current.label = root.modeLabel(current);
@@ -191,12 +248,14 @@ Singleton {
             list.push({
                 name: item.name,
                 description: item.description || item.name,
-                x: item.x,
-                y: item.y,
-                width: item.width,
-                height: item.height,
+                x: x,
+                y: y,
+                width: width,
+                height: height,
                 refresh: refresh,
                 scale: scale,
+                disabled: disabled,
+                transform: transform,
                 modes: modes
             });
         }
@@ -226,6 +285,10 @@ Singleton {
         if (!entry)
             return;
 
+        // At least one monitor must stay enabled.
+        if (changes && changes.disabled === true && !entry.disabled && root.enabledCount(root.draft) <= 1)
+            return;
+
         const next = {};
         for (const key of Object.keys(root.draft))
             next[key] = Object.assign({}, root.draft[key]);
@@ -236,12 +299,18 @@ Singleton {
 
     // hyprctl wants physical mode, logical position and scale, in that order.
     function spec(name: string, entry: var): string {
-        return name + "," + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "," + entry.x + "x" + entry.y + "," + entry.scale;
+        if (entry.disabled)
+            return name + ",disable";
+        const base = name + "," + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "," + entry.x + "x" + entry.y + "," + entry.scale;
+        return entry.transform ? base + ",transform," + entry.transform : base;
     }
 
     // The same monitor as the Lua config writes it, in the form general.lua uses for its own rules.
     function luaRule(name: string, entry: var): string {
-        return "hl.monitor({ output = \"" + name + "\", mode = \"" + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "Hz\", position = \"" + entry.x + "x" + entry.y + "\", scale = \"" + entry.scale + "\" })";
+        if (entry.disabled)
+            return "hl.monitor({ output = \"" + name + "\", disable = true })";
+        const transformPart = entry.transform ? ", transform = " + entry.transform : "";
+        return "hl.monitor({ output = \"" + name + "\", mode = \"" + entry.width + "x" + entry.height + "@" + entry.refresh.toFixed(2) + "Hz\", position = \"" + entry.x + "x" + entry.y + "\", scale = \"" + entry.scale + "\"" + transformPart + " })";
     }
 
     function luaRules(layout: var): var {
@@ -257,23 +326,39 @@ Singleton {
     property var pendingApplyCommand: null
 
     function apply(layout: var): bool {
+        if (!layout)
+            return false;
+
+        const entries = [];
+        let enabled = 0;
+        for (const name of Object.keys(layout)) {
+            const entry = root.usableName(name) ? root.sanitiseEntry(layout[name]) : null;
+            if (!entry)
+                continue;
+            entries.push({
+                name: name,
+                entry: entry
+            });
+            if (!entry.disabled)
+                enabled += 1;
+        }
+
+        // Never allow applying a layout with no enabled monitors.
+        if (entries.length === 0 || enabled === 0)
+            return false;
+
         let command;
         if (Hyprland.usingLua) {
-            const rules = root.luaRules(layout);
-            if (rules.length === 0)
-                return false;
+            const rules = [];
+            for (const item of entries)
+                rules.push(root.luaRule(item.name, item.entry));
 
             // One eval rather than a call each.
             command = ["hyprctl", "eval", rules.join(" ")];
         } else {
             const steps = [];
-            for (const name of Object.keys(layout)) {
-                const entry = root.usableName(name) ? root.sanitiseEntry(layout[name]) : null;
-                if (entry)
-                    steps.push("keyword monitor " + root.spec(name, entry));
-            }
-            if (steps.length === 0)
-                return false;
+            for (const item of entries)
+                steps.push("keyword monitor " + root.spec(item.name, item.entry));
             command = ["hyprctl", "--batch", steps.join(" ; ")];
         }
 
@@ -302,7 +387,9 @@ Singleton {
                 width: monitor.width,
                 height: monitor.height,
                 refresh: monitor.refresh,
-                scale: monitor.scale
+                scale: monitor.scale,
+                disabled: !!monitor.disabled,
+                transform: monitor.transform || 0
             };
         }
         return layout;
@@ -387,7 +474,7 @@ Singleton {
                 continue;
 
             layout[monitor.name] = entry;
-            if (entry.x !== monitor.x || entry.y !== monitor.y || entry.width !== monitor.width || entry.height !== monitor.height || Math.abs(entry.scale - monitor.scale) > 0.001 || Math.abs(entry.refresh - monitor.refresh) > 0.01)
+            if (entry.x !== monitor.x || entry.y !== monitor.y || entry.width !== monitor.width || entry.height !== monitor.height || Math.abs(entry.scale - monitor.scale) > 0.001 || Math.abs(entry.refresh - monitor.refresh) > 0.01 || !!entry.disabled !== !!monitor.disabled || (entry.transform || 0) !== (monitor.transform || 0))
                 differs = true;
         }
 

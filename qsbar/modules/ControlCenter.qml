@@ -22,6 +22,10 @@ BarPopup {
     readonly property int nightLightRowHeight: Settings.showNightLight ? 28 : 0
     readonly property int nightLightRowMargin: root.nightLightRowHeight > 0 ? 10 : 0
 
+    // Power profile pills are left out when power-profiles-daemon is unavailable or reports no profiles.
+    readonly property int powerRowHeight: PowerProfiles.available && PowerProfiles.profiles.length > 0 ? 28 : 0
+    readonly property int powerRowMargin: root.powerRowHeight > 0 ? 10 : 0
+
     // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath.
     onSettledChanged: Brightness.watching = root.settled
 
@@ -32,8 +36,10 @@ BarPopup {
         root.hoveredAction = null;
 
         // The list below already carries everything.
-        if (root.shown)
+        if (root.shown) {
             Notifications.clearPopups();
+            PowerProfiles.refresh();
+        }
     }
 
     component ActionButton: Rectangle {
@@ -93,7 +99,7 @@ BarPopup {
         id: content
 
         implicitWidth: root.panelWidth
-        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + nightLightRow.height + root.nightLightRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
+        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + nightLightRow.height + root.nightLightRowMargin + powerRow.height + root.powerRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
 
         Item {
             id: headerRow
@@ -250,10 +256,48 @@ BarPopup {
             }
         }
 
+        // Quick power-profile pills, collapsed when power-profiles-daemon is absent.
+        Item {
+            id: powerRow
+
+            anchors.top: nightLightRow.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: root.panelPadding
+            anchors.rightMargin: root.panelPadding
+            anchors.topMargin: root.powerRowMargin
+
+            visible: root.powerRowHeight > 0
+            height: root.powerRowHeight
+
+            Row {
+                id: powerButtons
+
+                anchors.fill: parent
+                spacing: 6
+
+                Repeater {
+                    model: PowerProfiles.sortedProfiles
+
+                    delegate: PanelButton {
+                        id: profilePill
+
+                        required property string modelData
+
+                        width: (powerButtons.width - powerButtons.spacing * Math.max(PowerProfiles.sortedProfiles.length - 1, 0)) / Math.max(PowerProfiles.sortedProfiles.length, 1)
+                        height: powerRow.height
+                        label: PowerProfiles.label(profilePill.modelData)
+                        accented: PowerProfiles.active === profilePill.modelData
+                        onActivated: PowerProfiles.set(profilePill.modelData)
+                    }
+                }
+            }
+        }
+
         Item {
             id: actionRow
 
-            anchors.top: nightLightRow.bottom
+            anchors.top: powerRow.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding

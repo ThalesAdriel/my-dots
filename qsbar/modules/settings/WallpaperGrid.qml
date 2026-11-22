@@ -35,11 +35,28 @@ Column {
     // Pictures are not settings a search can name.
     visible: !SettingsContext.searching
 
-    // Above the grid rather than under it.
-    ButtonRow {
-        applies: Wallpaper.images.length > grid.across
-        label: grid.expanded ? "Show fewer" : "Show all " + Wallpaper.images.length + " pictures"
-        onTriggered: grid.expanded = !grid.expanded
+    // Above the grid rather than under it: expand toggle + rescan button for newly added images.
+    Item {
+        width: parent.width
+        height: 28
+
+        PanelButton {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            visible: Wallpaper.images.length > grid.across
+            label: grid.expanded ? "Show fewer" : "Show all " + Wallpaper.images.length + " pictures"
+            onActivated: grid.expanded = !grid.expanded
+        }
+
+        PanelButton {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            label: "Rescan (" + Wallpaper.images.length + ")"
+            onActivated: {
+                Wallpaper.scan();
+                Wallpaper.refresh();
+            }
+        }
     }
 
     Flow {

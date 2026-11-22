@@ -12,6 +12,8 @@ Rectangle {
     // Picking a folder rather than a file.
     property bool folders: false
     property var nameFilters: []
+    property string fileGlyph: Glyphs.image
+    property string emptyFilesText: "No pictures or folders in here."
 
     // Where the browser opens: the field's value.
     property string start: ""
@@ -180,7 +182,7 @@ Rectangle {
 
                 fillBarHeight: false
                 width: 18
-                text: entry.fileIsDir ? Glyphs.folder : Glyphs.image
+                text: entry.fileIsDir ? Glyphs.folder : browser.fileGlyph
                 color: entry.fileIsDir ? Theme.accent : Theme.textMuted
                 font.pixelSize: 10
             }
@@ -221,6 +223,6 @@ Rectangle {
         anchors.rightMargin: 12
 
         visible: browserList.count === 0
-        text: browser.folders ? "No folders in here." : "No pictures or folders in here."
+        text: browser.folders ? "No folders in here." : browser.emptyFilesText
     }
 }

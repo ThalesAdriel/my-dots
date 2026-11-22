@@ -56,5 +56,11 @@ Column {
             suffix: "s"
             onAdjusted: newValue => Settings.notificationSeconds = Math.round(newValue)
         }
+
+        ToggleRow {
+            label: "Pause popups in fullscreen"
+            checked: Settings.dndOnFullscreen
+            onToggled: Settings.dndOnFullscreen = !Settings.dndOnFullscreen
+        }
     }
 }

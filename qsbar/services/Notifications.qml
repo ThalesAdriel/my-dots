@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import "root:/config"
 import "root:/services"
@@ -36,6 +37,7 @@ Singleton {
     readonly property int maximumTimeout: 120000
 
     property bool doNotDisturb: false
+    property bool fullscreenActive: false
     property var popups: []
     property var arrivals: ({})
 
@@ -46,6 +48,11 @@ Singleton {
 
     onDoNotDisturbChanged: {
         if (root.doNotDisturb)
+            root.clearPopups();
+    }
+
+    onFullscreenActiveChanged: {
+        if (root.fullscreenActive && Settings.dndOnFullscreen)
             root.clearPopups();
     }
 
@@ -68,7 +75,11 @@ Singleton {
 
     function shouldPopup(): bool {
         // The control center lists everything already.
-        return !root.doNotDisturb && !UiState.controlCenterOpen;
+        if (root.doNotDisturb || UiState.controlCenterOpen)
+            return false;
+        if (Settings.dndOnFullscreen && root.fullscreenActive)
+            return false;
+        return true;
     }
 
     function pushPopup(notification: var): void {
@@ -342,6 +353,21 @@ Singleton {
             return "";
 
         return root.sanitizeAnchors(root.clampText(text).replace(/<img[^>]*>/gi, "")).replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;").replace(/<(?!\/?(?:b|i|u|a|br)[\s\/>])/gi, "&lt;");
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event: var): void {
+            if (!event || event.name !== "fullscreen")
+                return;
+
+            const data = String(event.data || "").trim();
+            if (data === "1")
+                root.fullscreenActive = true;
+            else if (data === "0")
+                root.fullscreenActive = false;
+        }
     }
 
     SystemClock {

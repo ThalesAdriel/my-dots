@@ -13,8 +13,10 @@ Item {
             password.forceActiveFocus();
     }
 
+    readonly property int avatarOffset: Config.showAvatar ? 0 : (Config.avatarSize + 7)
+
     width: Config.cardWidth
-    height: Config.cardHeight
+    height: Config.cardHeight - root.avatarOffset
 
     Rectangle {
         anchors.fill: parent
@@ -27,6 +29,7 @@ Item {
     }
 
     Avatar {
+        visible: Config.showAvatar
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 18
@@ -39,7 +42,7 @@ Item {
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: 147
+        anchors.topMargin: Config.showAvatar ? 147 : 28
 
         focused: input.activeFocus
 

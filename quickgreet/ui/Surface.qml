@@ -55,6 +55,8 @@ Item {
 
         // The corner, scaled from the corner itself so it stays put while it shrinks.
         Item {
+            id: cornerHolder
+
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.margins: 20
@@ -71,6 +73,7 @@ Item {
                 spacing: 10
 
                 Tile {
+                    visible: Config.showSessionMenu
                     width: Config.cornerSize
                     height: Config.cornerSize
                     glyph: ""
@@ -92,7 +95,7 @@ Item {
                 }
 
                 Repeater {
-                    model: [
+                    model: Config.showPowerButtons ? [
                         {
                             glyph: "",
                             label: "Suspend",
@@ -108,7 +111,7 @@ Item {
                             label: "Power off",
                             action: "poweroff"
                         }
-                    ]
+                    ] : []
 
                     Tile {
                         required property var modelData
@@ -129,48 +132,67 @@ Item {
                 anchors.top: corner.bottom
                 anchors.topMargin: 2
 
-                open: root.menuOpen
+                open: Config.showSessionMenu && root.menuOpen
                 onPicked: root.menuOpen = false
             }
         }
 
-        // Clock & date centered cleanly in the space above the login card.
+        // Clock & date aligned with the login card, clear of both the card and top-right corner buttons.
         Item {
             id: clockHolder
 
             visible: Config.showClock
-            readonly property real cardTop: (parent.height - Config.cardHeight * root.factor) / 2
+            readonly property real cardTop: (parent.height - cardHolder.height * root.factor) / 2
+            readonly property real minY: Config.cardPosition === "right"
+                ? 20 + cornerHolder.height * root.factor + 16 * root.factor
+                : Math.max(20 * root.factor, Config.preview ? 56 : 0)
 
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: Math.max(20 * root.factor, (cardTop - height * root.factor) / 2)
+            x: Config.cardPosition === "left"
+                ? Math.round(parent.width * 0.08)
+                : (Config.cardPosition === "right"
+                    ? Math.round(parent.width * 0.92 - width)
+                    : Math.round((parent.width - width) / 2))
+            y: Math.max(minY, minY + (cardTop - minY - height * root.factor) / 2)
             width: clockColumn.implicitWidth
             height: clockColumn.implicitHeight
 
-            transformOrigin: Item.Top
+            transformOrigin: Config.cardPosition === "left"
+                ? Item.TopLeft
+                : (Config.cardPosition === "right" ? Item.TopRight : Item.Top)
             scale: root.factor
 
             Column {
                 id: clockColumn
 
+                readonly property int textAlign: Config.cardPosition === "left"
+                    ? Text.AlignLeft
+                    : (Config.cardPosition === "right" ? Text.AlignRight : Text.AlignHCenter)
+                readonly property real contentWidth: Math.max(clockTime.implicitWidth, clockDate.implicitWidth)
+
                 spacing: 4
 
                 Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    id: clockTime
 
+                    width: clockColumn.contentWidth
+                    horizontalAlignment: clockColumn.textAlign
                     text: Clock.time
                     color: Config.text
-                    font.family: Config.fontFamily
-                    font.pixelSize: 64
-                    font.weight: Font.Light
+                    font.family: Config.fontFamilyClock
+                    font.pixelSize: Config.clockSize
+                    font.weight: Font.DemiBold
                 }
 
                 Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    id: clockDate
 
+                    width: clockColumn.contentWidth
+                    horizontalAlignment: clockColumn.textAlign
                     text: Clock.date
-                    color: Config.muted
-                    font.family: Config.fontFamily
-                    font.pixelSize: Config.textSize + 3
+                    color: Config.text
+                    font.family: Config.fontFamilyClock
+                    font.pixelSize: 17
+                    font.weight: Font.DemiBold
                 }
             }
         }
@@ -190,10 +212,20 @@ Item {
 
         // The card has its own scale for the entrance, so the screen's goes on this.
         Item {
-            anchors.centerIn: parent
-            width: Config.cardWidth
-            height: Config.cardHeight
+            id: cardHolder
 
+            anchors.verticalCenter: parent.verticalCenter
+            x: Config.cardPosition === "left"
+                ? Math.round(parent.width * 0.08)
+                : (Config.cardPosition === "right"
+                    ? Math.round(parent.width * 0.92 - width)
+                    : Math.round((parent.width - width) / 2))
+            width: card.width
+            height: card.height
+
+            transformOrigin: Config.cardPosition === "left"
+                ? Item.Left
+                : (Config.cardPosition === "right" ? Item.Right : Item.Center)
             scale: root.factor
 
             LoginCard {
