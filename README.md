@@ -49,8 +49,6 @@ OBS: Some of my configs are still messy or broken. I plan to clean and fix them 
 
 </details>
 
-[My wallpaper](https://www.wikiart.org/en/claude-monet/the-promenade-woman-with-a-parasol) is slightly modified artwork of Claude Monet
-
 Credits to the people who helped me achieve my 'rice':
 
 [end_4](https://github.com/end-4/dots-hyprland)
