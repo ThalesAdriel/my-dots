@@ -27,7 +27,7 @@ PanelWindow {
         right: true
     }
 
-    margins.top: root.integrated ? 0 : 8
+    margins.top: root.integrated ? 0 : Settings.panelGap
     margins.right: root.integrated ? 0 : 8
 
     exclusiveZone: 0

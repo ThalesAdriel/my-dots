@@ -13,7 +13,7 @@ PanelWindow {
 
     required property Item anchorItem
     property bool alignRight: false
-    readonly property int gap: 0
+    readonly property int gap: Settings.panelGap
     property bool shown: false
     property bool dismissing: false
     property bool rendered: false
@@ -44,7 +44,7 @@ PanelWindow {
     readonly property int windowHeight: root.screen ? root.screen.height : 1080
 
     // Room on either side of the panel for the fillets that weld it to the bar.
-    readonly property int cornerSize: Settings.outerCorners ? Settings.outerCornerRadius : 0
+    readonly property int cornerSize: Settings.outerCorners && root.gap === 0 ? Settings.outerCornerRadius : 0
 
     // Where the window sits along the bar.
     property real anchorOffset: 0

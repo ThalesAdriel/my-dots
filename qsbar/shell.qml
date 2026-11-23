@@ -5,7 +5,10 @@ import "root:/services"
 
 ShellRoot {
     // Built from the start rather than when the theme page first asks for it.
-    Component.onCompleted: SystemTheme.followAccent()
+    Component.onCompleted: {
+        SystemTheme.followAccent();
+        Network.enforceStartupPolicy();
+    }
 
     Variants {
         model: Quickshell.screens

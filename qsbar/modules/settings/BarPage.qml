@@ -101,6 +101,13 @@ Column {
         }
 
         ToggleRow {
+            label: "Battery percentage"
+            applies: Settings.showBattery
+            checked: Settings.showBatteryPercent
+            onToggled: Settings.showBatteryPercent = !Settings.showBatteryPercent
+        }
+
+        ToggleRow {
             label: "Screen recording"
             checked: Settings.showRecording
             onToggled: Settings.showRecording = !Settings.showRecording

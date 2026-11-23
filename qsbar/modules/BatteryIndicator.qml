@@ -77,7 +77,25 @@ BarButton {
     }
 
     highlighted: batteryPopup.shown
+    leftPadding: Settings.showBatteryPercent && root.present ? 6 : Theme.iconPadding
+    contentSpacing: 3
     onPrimaryClicked: batteryPopup.toggle()
+
+    BarText {
+        visible: Settings.showBatteryPercent && root.present
+        text: root.percent + "%"
+        font.family: Theme.monoFamily
+        font.pixelSize: Theme.fontSizeSmall
+        color: root.low ? Theme.urgent : Theme.textPrimary
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Theme.durationBase
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Theme.easingCurve
+            }
+        }
+    }
 
     IconStack {
         IconText {

@@ -30,6 +30,7 @@ Column {
             panelOpacity: 0.30,
             barRadius: 0,
             panelRadius: 0,
+            panelGap: 0,
             barBlur: true,
             panelBlur: true,
             outerCorners: true,
@@ -44,6 +45,7 @@ Column {
             panelOpacity: 0.50,
             barRadius: 13,
             panelRadius: 18,
+            panelGap: 3,
             barBlur: true,
             panelBlur: true,
             outerCorners: false,
@@ -58,6 +60,7 @@ Column {
             panelOpacity: 0.60,
             barRadius: 0,
             panelRadius: 0,
+            panelGap: 0,
             barBlur: true,
             panelBlur: true,
             outerCorners: true,
@@ -72,6 +75,7 @@ Column {
             panelOpacity: 0.52,
             barRadius: 10,
             panelRadius: 14,
+            panelGap: 3,
             barBlur: true,
             panelBlur: true,
             outerCorners: false,
@@ -89,6 +93,7 @@ Column {
             panelOpacity: Settings.panelOpacity,
             barRadius: Settings.barRadius,
             panelRadius: Settings.panelRadius,
+            panelGap: Settings.panelGap,
             barBlur: Settings.barBlur,
             panelBlur: Settings.panelBlur,
             outerCorners: Settings.outerCorners,
@@ -113,6 +118,8 @@ Column {
             Settings.barRadius = preset.barRadius;
         if (preset.panelRadius !== undefined)
             Settings.panelRadius = preset.panelRadius;
+        if (preset.panelGap !== undefined)
+            Settings.panelGap = preset.panelGap;
         if (preset.barBlur !== undefined)
             Settings.barBlur = preset.barBlur;
         if (preset.panelBlur !== undefined)
@@ -166,6 +173,8 @@ Column {
             entry.barRadius = Math.round(Math.min(Math.max(raw.barRadius, 0), 20));
         if (typeof raw.panelRadius === "number")
             entry.panelRadius = Math.round(Math.min(Math.max(raw.panelRadius, 0), 24));
+        if (typeof raw.panelGap === "number")
+            entry.panelGap = Math.round(Math.min(Math.max(raw.panelGap, 0), 24));
         if (typeof raw.barBlur === "boolean")
             entry.barBlur = raw.barBlur;
         if (typeof raw.panelBlur === "boolean")
@@ -760,6 +769,15 @@ Column {
             maximum: 24
             suffix: "px"
             onAdjusted: newValue => Settings.panelRadius = Math.round(newValue)
+        }
+
+        SliderRow {
+            label: "Distance from bar"
+            value: Settings.panelGap
+            minimum: 0
+            maximum: 24
+            suffix: "px"
+            onAdjusted: newValue => Settings.panelGap = Math.round(newValue)
         }
 
         ToggleRow {

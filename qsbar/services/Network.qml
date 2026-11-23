@@ -35,9 +35,12 @@ Singleton {
     // [{ ssid, signal, security, enterprise, active }].
     property var accessPoints: []
     property var savedNames: []
-    // [{ name, type, active }] for WireGuard and NetworkManager VPN profiles.
+    // [{ name, type, active, device }] for Ethernet profiles.
+    property var ethernetProfiles: []
+    // [{ name, type, active, autoconnect }] for WireGuard and NetworkManager VPN profiles.
     property var vpns: []
     property var activeVpnNames: []
+    property bool startupPolicyApplied: false
 
     // Active interface IPv4/IPv6 info & connection settings, only populated during full reads (Settings / open panel).
     property string activeConnection: ""
@@ -82,6 +85,23 @@ Singleton {
         return null;
     }
 
+    readonly property var ethernetDevices: {
+        const list = [];
+        for (const device of root.devices) {
+            if (device.type === "ethernet" || device.type === "bridge")
+                list.push(device);
+        }
+        return list;
+    }
+
+    readonly property var anyEthernetDevice: {
+        for (const device of root.devices) {
+            if (device.type === "ethernet" || device.type === "bridge")
+                return device;
+        }
+        return null;
+    }
+
     readonly property var ethernetDevice: {
         for (const device of root.devices) {
             if ((device.type === "ethernet" || device.type === "bridge") && device.state === "connected")
@@ -110,9 +130,11 @@ Singleton {
         if (!root.available)
             return "NetworkManager not found";
         if (root.wired)
-            return "Wired, " + root.ethernetDevice.connection;
+            return "Wired, " + (root.ethernetDevice.connection || root.ethernetDevice.device);
         if (root.wifiConnected)
             return root.ssid + ", " + root.signalStrength + "%";
+        if (root.anyEthernetDevice && root.anyEthernetDevice.state === "disconnected")
+            return "Wired (" + root.anyEthernetDevice.device + ") disconnected";
         if (!root.wifiRadio)
             return "Wi-Fi off";
         return "Offline";
@@ -177,6 +199,56 @@ Singleton {
             return;
 
         root.runQueue([["nmcli", "device", "disconnect", root.wifiDevice.device]], "");
+    }
+
+    function connectEthernet(deviceName: string): void {
+        const target = deviceName || (root.anyEthernetDevice ? root.anyEthernetDevice.device : "");
+        if (!root.usableName(target))
+            return;
+
+        root.runQueue([
+            ["nmcli", "device", "set", target, "autoconnect", "yes"],
+            ["nmcli", "device", "connect", target]
+        ], "");
+    }
+
+    function disconnectEthernet(deviceName: string): void {
+        const target = deviceName || (root.ethernetDevice ? root.ethernetDevice.device : "");
+        if (!root.usableName(target))
+            return;
+
+        root.runQueue([["nmcli", "device", "disconnect", target]], "");
+    }
+
+    function toggleEthernet(deviceName: string, currentlyConnected: bool): void {
+        if (currentlyConnected)
+            root.disconnectEthernet(deviceName);
+        else
+            root.connectEthernet(deviceName);
+    }
+
+    function enforceStartupPolicy(): void {
+        if (!Settings.loaded) {
+            startupPolicyConn.enabled = true;
+            return;
+        }
+        if (root.startupPolicyApplied)
+            return;
+        root.startupPolicyApplied = true;
+        startupPolicyProcess.command = ["sh", "-c", root.startupPolicyScript, "qsbar-net-startup", Settings.vpnAutoconnect ? "1" : "0"];
+        startupPolicyProcess.running = true;
+    }
+
+    function setVpnAutoconnectGlobal(allow: bool): void {
+        Settings.vpnAutoconnect = allow;
+        vpnAutoconnectProcess.command = ["sh", "-c", root.vpnAutoconnectScript, "qsbar-vpn-auto", allow ? "yes" : "no"];
+        vpnAutoconnectProcess.running = true;
+    }
+
+    function setVpnProfileAutoconnect(name: string, allow: bool): void {
+        if (!root.usableName(name))
+            return;
+        root.runQueue([["nmcli", "connection", "modify", "id", name, "connection.autoconnect", allow ? "yes" : "no"]], "");
     }
 
     // nmcli takes the ssid positionally, but a leading dash is the kind of thing an option parser changes its mind about.
@@ -476,6 +548,49 @@ Singleton {
         root.refresh();
     }
 
+    readonly property string startupPolicyScript: `command -v nmcli >/dev/null 2>&1 || exit 0
+export LC_ALL=C
+allow_vpn="$1"
+
+# 1. If VPN autoconnect on startup is disabled (default: 0), disable autoconnect on VPN/WireGuard profiles and bring down any that auto-started.
+if [ "$allow_vpn" != "1" ]; then
+    nmcli -t -f UUID,TYPE,AUTOCONNECT,ACTIVE connection show 2>/dev/null | while IFS=: read -r uuid ctype autoconn active; do
+        if [ "$ctype" = "vpn" ] || [ "$ctype" = "wireguard" ]; then
+            if [ "$autoconn" = "yes" ]; then
+                nmcli connection modify uuid "$uuid" connection.autoconnect no >/dev/null 2>&1 || true
+            fi
+            if [ "$active" = "yes" ]; then
+                nmcli connection down uuid "$uuid" >/dev/null 2>&1 || true
+            fi
+        fi
+    done
+fi
+
+# 2. Ensure all ethernet profiles have autoconnect enabled and connect any plugged-in ethernet interface left in 'disconnected' state.
+nmcli -t -f UUID,TYPE,AUTOCONNECT connection show 2>/dev/null | while IFS=: read -r uuid ctype autoconn; do
+    if [ "$ctype" = "802-3-ethernet" ] && [ "$autoconn" = "no" ]; then
+        nmcli connection modify uuid "$uuid" connection.autoconnect yes >/dev/null 2>&1 || true
+    fi
+done
+
+nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null | while IFS=: read -r dev dtype dstate; do
+    if [ "$dtype" = "ethernet" ] && [ "$dstate" = "disconnected" ]; then
+        nmcli device set "$dev" autoconnect yes >/dev/null 2>&1 || true
+        nmcli device connect "$dev" >/dev/null 2>&1 || true
+    fi
+done
+exit 0`
+
+    readonly property string vpnAutoconnectScript: `command -v nmcli >/dev/null 2>&1 || exit 0
+export LC_ALL=C
+mode="$1"
+nmcli -t -f UUID,TYPE connection show 2>/dev/null | while IFS=: read -r uuid ctype; do
+    if [ "$ctype" = "vpn" ] || [ "$ctype" = "wireguard" ]; then
+        nmcli connection modify uuid "$uuid" connection.autoconnect "$mode" >/dev/null 2>&1 || true
+    fi
+done
+exit 0`
+
     readonly property string readScript: `command -v nmcli >/dev/null 2>&1 || exit 127
 export LC_ALL=C
 echo "#radio"
@@ -492,9 +607,12 @@ else
 fi
 echo "#saved"
 if [ "$1" = full ]; then
-    nmcli -t -f NAME,TYPE,ACTIVE connection show 2>/dev/null
+    nmcli -t -f NAME,TYPE,ACTIVE,AUTOCONNECT,DEVICE connection show 2>/dev/null
     echo "#ip"
-    dev=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null | awk -F: '$3 == "connected" && ($2 == "ethernet" || $2 == "bridge" || $2 == "wifi") { print $1; exit }')
+    dev=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null | awk -F: '$3 == "connected" && ($2 == "ethernet" || $2 == "bridge") { print $1; found=1; exit } END { if (!found) { } }')
+    if [ -z "$dev" ]; then
+        dev=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null | awk -F: '$3 == "connected" && $2 == "wifi" { print $1; exit }')
+    fi
     if [ -n "$dev" ]; then
         nmcli -t -f IP4.ADDRESS,IP4.GATEWAY,IP4.DNS,IP6.ADDRESS,IP6.GATEWAY,IP6.DNS device show "$dev" 2>/dev/null
         con=$(nmcli -t -f DEVICE,CONNECTION device status 2>/dev/null | awk -F: -v d="$dev" '$1 == d { print $2; exit }')
@@ -512,6 +630,7 @@ exit 0`
         const devices = [];
         const points = [];
         const saved = [];
+        const ethProfiles = [];
         const vpns = [];
         const activeVpns = [];
         let activeConnection = "";
@@ -606,13 +725,25 @@ exit 0`
                 const connType = fields[1];
                 if (full) {
                     const isActive = fields.length >= 3 && fields[2] === "yes";
+                    const isAuto = fields.length < 4 || fields[3] !== "no";
+                    const connDev = fields.length >= 5 ? fields[4] : "";
                     if (connType === "802-11-wireless")
                         saved.push(connName);
+                    if (connType === "802-3-ethernet") {
+                        ethProfiles.push({
+                            name: connName,
+                            type: connType,
+                            active: isActive,
+                            autoconnect: isAuto,
+                            device: connDev
+                        });
+                    }
                     if (connType === "wireguard" || connType === "vpn") {
                         vpns.push({
                             name: connName,
                             type: connType,
-                            active: isActive
+                            active: isActive,
+                            autoconnect: isAuto
                         });
                         if (isActive && activeVpns.indexOf(connName) === -1)
                             activeVpns.push(connName);
@@ -637,6 +768,7 @@ exit 0`
         root.activeVpnNames = activeVpns;
         if (full) {
             root.savedNames = saved;
+            root.ethernetProfiles = ethProfiles;
             vpns.sort((a, b) => (a.active === b.active) ? a.name.localeCompare(b.name) : (a.active ? -1 : 1));
             root.vpns = vpns;
             if (root.activeConnection !== activeConnection)
@@ -693,6 +825,38 @@ exit 0`
         });
 
         return matched ? merged : merged.concat([active]);
+    }
+
+    Connections {
+        id: startupPolicyConn
+
+        target: Settings
+        enabled: false
+
+        function onLoadedChanged(): void {
+            if (Settings.loaded) {
+                startupPolicyConn.enabled = false;
+                root.enforceStartupPolicy();
+            }
+        }
+    }
+
+    Process {
+        id: startupPolicyProcess
+
+        onExited: {
+            if (root.enabled)
+                root.refresh();
+        }
+    }
+
+    Process {
+        id: vpnAutoconnectProcess
+
+        onExited: {
+            if (root.enabled)
+                root.refresh();
+        }
     }
 
     Process {

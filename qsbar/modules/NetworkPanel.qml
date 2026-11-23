@@ -183,6 +183,7 @@ Item {
                 PanelButton {
                     label: Network.wifiRadio ? "Wi-Fi on" : "Wi-Fi off"
                     accented: Network.wifiRadio
+                    visible: Network.wifiDevice !== null
                     available: Network.available && !Network.busy
                     onActivated: Network.setWifiRadio(!Network.wifiRadio)
                 }
@@ -192,7 +193,7 @@ Item {
         Card {
             width: parent.width
             height: 58
-            visible: Network.connected
+            visible: Network.connected || Network.anyEthernetDevice !== null
 
             IconText {
                 id: activeGlyph
@@ -202,8 +203,8 @@ Item {
                 anchors.leftMargin: 14
 
                 fillBarHeight: false
-                text: Network.wired ? Glyphs.networkWired : Glyphs.wifi
-                color: Theme.textPrimary
+                text: (Network.wired || (!Network.wifiConnected && Network.anyEthernetDevice !== null)) ? Glyphs.networkWired : Glyphs.wifi
+                color: Network.connected ? Theme.textPrimary : Theme.textMuted
                 font.pixelSize: 16
             }
 
@@ -218,7 +219,15 @@ Item {
                 anchors.topMargin: 12
 
                 textFormat: Text.PlainText
-                text: Network.wired ? Network.ethernetDevice.connection : Network.ssid
+                text: {
+                    if (Network.wired)
+                        return (Network.ethernetDevice.connection && Network.ethernetDevice.connection !== "--") ? (Network.ethernetDevice.connection + " (" + Network.ethernetDevice.device + ")") : Network.ethernetDevice.device;
+                    if (Network.wifiConnected)
+                        return Network.ssid;
+                    if (Network.anyEthernetDevice)
+                        return "Wired (" + Network.anyEthernetDevice.device + ")";
+                    return "Offline";
+                }
                 color: Theme.textPrimary
                 font.family: Theme.sansFamily
                 font.pixelSize: Theme.fontSizeSmall
@@ -232,7 +241,15 @@ Item {
                 anchors.top: activeName.bottom
                 anchors.topMargin: 2
 
-                text: Network.wired ? "Wired connection" : "Connected, " + Network.signalStrength + "%"
+                text: {
+                    if (Network.wired)
+                        return Network.ipAddress !== "" ? ("Wired · " + Network.ipAddress.split("/")[0]) : "Wired connection";
+                    if (Network.wifiConnected)
+                        return "Connected, " + Network.signalStrength + "%";
+                    if (Network.anyEthernetDevice)
+                        return Network.anyEthernetDevice.state === "unavailable" ? "Cable unplugged" : "Disconnected";
+                    return "Disconnected";
+                }
                 color: Theme.textMuted
                 font.family: Theme.sansFamily
                 font.pixelSize: Theme.fontSizeSmall
@@ -246,10 +263,18 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.rightMargin: 12
 
-                label: "Disconnect"
-                available: Network.wifiConnected && !Network.busy
-                visible: Network.wifiConnected
-                onActivated: Network.disconnect()
+                label: Network.connected ? "Disconnect" : "Connect"
+                accented: !Network.connected
+                available: !Network.busy && (Network.connected || (Network.anyEthernetDevice !== null && Network.anyEthernetDevice.state === "disconnected"))
+                visible: Network.connected || (Network.anyEthernetDevice !== null && Network.anyEthernetDevice.state === "disconnected")
+                onActivated: {
+                    if (Network.wired)
+                        Network.disconnectEthernet(Network.ethernetDevice.device);
+                    else if (Network.wifiConnected)
+                        Network.disconnect();
+                    else if (Network.anyEthernetDevice)
+                        Network.connectEthernet(Network.anyEthernetDevice.device);
+                }
             }
         }
 

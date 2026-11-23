@@ -121,9 +121,82 @@ Column {
             onToggled: Settings.showNetwork = !Settings.showNetwork
         }
 
+        // Ethernet interfaces (connect / disconnect wired network cards such as enp34s0)
+        Repeater {
+            model: Network.available ? Network.ethernetDevices : []
+
+            delegate: Item {
+                id: ethDevRow
+
+                required property var modelData
+
+                readonly property bool isConnected: ethDevRow.modelData.state === "connected"
+                readonly property bool isUnavailable: ethDevRow.modelData.state === "unavailable" || ethDevRow.modelData.state === "unmanaged"
+                readonly property bool hit: SettingsContext.shows(ethDevRow, "ethernet wired cable lan " + ethDevRow.modelData.device + " " + ethDevRow.modelData.connection + " " + ethDevRow.modelData.state)
+
+                width: parent.width
+                height: ethDevRow.hit ? 40 : 0
+                visible: ethDevRow.hit
+
+                Row {
+                    anchors.left: parent.left
+                    anchors.right: ethDevBtn.left
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 10
+
+                    IconText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        fillBarHeight: false
+                        text: Glyphs.networkWired
+                        color: ethDevRow.isConnected ? Theme.accent : Theme.textMuted
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - 26
+                        spacing: 1
+
+                        Text {
+                            width: parent.width
+                            textFormat: Text.PlainText
+                            text: "Wired (" + ethDevRow.modelData.device + ")" + (ethDevRow.modelData.connection && ethDevRow.modelData.connection !== "--" ? " · " + ethDevRow.modelData.connection : "")
+                            color: Theme.textPrimary
+                            font.family: Theme.sansFamily
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.weight: ethDevRow.isConnected ? Theme.fontWeightStrong : Theme.fontWeightRegular
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            textFormat: Text.PlainText
+                            text: ethDevRow.isConnected ? "Connected" : (ethDevRow.isUnavailable ? "Cable unplugged (" + ethDevRow.modelData.state + ")" : "Disconnected")
+                            color: ethDevRow.isConnected ? Theme.accent : Theme.textMuted
+                            font.family: Theme.sansFamily
+                            font.pixelSize: Theme.fontSizeSmall - 1
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+
+                PanelButton {
+                    id: ethDevBtn
+
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    label: ethDevRow.isConnected ? "Disconnect" : "Connect"
+                    accented: !ethDevRow.isConnected && !ethDevRow.isUnavailable
+                    available: !Network.busy && !ethDevRow.isUnavailable
+                    onActivated: Network.toggleEthernet(ethDevRow.modelData.device, ethDevRow.isConnected)
+                }
+            }
+        }
+
         ToggleRow {
             label: "Wi-Fi radio"
-            applies: Network.available
+            applies: Network.available && Network.wifiDevice !== null
             checked: Network.wifiRadio
             onToggled: Network.setWifiRadio(!Network.wifiRadio)
         }
@@ -170,10 +243,16 @@ Column {
 
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                visible: Network.wifiConnected
-                label: "Disconnect"
+                visible: Network.wifiConnected || (Network.anyEthernetDevice !== null && !Network.wired && Network.anyEthernetDevice.state === "disconnected")
+                label: Network.wifiConnected ? "Disconnect" : "Connect Wired"
+                accented: !Network.wifiConnected
                 available: !Network.busy
-                onActivated: Network.disconnect()
+                onActivated: {
+                    if (Network.wifiConnected)
+                        Network.disconnect();
+                    else if (Network.anyEthernetDevice)
+                        Network.connectEthernet(Network.anyEthernetDevice.device);
+                }
             }
         }
 
@@ -900,6 +979,13 @@ Column {
             onToggled: Settings.showVpn = !Settings.showVpn
         }
 
+        ToggleRow {
+            label: "Auto-connect VPN on startup"
+            applies: Network.available
+            checked: Settings.vpnAutoconnect
+            onToggled: Network.setVpnAutoconnectGlobal(!Settings.vpnAutoconnect)
+        }
+
         PanelMessage {
             width: parent.width
             visible: Network.available && Network.vpns.length === 0 && !SettingsContext.searching
@@ -954,7 +1040,7 @@ Column {
                         Text {
                             width: parent.width
                             textFormat: Text.PlainText
-                            text: vpnRow.modelData.active ? ("Connected · " + vpnRow.modelData.type) : vpnRow.modelData.type
+                            text: (vpnRow.modelData.active ? ("Connected · " + vpnRow.modelData.type) : vpnRow.modelData.type) + (vpnRow.modelData.autoconnect ? " · auto-connect on" : " · auto-connect off")
                             color: vpnRow.modelData.active ? Theme.accent : Theme.textMuted
                             font.family: Theme.sansFamily
                             font.pixelSize: Theme.fontSizeSmall - 1
@@ -969,6 +1055,13 @@ Column {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
+
+                    PanelButton {
+                        label: vpnRow.modelData.autoconnect ? "Auto: On" : "Auto: Off"
+                        accented: vpnRow.modelData.autoconnect === true
+                        available: !Network.busy
+                        onActivated: Network.setVpnProfileAutoconnect(vpnRow.modelData.name, !vpnRow.modelData.autoconnect)
+                    }
 
                     PanelButton {
                         label: vpnRow.modelData.active ? "Disconnect" : "Connect"

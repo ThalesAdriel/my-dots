@@ -15,6 +15,7 @@ Singleton {
     property alias outerCornerRadius: adapter.outerCornerRadius
     property alias barBlur: adapter.barBlur
     property alias panelRadius: adapter.panelRadius
+    property alias panelGap: adapter.panelGap
     property alias surfaceColor: adapter.surfaceColor
     property alias panelOpacity: adapter.panelOpacity
     property alias panelBlur: adapter.panelBlur
@@ -31,8 +32,10 @@ Singleton {
     // The four bar modules that stay off until asked for: each costs a polled process while it is on.
     property alias showNetwork: adapter.showNetwork
     property alias showVpn: adapter.showVpn
+    property alias vpnAutoconnect: adapter.vpnAutoconnect
     property alias showBluetooth: adapter.showBluetooth
     property alias showBattery: adapter.showBattery
+    property alias showBatteryPercent: adapter.showBatteryPercent
     property alias showRecording: adapter.showRecording
     property alias showNightLight: adapter.showNightLight
     property alias nightLightEnabled: adapter.nightLightEnabled
@@ -112,6 +115,7 @@ Singleton {
         adapter.outerCornerRadius = 12;
         adapter.barBlur = true;
         adapter.panelRadius = 0;
+        adapter.panelGap = 0;
         adapter.surfaceColor = "#000000";
         adapter.panelOpacity = 0.30;
         adapter.panelBlur = true;
@@ -124,8 +128,10 @@ Singleton {
         adapter.workspaceSpacing = 2;
         adapter.showNetwork = false;
         adapter.showVpn = false;
+        adapter.vpnAutoconnect = false;
         adapter.showBluetooth = false;
         adapter.showBattery = false;
+        adapter.showBatteryPercent = false;
         adapter.showRecording = false;
         adapter.showNightLight = true;
         adapter.nightLightEnabled = false;
@@ -178,6 +184,7 @@ Singleton {
             property int outerCornerRadius: 12
             property bool barBlur: true
             property int panelRadius: 0
+            property int panelGap: 0
             property string surfaceColor: "#000000"
             property real panelOpacity: 0.30
             property bool panelBlur: true
@@ -193,8 +200,10 @@ Singleton {
 
             property bool showNetwork: false
             property bool showVpn: false
+            property bool vpnAutoconnect: false
             property bool showBluetooth: false
             property bool showBattery: false
+            property bool showBatteryPercent: false
             property bool showRecording: false
             property bool showNightLight: true
             property bool nightLightEnabled: false
