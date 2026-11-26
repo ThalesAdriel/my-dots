@@ -42,28 +42,16 @@ Item {
             return "settings/WallpaperPage.qml";
         case "bar":
             return "settings/BarPage.qml";
-        case "notifications":
-            return "settings/NotificationsPage.qml";
-        case "general":
-            return "settings/GeneralPage.qml";
         case "displays":
             return "settings/DisplaysPage.qml";
         case "connections":
             return "settings/ConnectionsPage.qml";
-        case "lock":
-            return "settings/LockPage.qml";
-        case "greeter":
-            return "settings/GreeterPage.qml";
-        case "theme":
-            return "settings/ThemePage.qml";
+        case "locklogin":
+            return "settings/LockLoginPage.qml";
         case "apps":
             return "settings/AppsPage.qml";
-        case "startup":
-            return "settings/StartupPage.qml";
         case "input":
-            return "settings/InputPage.qml";
-        case "keybinds":
-            return "settings/KeybindsPage.qml";
+            return "settings/InputShortcutsPage.qml";
         default:
             return "settings/AppearancePage.qml";
         }

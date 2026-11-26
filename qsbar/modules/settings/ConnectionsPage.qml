@@ -115,12 +115,6 @@ Column {
             text: "nmcli was not found. Wi-Fi and VPN controls require NetworkManager."
         }
 
-        ToggleRow {
-            label: "Show network icon in bar"
-            checked: Settings.showNetwork
-            onToggled: Settings.showNetwork = !Settings.showNetwork
-        }
-
         // Ethernet interfaces (connect / disconnect wired network cards such as enp34s0)
         Repeater {
             model: Network.available ? Network.ethernetDevices : []
@@ -974,12 +968,6 @@ Column {
         title: "VPN and WireGuard"
 
         ToggleRow {
-            label: "Show VPN icon in bar (always shown when active)"
-            checked: Settings.showVpn
-            onToggled: Settings.showVpn = !Settings.showVpn
-        }
-
-        ToggleRow {
             label: "Auto-connect VPN on startup"
             applies: Network.available
             checked: Settings.vpnAutoconnect
@@ -1106,12 +1094,6 @@ Column {
             visible: !Bluetooth.available && !SettingsContext.searching
             warning: true
             text: "bluetoothctl was not found. Bluetooth controls require BlueZ."
-        }
-
-        ToggleRow {
-            label: "Show Bluetooth icon in bar"
-            checked: Settings.showBluetooth
-            onToggled: Settings.showBluetooth = !Settings.showBluetooth
         }
 
         ToggleRow {

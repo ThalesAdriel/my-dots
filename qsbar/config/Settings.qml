@@ -63,8 +63,7 @@ Singleton {
     // Saved custom appearance presets.
     property alias appearancePresets: adapter.appearancePresets
 
-    // Smooth scrolling and speed multiplier for the settings window.
-    property alias settingsSmoothScroll: adapter.settingsSmoothScroll
+    // Scroll speed multiplier for the settings window.
     property alias settingsScrollSpeed: adapter.settingsScrollSpeed
 
     // Real surface captures in the overview.
@@ -142,7 +141,6 @@ Singleton {
         adapter.notificationSeconds = 10;
         adapter.dndOnFullscreen = false;
         adapter.appearancePresets = [];
-        adapter.settingsSmoothScroll = true;
         adapter.settingsScrollSpeed = 2.3;
         adapter.overviewPreviews = true;
         adapter.wallpaperTransition = "fade";
@@ -220,7 +218,6 @@ Singleton {
             property bool dndOnFullscreen: false
 
             property var appearancePresets: []
-            property bool settingsSmoothScroll: true
             property real settingsScrollSpeed: 2.3
 
             property bool overviewPreviews: true

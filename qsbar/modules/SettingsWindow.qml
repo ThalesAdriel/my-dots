@@ -26,18 +26,8 @@ Scope {
         },
         {
             key: "bar",
-            title: "Bar",
+            title: "Bar & Shell",
             glyph: Glyphs.windowMaximize
-        },
-        {
-            key: "notifications",
-            title: "Notifications",
-            glyph: Glyphs.bell
-        },
-        {
-            key: "general",
-            title: "Clock and overview",
-            glyph: Glyphs.sliders
         },
         {
             key: "displays",
@@ -50,39 +40,19 @@ Scope {
             glyph: Glyphs.wifi
         },
         {
-            key: "lock",
-            title: "Lock screen",
+            key: "locklogin",
+            title: "Lock & Login",
             glyph: Glyphs.lock
         },
         {
-            key: "greeter",
-            title: "Login screen",
-            glyph: Glyphs.userLock
-        },
-        {
-            key: "theme",
-            title: "System theme",
-            glyph: Glyphs.paintbrush
-        },
-        {
             key: "apps",
-            title: "Default applications",
+            title: "Applications",
             glyph: Glyphs.apps
         },
         {
-            key: "startup",
-            title: "Startup apps",
-            glyph: Glyphs.play
-        },
-        {
             key: "input",
-            title: "Input",
+            title: "Input & Shortcuts",
             glyph: Glyphs.sliders
-        },
-        {
-            key: "keybinds",
-            title: "Keybinds",
-            glyph: Glyphs.comment
         }
     ]
 
@@ -479,7 +449,6 @@ Scope {
                     WheelHandler {
                         id: smoothWheel
 
-                        enabled: Settings.settingsSmoothScroll
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         orientation: Qt.Vertical
 

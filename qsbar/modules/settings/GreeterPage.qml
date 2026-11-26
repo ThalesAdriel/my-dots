@@ -220,16 +220,16 @@ Column {
             labelOf: value => GreetConfig.label(value)
             onPicked: value => GreetConfig.theme = value
         }
+    }
+
+    Group {
+        title: "Avatar"
 
         ToggleRow {
             label: "Show avatar"
             checked: GreetConfig.showAvatar
             onToggled: GreetConfig.showAvatar = !GreetConfig.showAvatar
         }
-    }
-
-    Group {
-        title: "Avatar"
 
         FieldRow {
             label: "Picture"
