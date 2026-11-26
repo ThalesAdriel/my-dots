@@ -9,6 +9,9 @@ import "root:/services"
 Column {
     id: pageRoot
 
+    property string tab: "network"
+    property bool advancedOpen: false
+
     property string pendingWifi: ""
     property bool pendingEnterprise: false
     property string eapMethod: "peap"
@@ -101,6 +104,35 @@ Column {
     }
 
     spacing: 18
+
+    SubTabs {
+        tabs: [
+            {
+                value: "network",
+                label: "Wi-Fi & Wired"
+            },
+            {
+                value: "vpn",
+                label: "VPN"
+            },
+            {
+                value: "bluetooth",
+                label: "Bluetooth"
+            }
+        ]
+        current: pageRoot.tab
+        onPicked: value => pageRoot.tab = value
+    }
+
+    Column {
+        id: networkTab
+
+        readonly property string searchTitle: "Network wifi ethernet wired lan dns ip hotspot"
+        readonly property bool hit: SettingsContext.searching && SettingsContext.anyHit(networkTab.children)
+
+        width: parent.width
+        spacing: 18
+        visible: SettingsContext.searching ? networkTab.hit : pageRoot.tab === "network"
 
     // =========================================================================
     // Wi-Fi & Ethernet
@@ -362,16 +394,22 @@ Column {
             }
         }
 
+        ButtonRow {
+            label: pageRoot.advancedOpen ? "Hide advanced network settings" : "Advanced settings (DNS, IPv4/IPv6, MAC, Hotspot)"
+            applies: Network.available && (Network.connected || Network.wifiDevice !== null) && !SettingsContext.searching
+            onTriggered: pageRoot.advancedOpen = !pageRoot.advancedOpen
+        }
+
         ToggleRow {
             label: "Connect automatically"
-            applies: Network.available && Network.connected && Network.activeConnection !== ""
+            applies: (pageRoot.advancedOpen || SettingsContext.searching) && Network.available && Network.connected && Network.activeConnection !== ""
             checked: Network.autoconnect
             onToggled: Network.setAutoconnect(!Network.autoconnect)
         }
 
         ChoiceRow {
             label: "Wi-Fi MAC privacy"
-            applies: Network.available && Network.wifiConnected && Network.activeConnection !== ""
+            applies: (pageRoot.advancedOpen || SettingsContext.searching) && Network.available && Network.wifiConnected && Network.activeConnection !== ""
             options: [
                 { value: "permanent", label: "Permanent" },
                 { value: "random", label: "Random" },
@@ -383,7 +421,7 @@ Column {
 
         ChoiceRow {
             label: "DNS"
-            applies: Network.available && Network.connected && Network.activeConnection !== ""
+            applies: (pageRoot.advancedOpen || SettingsContext.searching) && Network.available && Network.connected && Network.activeConnection !== ""
             options: [
                 { value: "auto", label: "Auto" },
                 { value: "cloudflare", label: "Cloudflare" },
@@ -455,7 +493,7 @@ Column {
 
         ChoiceRow {
             label: "IPv4"
-            applies: Network.available && Network.connected && Network.activeConnection !== ""
+            applies: (pageRoot.advancedOpen || SettingsContext.searching) && Network.available && Network.connected && Network.activeConnection !== ""
             options: [
                 { value: "auto", label: "Auto (DHCP)" },
                 { value: "manual", label: "Manual" }
@@ -534,7 +572,7 @@ Column {
 
         ChoiceRow {
             label: "IPv6"
-            applies: Network.available && Network.connected && Network.activeConnection !== ""
+            applies: (pageRoot.advancedOpen || SettingsContext.searching) && Network.available && Network.connected && Network.activeConnection !== ""
             options: [
                 { value: "auto", label: "Auto" },
                 { value: "disabled", label: "Disabled" },
@@ -547,7 +585,7 @@ Column {
 
         ButtonRow {
             label: Network.hotspotActive ? "Stop Wi-Fi hotspot" : (pageRoot.hotspotOpen ? "Hide Wi-Fi hotspot form" : "Create Wi-Fi hotspot")
-            applies: Network.available && Network.wifiDevice !== null
+            applies: (pageRoot.advancedOpen || Network.hotspotActive || SettingsContext.searching) && Network.available && Network.wifiDevice !== null
             enabledAction: !Network.busy
             onTriggered: {
                 if (Network.hotspotActive)
@@ -960,10 +998,21 @@ Column {
             }
         }
     }
+    }
 
     // =========================================================================
     // VPN & WireGuard
     // =========================================================================
+    Column {
+        id: vpnTab
+
+        readonly property string searchTitle: "VPN WireGuard tunnel"
+        readonly property bool hit: SettingsContext.searching && SettingsContext.anyHit(vpnTab.children)
+
+        width: parent.width
+        spacing: 18
+        visible: SettingsContext.searching ? vpnTab.hit : pageRoot.tab === "vpn"
+
     Group {
         title: "VPN and WireGuard"
 
@@ -1082,10 +1131,21 @@ Column {
             }
         }
     }
+    }
 
     // =========================================================================
     // Bluetooth
     // =========================================================================
+    Column {
+        id: bluetoothTab
+
+        readonly property string searchTitle: "Bluetooth devices pair"
+        readonly property bool hit: SettingsContext.searching && SettingsContext.anyHit(bluetoothTab.children)
+
+        width: parent.width
+        spacing: 18
+        visible: SettingsContext.searching ? bluetoothTab.hit : pageRoot.tab === "bluetooth"
+
     Group {
         title: "Bluetooth"
 
@@ -1215,5 +1275,6 @@ Column {
             warning: true
             text: Bluetooth.lastError
         }
+    }
     }
 }

@@ -77,8 +77,25 @@ Item {
     }
 
     function toggleView(): void {
-        root.reset();
+        settleTimer.stop();
+        if (root.yearView) {
+            const targetOffset = (root.anchorDate.getFullYear() - root.todayYear) * 12;
+            root.offset = targetOffset;
+            root.settledOffset = targetOffset;
+        } else {
+            const targetOffset = root.anchorDate.getFullYear() - root.todayYear;
+            root.offset = targetOffset;
+            root.settledOffset = targetOffset;
+        }
         Settings.calendarYearView = !Settings.calendarYearView;
+    }
+
+    function openMonth(year: int, monthIndex: int): void {
+        settleTimer.stop();
+        const targetOffset = (year - root.todayYear) * 12 + (monthIndex - root.todayMonth);
+        root.offset = targetOffset;
+        root.settledOffset = targetOffset;
+        Settings.calendarYearView = false;
     }
 
     implicitWidth: root.bodyWidth + root.padding * 2
@@ -108,6 +125,9 @@ Item {
         property real weekWidth: 26
         property real titleHeight: 18
         property real dayFontSize: 9
+        property bool interactive: false
+
+        signal activated
 
         readonly property date firstDay: new Date(block.year, block.monthIndex, 1)
         readonly property int lead: (block.firstDay.getDay() - root.firstWeekday + 7) % 7
@@ -116,6 +136,32 @@ Item {
 
         width: block.cellWidth * 7 + block.weekWidth
         height: block.titleHeight + block.rowHeight * 7
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -4
+            visible: block.interactive
+            radius: Theme.radius
+            color: monthBlockMouse.containsPress ? Theme.fillPressed : (monthBlockMouse.containsMouse ? Theme.fillHover : "transparent")
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.durationFast
+                }
+            }
+        }
+
+        MouseArea {
+            id: monthBlockMouse
+
+            anchors.fill: parent
+            anchors.margins: -4
+            enabled: block.interactive
+            acceptedButtons: Qt.LeftButton
+            hoverEnabled: true
+            cursorShape: block.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: block.activated()
+        }
 
         Text {
             anchors.left: parent.left
@@ -244,6 +290,8 @@ Item {
         height: 26
 
         BarButton {
+            id: prevButton
+
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             implicitHeight: 24
@@ -259,16 +307,30 @@ Item {
         }
 
         BarButton {
+            anchors.left: prevButton.right
+            anchors.leftMargin: 4
+            anchors.verticalCenter: parent.verticalCenter
+            implicitHeight: 24
+            leftPadding: 8
+            rightPadding: 8
+            visible: root.offset !== 0
+            onPrimaryClicked: root.reset()
+
+            BarText {
+                text: "Today"
+                color: Theme.accent
+                font.pixelSize: Theme.fontSizeSmall
+            }
+        }
+
+        BarButton {
             anchors.centerIn: parent
             implicitHeight: 24
             leftPadding: 10
             rightPadding: 10
 
-            doubleClickEnabled: true
-
-            // The right click goes to the area over the whole calendar.
-            onPrimaryClicked: root.reset()
-            onDoubleClicked: root.toggleView()
+            // Single click switches between month and year view.
+            onPrimaryClicked: root.toggleView()
 
             BarText {
                 text: root.yearView ? String(root.anchorDate.getFullYear()) : Qt.formatDate(root.anchorDate, "MMMM yyyy")
@@ -302,13 +364,34 @@ Item {
         height: root.bodyHeight
         clip: true
 
-        // One layout at a time, and neither until the calendar is on screen.
+        // GPU layer caching only during the short crossfade keeps transitions fluid without holding extra textures when idle.
         Loader {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            id: monthLoader
+
+            anchors.centerIn: parent
 
             asynchronous: true
-            active: root.active && !root.yearView
+            active: root.active && (!root.yearView || monthLoader.opacity > 0.01)
+            opacity: root.yearView ? 0 : 1
+            scale: root.yearView ? 1.04 : 1
+            visible: opacity > 0.01
+            layer.enabled: monthOpacityAnim.running || monthScaleAnim.running
+
+            Behavior on opacity {
+                NumberAnimation {
+                    id: monthOpacityAnim
+                    duration: 180
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            Behavior on scale {
+                NumberAnimation {
+                    id: monthScaleAnim
+                    duration: 200
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             sourceComponent: MonthBlock {
                 cellWidth: 36
@@ -323,11 +406,32 @@ Item {
         }
 
         Loader {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
+            id: yearLoader
+
+            anchors.centerIn: parent
 
             asynchronous: true
-            active: root.active && root.yearView
+            active: root.active && (root.yearView || yearLoader.opacity > 0.01)
+            opacity: root.yearView ? 1 : 0
+            scale: root.yearView ? 1 : 0.96
+            visible: opacity > 0.01
+            layer.enabled: yearOpacityAnim.running || yearScaleAnim.running
+
+            Behavior on opacity {
+                NumberAnimation {
+                    id: yearOpacityAnim
+                    duration: 180
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            Behavior on scale {
+                NumberAnimation {
+                    id: yearScaleAnim
+                    duration: 200
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             sourceComponent: Grid {
                 columns: 3
@@ -340,8 +444,10 @@ Item {
                     delegate: MonthBlock {
                         required property int index
 
+                        interactive: true
                         year: root.anchorDate.getFullYear()
                         monthIndex: index
+                        onActivated: root.openMonth(year, index)
                     }
                 }
             }

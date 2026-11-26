@@ -38,6 +38,7 @@ Singleton {
     property alias showBatteryPercent: adapter.showBatteryPercent
     property alias showRecording: adapter.showRecording
     property alias showNightLight: adapter.showNightLight
+    property alias showPowerProfiles: adapter.showPowerProfiles
     property alias nightLightEnabled: adapter.nightLightEnabled
     property alias nightLightTemperature: adapter.nightLightTemperature
 
@@ -120,7 +121,7 @@ Singleton {
         adapter.panelBlur = true;
         adapter.hoverOpacity = 0.26;
         adapter.hoverRadius = 4;
-        adapter.accentColor = "#e01b24";
+        adapter.accentColor = "#791b1f";
         adapter.iconSize = 12;
         adapter.iconPadding = 3;
         adapter.moduleSpacing = 0;
@@ -133,6 +134,7 @@ Singleton {
         adapter.showBatteryPercent = false;
         adapter.showRecording = false;
         adapter.showNightLight = true;
+        adapter.showPowerProfiles = true;
         adapter.nightLightEnabled = false;
         adapter.nightLightTemperature = 4000;
         adapter.notificationStyle = "integrated";
@@ -189,7 +191,7 @@ Singleton {
 
             property real hoverOpacity: 0.26
             property int hoverRadius: 4
-            property string accentColor: "#e01b24"
+            property string accentColor: "#791b1f"
 
             property int iconSize: 12
             property int iconPadding: 3
@@ -204,6 +206,7 @@ Singleton {
             property bool showBatteryPercent: false
             property bool showRecording: false
             property bool showNightLight: true
+            property bool showPowerProfiles: true
             property bool nightLightEnabled: false
             property int nightLightTemperature: 4000
 

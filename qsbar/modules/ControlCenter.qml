@@ -22,9 +22,11 @@ BarPopup {
     readonly property int nightLightRowHeight: Settings.showNightLight ? 28 : 0
     readonly property int nightLightRowMargin: root.nightLightRowHeight > 0 ? 10 : 0
 
-    // Power profile pills are left out when power-profiles-daemon is unavailable or reports no profiles.
-    readonly property int powerRowHeight: PowerProfiles.available && PowerProfiles.profiles.length > 0 ? 28 : 0
+    // Power profile pills are left out when disabled in settings or when power-profiles-daemon is unavailable.
+    readonly property int powerRowHeight: Settings.showPowerProfiles && PowerProfiles.available && PowerProfiles.profiles.length > 0 ? 28 : 0
     readonly property int powerRowMargin: root.powerRowHeight > 0 ? 10 : 0
+
+    readonly property bool hasQuickControls: root.brightnessRowHeight > 0 || root.nightLightRowHeight > 0 || root.powerRowHeight > 0
 
     // brightnessctl is only worth re-reading while the slider that shows it is on screen and the brightness keys could be moving it underneath.
     onSettledChanged: Brightness.watching = root.settled
@@ -38,7 +40,8 @@ BarPopup {
         // The list below already carries everything.
         if (root.shown) {
             Notifications.clearPopups();
-            PowerProfiles.refresh();
+            if (Settings.showPowerProfiles)
+                PowerProfiles.refresh();
         }
     }
 
@@ -98,8 +101,11 @@ BarPopup {
     Item {
         id: content
 
+        readonly property int controlsCardHeight: root.hasQuickControls ? (controlsColumn.implicitHeight + 24) : 0
+        readonly property int controlsCardMargin: root.hasQuickControls ? 12 : 0
+
         implicitWidth: root.panelWidth
-        implicitHeight: headerRow.height + brightnessRow.height + root.brightnessRowMargin + nightLightRow.height + root.nightLightRowMargin + powerRow.height + root.powerRowMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 10
+        implicitHeight: headerRow.height + content.controlsCardHeight + content.controlsCardMargin + actionRow.height + listArea.height + buttonsCard.height + root.panelPadding * 4 + 12
 
         Item {
             id: headerRow
@@ -113,207 +119,260 @@ BarPopup {
 
             height: 28
 
-            ActionButton {
-                id: settingsButton
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-
-                compact: true
-                glyph: Glyphs.gear
-                tooltip: "System settings"
-
-                // The window opens over the middle of the screen.
-                onTriggered: {
-                    root.shown = false;
-                    UiState.settingsOpen = true;
-                }
-            }
-
             Text {
-                anchors.left: settingsButton.right
-                anchors.right: parent.right
-                anchors.leftMargin: 10
+                anchors.left: parent.left
+                anchors.right: settingsPill.left
+                anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
 
-                text: "System settings"
-                color: Theme.textSecondary
+                text: "Control Center"
+                color: Theme.textPrimary
                 font.family: Theme.sansFamily
                 font.pixelSize: Theme.fontSize
+                font.weight: Theme.fontWeightStrong
                 elide: Text.ElideRight
+            }
+
+            Rectangle {
+                id: settingsPill
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+
+                width: settingsRow.implicitWidth + 18
+                height: 28
+                radius: Theme.radius
+                color: settingsPillMouse.containsPress ? Theme.fillPressed : (settingsPillMouse.containsMouse ? Theme.fillHover : Theme.fillTrack)
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Theme.durationFast
+                    }
+                }
+
+                Row {
+                    id: settingsRow
+
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    IconText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        fillBarHeight: false
+                        text: Glyphs.gear
+                        color: Theme.textSecondary
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "Settings"
+                        color: Theme.textPrimary
+                        font.family: Theme.sansFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+                }
+
+                MouseArea {
+                    id: settingsPillMouse
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        root.shown = false;
+                        UiState.settingsOpen = true;
+                    }
+                }
             }
         }
 
-        // The backlight, directly under System settings.
-        Item {
-            id: brightnessRow
+        // Quick controls card: brightness, night light, and power profiles grouped cleanly.
+        Card {
+            id: controlsCard
 
             anchors.top: headerRow.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding
             anchors.rightMargin: root.panelPadding
-            anchors.topMargin: root.brightnessRowMargin
+            anchors.topMargin: content.controlsCardMargin
 
-            visible: root.brightnessRowHeight > 0
-            height: root.brightnessRowHeight
+            visible: root.hasQuickControls
+            height: content.controlsCardHeight
 
-            // The same 32 wide slot the gear above and the bell below sit in.
-            IconText {
-                id: brightnessIcon
-
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-
-                fillBarHeight: false
-                width: 32
-                text: Glyphs.sun
-                color: Theme.textSecondary
-            }
-
-            LevelSlider {
-                anchors.left: brightnessIcon.right
-                anchors.leftMargin: 10
-                anchors.right: brightnessValue.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-
-                maximum: 100
-                value: Brightness.level
-
-                onMoved: newValue => Brightness.set(newValue)
-            }
-
-            Text {
-                id: brightnessValue
-
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-
-                width: 38
-                horizontalAlignment: Text.AlignRight
-                text: Brightness.level + "%"
-                color: Theme.textSecondary
-                font.family: Theme.monoFamily
-                font.pixelSize: Theme.fontSizeSmall
-            }
-        }
-
-        // Night light toggle and colour temperature slider, aligned with the rows above and below.
-        Item {
-            id: nightLightRow
-
-            anchors.top: brightnessRow.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: root.panelPadding
-            anchors.rightMargin: root.panelPadding
-            anchors.topMargin: root.nightLightRowMargin
-
-            visible: root.nightLightRowHeight > 0
-            height: root.nightLightRowHeight
-
-            ActionButton {
-                id: nightLightButton
+            Column {
+                id: controlsColumn
 
                 anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-
-                compact: true
-                glyph: Glyphs.moon
-                tooltip: NightLight.enabled ? "Night light is on (" + NightLight.temperature + "K)" : "Night light"
-                engaged: NightLight.enabled
-                onTriggered: NightLight.toggle()
-            }
-
-            LevelSlider {
-                anchors.left: nightLightButton.right
-                anchors.leftMargin: 10
-                anchors.right: nightLightValue.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-
-                maximum: NightLight.maxTemperature - NightLight.minTemperature
-                value: NightLight.temperature - NightLight.minTemperature
-                fillColor: NightLight.enabled ? Theme.accent : Theme.textMuted
-                opacity: NightLight.enabled ? 1 : 0.45
-
-                onMoved: newValue => NightLight.setTemperature(NightLight.minTemperature + newValue)
-            }
-
-            Text {
-                id: nightLightValue
-
                 anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
+                anchors.margins: 12
+                spacing: 10
 
-                width: 42
-                horizontalAlignment: Text.AlignRight
-                text: NightLight.temperature + "K"
-                color: NightLight.enabled ? Theme.textPrimary : Theme.textSecondary
-                font.family: Theme.monoFamily
-                font.pixelSize: Theme.fontSizeSmall
-            }
-        }
+                Item {
+                    id: brightnessRow
 
-        // Quick power-profile pills, collapsed when power-profiles-daemon is absent.
-        Item {
-            id: powerRow
+                    width: parent.width
+                    visible: root.brightnessRowHeight > 0
+                    height: root.brightnessRowHeight
 
-            anchors.top: nightLightRow.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: root.panelPadding
-            anchors.rightMargin: root.panelPadding
-            anchors.topMargin: root.powerRowMargin
+                    IconText {
+                        id: brightnessIcon
 
-            visible: root.powerRowHeight > 0
-            height: root.powerRowHeight
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
 
-            Row {
-                id: powerButtons
+                        fillBarHeight: false
+                        width: 32
+                        text: Glyphs.sun
+                        color: Theme.textSecondary
+                    }
 
-                anchors.fill: parent
-                spacing: 6
+                    LevelSlider {
+                        anchors.left: brightnessIcon.right
+                        anchors.leftMargin: 10
+                        anchors.right: brightnessValue.left
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
 
-                Repeater {
-                    model: PowerProfiles.sortedProfiles
+                        maximum: 100
+                        value: Brightness.level
 
-                    delegate: PanelButton {
-                        id: profilePill
+                        onMoved: newValue => Brightness.set(newValue)
+                    }
 
-                        required property string modelData
+                    Text {
+                        id: brightnessValue
 
-                        width: (powerButtons.width - powerButtons.spacing * Math.max(PowerProfiles.sortedProfiles.length - 1, 0)) / Math.max(PowerProfiles.sortedProfiles.length, 1)
-                        height: powerRow.height
-                        label: PowerProfiles.label(profilePill.modelData)
-                        accented: PowerProfiles.active === profilePill.modelData
-                        onActivated: PowerProfiles.set(profilePill.modelData)
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        width: 42
+                        horizontalAlignment: Text.AlignRight
+                        text: Brightness.level + "%"
+                        color: Theme.textSecondary
+                        font.family: Theme.monoFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+                }
+
+                Item {
+                    id: nightLightRow
+
+                    width: parent.width
+                    visible: root.nightLightRowHeight > 0
+                    height: root.nightLightRowHeight
+
+                    ActionButton {
+                        id: nightLightButton
+
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        compact: true
+                        glyph: Glyphs.moon
+                        tooltip: NightLight.enabled ? "Night light is on (" + NightLight.temperature + "K)" : "Night light"
+                        engaged: NightLight.enabled
+                        onTriggered: NightLight.toggle()
+                    }
+
+                    LevelSlider {
+                        anchors.left: nightLightButton.right
+                        anchors.leftMargin: 10
+                        anchors.right: nightLightValue.left
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        maximum: NightLight.maxTemperature - NightLight.minTemperature
+                        value: NightLight.temperature - NightLight.minTemperature
+                        fillColor: NightLight.enabled ? Theme.accent : Theme.textMuted
+                        opacity: NightLight.enabled ? 1 : 0.45
+
+                        onMoved: newValue => NightLight.setTemperature(NightLight.minTemperature + newValue)
+                    }
+
+                    Text {
+                        id: nightLightValue
+
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        width: 42
+                        horizontalAlignment: Text.AlignRight
+                        text: NightLight.temperature + "K"
+                        color: NightLight.enabled ? Theme.textPrimary : Theme.textSecondary
+                        font.family: Theme.monoFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+                }
+
+                Item {
+                    id: powerRow
+
+                    width: parent.width
+                    visible: root.powerRowHeight > 0
+                    height: root.powerRowHeight
+
+                    Row {
+                        id: powerButtons
+
+                        anchors.fill: parent
+                        spacing: 6
+
+                        Repeater {
+                            model: PowerProfiles.sortedProfiles
+
+                            delegate: PanelButton {
+                                id: profilePill
+
+                                required property string modelData
+
+                                width: (powerButtons.width - powerButtons.spacing * Math.max(PowerProfiles.sortedProfiles.length - 1, 0)) / Math.max(PowerProfiles.sortedProfiles.length, 1)
+                                height: powerRow.height
+                                label: PowerProfiles.label(profilePill.modelData)
+                                accented: PowerProfiles.active === profilePill.modelData
+                                onActivated: PowerProfiles.set(profilePill.modelData)
+                            }
+                        }
                     }
                 }
             }
         }
 
+        // Notifications section header: title on the left, Do Not Disturb + Clear on the right.
         Item {
             id: actionRow
 
-            anchors.top: powerRow.bottom
+            anchors.top: controlsCard.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.leftMargin: root.panelPadding
             anchors.rightMargin: root.panelPadding
-            anchors.topMargin: 10
+            anchors.topMargin: 12
 
             height: 28
 
-            Row {
+            Text {
                 anchors.left: parent.left
+                anchors.right: notifActions.left
+                anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
 
-                // The same gap the label and the slider above keep from their own icons.
-                spacing: 10
+                text: Notifications.count > 0 ? ("Notifications · " + Notifications.count) : "Notifications"
+                color: Theme.textSecondary
+                font.family: Theme.sansFamily
+                font.pixelSize: Theme.fontSizeSmall
+                font.weight: Theme.fontWeightStrong
+                elide: Text.ElideRight
+            }
 
-                // Do not disturb reads as something you do to the list.
+            Row {
+                id: notifActions
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 6
+
                 ActionButton {
                     compact: true
                     glyph: Notifications.doNotDisturb ? Glyphs.bellOff : Glyphs.bell
@@ -323,7 +382,7 @@ BarPopup {
                 }
 
                 Rectangle {
-                    width: clearLabel.implicitWidth + 24
+                    width: clearLabel.implicitWidth + 20
                     height: 28
                     radius: Theme.radius
                     color: clearMouse.containsPress ? Theme.fillPressed : clearMouse.containsMouse ? Theme.fillHover : Theme.fillTrack

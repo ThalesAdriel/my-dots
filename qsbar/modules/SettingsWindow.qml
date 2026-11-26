@@ -31,7 +31,7 @@ Scope {
         },
         {
             key: "displays",
-            title: "Displays",
+            title: "Displays & Gaming",
             glyph: Glyphs.desktop
         },
         {
@@ -506,23 +506,87 @@ Scope {
                     onActivated: Settings.restoreDefaults()
                 }
 
-                // A thin thumb rather than a scroll bar.
-                Rectangle {
+                // Interactive thin scrollbar: hover widens it slightly, click or drag moves the scroll position directly.
+                Item {
+                    id: scrollTrack
+
+                    readonly property real maxY: Math.max(pageArea.contentHeight - pageArea.height, 0)
+                    readonly property real thumbHeight: Math.max(Math.min(pageArea.visibleArea.heightRatio * scrollTrack.height, scrollTrack.height), 28)
+                    readonly property real travel: Math.max(scrollTrack.height - scrollTrack.thumbHeight, 1)
+                    readonly property real thumbY: scrollTrack.maxY > 0 ? Math.min(Math.max(pageArea.contentY / scrollTrack.maxY, 0), 1) * scrollTrack.travel : 0
+                    readonly property bool active: scrollMouse.containsMouse || scrollMouse.pressed
+
                     anchors.right: parent.right
-                    anchors.rightMargin: 6
+                    anchors.rightMargin: 2
 
-                    y: pageArea.y + pageArea.visibleArea.yPosition * pageArea.height
-                    width: 3
-                    height: pageArea.visibleArea.heightRatio * pageArea.height
-                    radius: Theme.pill(3)
-
+                    y: pageArea.y
+                    width: 12
+                    height: pageArea.height
                     visible: pageArea.visibleArea.heightRatio < 1
-                    color: Theme.textMuted
-                    opacity: pageArea.moving || smoothScrollAnim.running ? 1 : 0.5
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.durationBase
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.rightMargin: 3
+
+                        y: scrollTrack.thumbY
+                        width: scrollTrack.active ? 6 : 3
+                        height: scrollTrack.thumbHeight
+                        radius: Theme.pill(width)
+
+                        color: scrollMouse.pressed ? Theme.accent : (scrollMouse.containsMouse ? Theme.textSecondary : Theme.textMuted)
+                        opacity: scrollTrack.active || pageArea.moving || smoothScrollAnim.running ? 1 : 0.5
+
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: Theme.durationFast
+                            }
+                        }
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.durationBase
+                            }
+                        }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.durationFast
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: scrollMouse
+
+                        property real dragOffset: 0
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        preventStealing: true
+                        cursorShape: Qt.PointingHandCursor
+
+                        function jumpTo(pointerY: real): void {
+                            if (scrollTrack.maxY <= 0)
+                                return;
+                            const ratio = Math.min(Math.max((pointerY - scrollMouse.dragOffset) / scrollTrack.travel, 0), 1);
+                            const nextY = ratio * scrollTrack.maxY;
+                            smoothScrollAnim.stop();
+                            pageArea.contentY = nextY;
+                            pageArea.smoothTargetY = nextY;
+                        }
+
+                        onPressed: mouse => {
+                            if (mouse.y >= scrollTrack.thumbY && mouse.y <= scrollTrack.thumbY + scrollTrack.thumbHeight) {
+                                scrollMouse.dragOffset = mouse.y - scrollTrack.thumbY;
+                            } else {
+                                scrollMouse.dragOffset = scrollTrack.thumbHeight / 2;
+                                scrollMouse.jumpTo(mouse.y);
+                            }
+                        }
+
+                        onPositionChanged: mouse => {
+                            if (scrollMouse.pressed)
+                                scrollMouse.jumpTo(mouse.y);
                         }
                     }
                 }

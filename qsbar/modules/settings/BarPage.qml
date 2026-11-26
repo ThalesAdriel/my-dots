@@ -20,8 +20,12 @@ Column {
                 label: "Bar"
             },
             {
-                value: "extras",
-                label: "Clock & Notifications"
+                value: "clock",
+                label: "Clock"
+            },
+            {
+                value: "notifications",
+                label: "Notifications"
             }
         ]
         current: barPage.tab
@@ -195,18 +199,24 @@ Column {
                 checked: Settings.showNightLight
                 onToggled: Settings.showNightLight = !Settings.showNightLight
             }
+
+            ToggleRow {
+                label: "Power plan in Control Center"
+                checked: Settings.showPowerProfiles
+                onToggled: Settings.showPowerProfiles = !Settings.showPowerProfiles
+            }
         }
     }
 
     Column {
-        id: extrasTab
+        id: clockTab
 
-        readonly property string searchTitle: "Clock calendar notifications overview settings"
-        readonly property bool hit: SettingsContext.searching && SettingsContext.anyHit(extrasTab.children)
+        readonly property string searchTitle: "Clock calendar overview settings"
+        readonly property bool hit: SettingsContext.searching && SettingsContext.anyHit(clockTab.children)
 
         width: parent.width
         spacing: 18
-        visible: SettingsContext.searching ? extrasTab.hit : barPage.tab === "extras"
+        visible: SettingsContext.searching ? clockTab.hit : barPage.tab === "clock"
 
         Group {
             title: "Clock and calendar"
@@ -235,6 +245,37 @@ Column {
                 onToggled: Settings.calendarYearView = !Settings.calendarYearView
             }
         }
+
+        Group {
+            title: "Overview and settings"
+
+            ToggleRow {
+                label: "Window previews in overview"
+                checked: Settings.overviewPreviews
+                onToggled: Settings.overviewPreviews = !Settings.overviewPreviews
+            }
+
+            SliderRow {
+                label: "Settings scroll speed"
+                value: Settings.settingsScrollSpeed
+                minimum: 0.4
+                maximum: 2.5
+                decimals: 1
+                suffix: "x"
+                onAdjusted: newValue => Settings.settingsScrollSpeed = Math.round(newValue * 10) / 10
+            }
+        }
+    }
+
+    Column {
+        id: notificationsTab
+
+        readonly property string searchTitle: "Notifications toast popups dnd"
+        readonly property bool hit: SettingsContext.searching && SettingsContext.anyHit(notificationsTab.children)
+
+        width: parent.width
+        spacing: 18
+        visible: SettingsContext.searching ? notificationsTab.hit : barPage.tab === "notifications"
 
         Group {
             title: "Notifications"
@@ -288,26 +329,6 @@ Column {
                 label: "Pause popups in fullscreen"
                 checked: Settings.dndOnFullscreen
                 onToggled: Settings.dndOnFullscreen = !Settings.dndOnFullscreen
-            }
-        }
-
-        Group {
-            title: "Overview and settings"
-
-            ToggleRow {
-                label: "Window previews in overview"
-                checked: Settings.overviewPreviews
-                onToggled: Settings.overviewPreviews = !Settings.overviewPreviews
-            }
-
-            SliderRow {
-                label: "Settings scroll speed"
-                value: Settings.settingsScrollSpeed
-                minimum: 0.4
-                maximum: 2.5
-                decimals: 1
-                suffix: "x"
-                onAdjusted: newValue => Settings.settingsScrollSpeed = Math.round(newValue * 10) / 10
             }
         }
     }

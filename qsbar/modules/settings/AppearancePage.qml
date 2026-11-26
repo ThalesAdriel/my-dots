@@ -25,7 +25,7 @@ Column {
     readonly property var builtinPresets: [
         {
             name: "Default",
-            accentColor: "#e01b24",
+            accentColor: "#791b1f",
             barColor: "#000000",
             surfaceColor: "#000000",
             barOpacity: 0.30,
